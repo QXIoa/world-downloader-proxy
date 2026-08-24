@@ -11,8 +11,6 @@ import se.llbit.nbt.LongArrayTag;
 import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.SpecificTag;
 
-import static util.PrintUtils.devPrint;
-
 /**
  * As of protocol 775 (26.1):
  * - heightmaps in the chunk packet are no longer sent as an NBT compound, but as an explicit array of
@@ -47,8 +45,6 @@ public class Chunk_26_1 extends Chunk_1_20 {
 
             String name = type >= 0 && type < HEIGHTMAP_TYPES.length ? HEIGHTMAP_TYPES[type] : "UNKNOWN_" + type;
             tag.add(name, new LongArrayTag(data));
-
-            devPrint("[heightmap] " + location + " type=" + name + " (" + type + ") longs=" + data.length);
         }
 
         heightMap = tag;
