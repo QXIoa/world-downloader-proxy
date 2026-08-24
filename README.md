@@ -1,110 +1,135 @@
-# minecraft-world-downloader
-A Minecraft world downloader that works as a proxy server between the client and the server to read & save chunk data. Download multiplayer worlds by connecting to them and walking around. Chunks can be sent back to the client to extend the render distance.
+# world-downloader-proxy
 
+A Minecraft world downloader that works as a proxy server between the Minecraft client and server, reading and saving chunk data as you walk around the world. Downloaded chunks can also be sent back to the client to extend render distance.
 
-### Downloads  <a href="https://github.com/mircokroon/minecraft-world-downloader/releases/latest"><img align="right" src="https://img.shields.io/github/downloads/mircokroon/minecraft-world-downloader/total.svg"></a>
-Windows launcher: [world-downloader-launcher.exe](https://github.com/mircokroon/minecraft-world-downloader-launcher/releases/latest/download/world-downloader-launcher.exe)
+Fork of [mircokroon/minecraft-world-downloader](https://github.com/mircokroon/minecraft-world-downloader), maintained with support for newer Minecraft versions and platform-specific packaging.
 
-Latest cross-platform jar (command-line support): [world-downloader.jar](https://github.com/mircokroon/minecraft-world-downloader/releases/latest/download/world-downloader.jar)
+### Downloads
+
+Grab the latest jar for your platform from the [Releases](../../releases/latest) page.
+
+| Jar | Platforms |
+|-----|-----------|
+| `world-downloader-proxy-<version>-win-linux-mac-x86_64.jar` | Windows, Linux, macOS (x86_64) |
+| `world-downloader-proxy-<version>-linux-mac-arm64.jar` | Linux, macOS (ARM64/Apple Silicon) |
+
+> Windows ARM users: use the x86_64 jar under Windows x86 emulation. OpenJFX does not publish Windows ARM64 native libraries.
 
 ### Basic usage
-[Download](https://github.com/mircokroon/minecraft-world-downloader-launcher/releases/latest/download/world-downloader-launcher.exe) the latest release and run it. Enter the server address in the address field and press start.
+
+Run the jar, enter the server address in the address field, and press start.
 
 <img src="https://i.imgur.com/yH8SH5C.png">
 
-Instead of connecting to the server itself, connect to `localhost` in Minecraft to start downloading the world.
+Instead of connecting to the server directly, connect to `localhost` in Minecraft to start downloading the world.
+
 <img src="https://i.imgur.com/wKMnXfq.png">
 
-If you run into any problems, check the [FAQ](https://github.com/mircokroon/minecraft-world-downloader/wiki/FAQ) page for some common issues. 
+### Features
 
-### [Features](https://github.com/mircokroon/minecraft-world-downloader/wiki/Features)
-- Requires no client modifications and as such works with every game client, vanilla or not
+- Requires no client modifications — works with every vanilla or modded client
 - Automatically merge into previous downloads or existing worlds
 - Save chests and other inventories by opening them
-- Extend the client's render distance by sending chunks downloaded previously back to the client
-- Supports Minecraft 26.1+'s reorganised world storage (dimensions moved under `dimensions/<namespace>/<name>`, world gen settings moved to their own file) automatically - worlds saved from these versions open normally, no manual fixing needed
-- Overview map of chunks that have been saved:
+- Extend the client's render distance by sending previously downloaded chunks back to the client
+- Supports Minecraft 26.1+'s reorganised world storage (dimensions under `dimensions/<namespace>/<name>`, world gen settings in their own file) — saved worlds open normally without manual fixing
+- Overview map of saved chunks:
 
 <img src="https://i.imgur.com/7FIJ6fZ.png" width="80%" title="Example of the GUI showing all the downloaded chunks as white squares, which ones from a previous download greyed out.">
 
 ### Requirements
-- Java 25 or higher to run the downloader itself
-- Minecraft version 1.12.2+ // 1.13.2+ // 1.14.1+ // 1.15.2+ // 1.16.2+ // 1.17+ // 1.18+ // 1.19.3+ // 1.20+ // 1.21+ // 26.1+ // 26.2+
-- To connect to a Minecraft **26.1+** server, you additionally need a **Java 25+** JDK installed somewhere on your system. Minecraft's own server.jar needs it to generate that version's block/item data; the downloader detects and uses it automatically the first time you connect to that version, no configuration needed.
+
+- Java 25 or higher
+- Minecraft 1.12.2+ / 1.13.2+ / 1.14.1+ / 1.15.2+ / 1.16.2+ / 1.17+ / 1.18+ / 1.19.3+ / 1.20+ / 1.21+ / 26.1+ / 26.2+
+- For Minecraft **26.1+** servers: a **Java 25+** JDK must be installed somewhere on your system. Minecraft's `server.jar` is used to generate that version's block/item data; the downloader detects and uses it automatically on first connect.
 
 ### Command-line
-[Download](https://github.com/mircokroon/minecraft-world-downloader/releases/latest/download/world-downloader.jar) the cross-platform `world-downloader.jar` and run it using the command-line:
 
 ```
-java -jar world-downloader.jar
+java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar
 ```
 
-Arguments can be specified to change the behaviour of the downloader. Running with `--help` shows all the available commands.
+Run with `--help` to see all available options:
+
 ```
-java -jar world-downloader.jar --help
+java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar --help
 ```
 
-The GUI can be disabled by including the `--no-gui` option, and specifying the server address:
+Disable the GUI and specify the server address directly:
+
 ```
-java -jar world-downloader.jar --no-gui -s address.to.server.com
+java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar --no-gui -s address.to.server.com
 ```
 
 ### Running on Linux
-To easily download the latest release using the terminal, the following commands can be used:
-```
-wget https://github.com/mircokroon/minecraft-world-downloader/releases/latest/download/world-downloader.jar
-java -jar world-downloader.jar -s address.to.server.com
+
+```bash
+wget <release-url-from-Releases-page>
+java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar -s address.to.server.com
 ```
 
-When running headless Java, the GUI should be disabled by including the GUI option:
-```
-java -jar world-downloader.jar -s address.to.server.com --no-gui
+Headless mode (no GUI):
+
+```bash
+java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar -s address.to.server.com --no-gui
 ```
 
-Some linux distributions may require `-Djdk.gtk.version=2` for the GUI to work:
-```
-java -Djdk.gtk.version=2 -jar world-downloader.jar
-```
+Some Linux distributions require `-Djdk.gtk.version=2` for the GUI to work:
 
+```bash
+java -Djdk.gtk.version=2 -jar world-downloader-proxy-<version>-linux-mac-arm64.jar
+```
 
 ### Building from source
+
 <details>
-  <summary>Dependencies on linux</summary>
-  
-  ### debian/ubuntu
-  
+  <summary>Dependencies on Linux</summary>
+
+  **Debian/Ubuntu:**
   ```
   sudo apt-get install default-jdk maven
   ```
 
-  ### arch/manjaro
-  
+  **Arch/Manjaro:**
   ```
   sudo pacman -S --needed jdk-openjdk maven
   ```
 </details>
 
 <details>
-  <summary>Build project to executable jar file</summary>
-  
- Building the project manually can be done using Maven:
+  <summary>Build executable jar</summary>
+
+  The project uses two Maven profiles, one per CPU architecture, to bundle the correct JavaFX native libraries:
+
+  ```bash
+  git clone https://github.com/XInfiniterX/world-downloader-proxy
+  cd world-downloader-proxy
+
+  # ARM64 (default profile): Linux + macOS ARM64
+  mvn clean package
+
+  # x86_64: Windows + Linux + macOS x86_64
+  mvn clean package -Px86_64
   ```
-  git clone https://github.com/mircokroon/minecraft-world-downloader
-  cd minecraft-world-downloader
+
+  To produce both jars without wiping the first one, build sequentially without `clean` on the second run:
+
+  ```bash
+  mvn clean package -Px86_64
   mvn package
-  java -jar ./target/world-downloader.jar -s address.to.server.com
+  ```
+
+  Output jars land in `target/`:
+  ```
+  world-downloader-proxy-<version>-win-linux-mac-x86_64.jar
+  world-downloader-proxy-<version>-linux-mac-arm64.jar
   ```
 
 </details>
 
-### Contact
-<details>
-  <summary>Contact information</summary>
+### License
 
-  For problems, bugs, feature requests and questions about how to use the application, please [open an issue](https://github.com/mircokroon/minecraft-world-downloader/issues/new/choose) or discussion on GitHub. 
+GPL-3.0. See [LICENSE](LICENSE).
 
-  For other inquiries, email: mircokroon.github@gmail.com
-  
-  If you want to support this project, you can [donate through GitHub](https://github.com/sponsors/mircokroon?frequency=one-time&amount=5)
-</details>
+---
 
+Based on [minecraft-world-downloader](https://github.com/mircokroon/minecraft-world-downloader) by [mircokroon](https://github.com/mircokroon).
