@@ -31,7 +31,7 @@ import static util.ExceptionHandling.attempt;
  * Class to the handle the GUI.
  */
 public class GuiManager extends Application {
-    private static final String TITLE = "World Downloader";
+    private static final String TITLE = "World Downloader " + util.AppVersion.get();
     private static boolean hasErrors;
     private static boolean authenticationFailed;
     private static ObservableList<String> messages;
@@ -175,6 +175,24 @@ public class GuiManager extends Application {
         s.getIcons().add(icon);
     }
 
+    /**
+     * Set the macOS dock icon (and taskbar icon on other platforms). JavaFX's
+     * {@code stage.getIcons()} only sets the window title bar icon; it does not
+     * affect the dock icon on macOS. {@code java.awt.Taskbar} is the cross-platform
+     * way to set the dock/taskbar icon.
+     */
+    private static void setDockIcon() {
+        try {
+            if (!java.awt.Taskbar.isTaskbarSupported()) { return; }
+            java.awt.Taskbar taskbar = java.awt.Taskbar.getTaskbar();
+            java.awt.Image dockIcon = java.awt.Toolkit.getDefaultToolkit().getImage(
+                GuiManager.class.getResource("/ui/icon/icon.png"));
+            taskbar.setIconImage(dockIcon);
+        } catch (Exception ignored) {
+            // not all platforms support setIconImage; safe to ignore
+        }
+    }
+
     static void registerSettingController(GuiSettings settings) {
         GuiManager.settingController = settings;
     }
@@ -289,6 +307,7 @@ public class GuiManager extends Application {
         this.stage = stage;
         icon = new Image(GuiManager.class.getResourceAsStream("/ui/icon/icon.png"));
         addIcon(this.stage);
+        setDockIcon();
 
         // when in GUI mode, close the application when the main stage is closed.
         this.stage.setOnCloseRequest(e -> {

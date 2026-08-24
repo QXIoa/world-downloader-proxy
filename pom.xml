@@ -5,13 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>mircokroon.minecraft-world-downloader</groupId>
-    <artifactId>minecraft-world-downloader</artifactId>
-    <version>1.0.0.0</version>
+    <artifactId>world-downloader-proxy</artifactId>
+    <version>26w35a</version>
     <packaging>jar</packaging>
     <properties>
-        <java.version>21</java.version>
-        <java.version.max>21</java.version.max>
+        <java.version>25</java.version>
+        <java.version.max>25</java.version.max>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javafx.version>23.0.1</javafx.version>
     </properties>
 
     <repositories>
@@ -30,6 +31,24 @@
     </pluginRepositories>
 
     <build>
+        <resources>
+            <!-- Filter version.txt so ${project.version} is substituted at build time -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>version.txt</include>
+                </includes>
+            </resource>
+            <!-- All other resources are copied verbatim -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>version.txt</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -43,7 +62,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.6.1</version>
+                <dependencies>
+                    <!-- Workaround for shade 3.6.1 minimizeJar failing on Java 25 class files (major version 69).
+                         See https://github.com/apache/maven-shade-plugin/issues/784 -->
+                    <dependency>
+                        <groupId>org.vafer</groupId>
+                        <artifactId>jdependency</artifactId>
+                        <version>2.14</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
                     <filters>
@@ -74,7 +102,7 @@
                             <mainClass>Launcher</mainClass>
                         </transformer>
                     </transformers>
-                    <finalName>world-downloader</finalName>
+                    <finalName>world-downloader-proxy-${project.version}-${jar.suffix}</finalName>
                 </configuration>
                 <executions>
                     <execution>
@@ -162,12 +190,12 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>18.0.1</version>
+            <version>${javafx.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
-            <version>18.0.1</version>
+            <version>${javafx.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/dnsjava/dnsjava -->
@@ -217,26 +245,65 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>18.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>18.0.1</version>
-            <classifier>win</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>18.0.1</version>
-            <classifier>linux</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>11</version>
-            <classifier>mac</classifier>
+            <version>${javafx.version}</version>
         </dependency>
     </dependencies>
-</project>
 
+    <!--
+        Two build profiles, one per CPU architecture. Each produces a separate jar with
+        native libraries for all supported OSes on that architecture. Build with:
+            mvn package                  (x86_64 by default)
+            mvn package -Parm64
+    -->
+    <profiles>
+        <profile>
+            <id>x86_64</id>
+            <properties>
+                <jar.suffix>win-linux-mac-x86_64</jar.suffix>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>linux</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>mac</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>arm64</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <jar.suffix>linux-mac-arm64</jar.suffix>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>linux-aarch64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>mac-aarch64</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+</project>

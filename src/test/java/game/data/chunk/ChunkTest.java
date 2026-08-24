@@ -190,4 +190,14 @@ class ChunkTest extends PacketBuilderAndParserTest {
     void chunk_1_21() throws IOException, ClassNotFoundException {
         testFor(Version.V1_21.protocolVersion, "chunkdata_1_21");
     }
+
+    @Test
+    void chunk_26_1() throws IOException, ClassNotFoundException {
+        testFor(Version.V26_1.protocolVersion, "chunkdata_26_1");
+    }
+
+    @Test
+    void chunk_26_2() throws IOException, ClassNotFoundException {
+        testFor(Version.V26_2.protocolVersion, "chunkdata_26_2");
+    }
 }

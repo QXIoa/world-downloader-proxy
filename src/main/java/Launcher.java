@@ -1,5 +1,6 @@
 import config.Config;
 
+import util.AppVersion;
 import util.PathUtils;
 
 import java.net.URISyntaxException;
@@ -11,6 +12,7 @@ import static util.ExceptionHandling.attemptQuiet;
 
 public class Launcher {
     public static void main(String[] args) throws URISyntaxException {
+        System.out.println("World Downloader Proxy " + AppVersion.get());
         fixCwd();
 
         Config.init(args);

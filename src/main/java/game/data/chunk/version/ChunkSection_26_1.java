@@ -26,10 +26,36 @@ public class ChunkSection_26_1 extends ChunkSection_1_18 {
         packet.writeShort(blockCount);
         packet.writeShort(0); // fluid count - not tracked separately, 0 is a safe placeholder
 
-        palette.write(packet);
-        packet.writeLongArray(blocks);
+        writePalettedContainer(packet, palette, blocks, true);
+        writePalettedContainer(packet, biomePalette, biomes, false);
+    }
 
-        biomePalette.write(packet);
-        packet.writeLongArray(biomes);
+    /**
+     * In 26.1+ the data array length is not sent on the wire; it is derived from bits-per-entry.
+     * A 1-entry palette with an empty data array (common for sections that contain only air) must be
+     * written as a single-value palette (bitsPerBlock = 0, no data array), otherwise the reader
+     * would expect longsRequired(bitsPerBlock) longs that were never written.
+     */
+    private void writePalettedContainer(PacketBuilder packet, Palette pal, long[] data, boolean isBlocks) {
+        if (pal.size() == 1 && (data == null || data.length == 0)) {
+            packet.writeByte((byte) 0);
+            packet.writeVarInt(pal.stateFromId(0));
+            return;
+        }
+
+        int expectedLen = isBlocks
+            ? ChunkSection_1_18.longsRequired(pal.getBitsPerBlock())
+            : ChunkSection_1_18.longsRequiredBiomes(pal.getBitsPerBlock());
+
+        long[] dataToWrite = data;
+        if (data == null || data.length != expectedLen) {
+            dataToWrite = new long[expectedLen];
+            if (data != null) {
+                System.arraycopy(data, 0, dataToWrite, 0, Math.min(data.length, expectedLen));
+            }
+        }
+
+        pal.write(packet);
+        packet.writeLongArray(dataToWrite);
     }
 }

@@ -35,7 +35,8 @@ public class BiomeRegistry implements Registry {
 
     @Override
     public int getStateId(SpecificTag nbt) {
-        return biomeIdsFromIdentifier.get(new BiomeIdentifier(nbt));
+        Integer id = biomeIdsFromIdentifier.get(new BiomeIdentifier(nbt));
+        return id != null ? id : 0;
     }
 
     @Override
