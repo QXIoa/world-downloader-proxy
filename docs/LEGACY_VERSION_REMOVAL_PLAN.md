@@ -275,8 +275,18 @@ Krótka instrukcja "on-boarding", którą warto potem przenieść też do `READM
 
 ## 8. Checklisty postępu
 
-- [ ] Faza 0: baseline testów
-- [ ] Faza 1: blokada starszych klientów (4.7)
+- [x] Faza 0: baseline testów — 102 testy, wszystkie przechodzą (patrz `AGENTS.md` po instrukcję
+      uruchomienia `mvn`/`java` w tym środowisku).
+- [x] Faza 1: blokada starszych klientów (4.7) — `Config.setProtocolVersion` odrzuca teraz protokoły
+      poniżej `Version.V26_1` przez `UnsupportedMinecraftVersionException` (z komunikatem w konsoli i GUI).
+      `DEFAULT_VERSION` zaktualizowany na `V26_2`. Dodano `ConfigTest` pokrywający tę blokadę.
+      W ramach tej fazy od razu usunięto testy w `ChunkTest`/`ParticleRegistryTest`, które explicite
+      wywoływały `Config.setProtocolVersion` dla wersji < 26.1 (inaczej od razu zaczęłyby czerwienić się
+      po dodaniu blokady) oraz odpowiadające im zasoby `chunkdata_1_12..1_21` — to wyprzedzający fragment
+      Fazy 9, zrobiony teraz żeby każdy commit zostawiał zielone testy. `testForWithLight`/`chunk_1_17` też
+      usunięte przy okazji: się okazało że to martwy kod dla 26.x — od 1.18 światło jest zapisywane wprost
+      w pakiecie `LevelChunkWithLight` (patrz `Chunk_1_18#toLightPacket` zwraca `null`), więc oddzielny
+      pakiet światła i tak nigdy nie był używany dla 26.x; nie ma potrzeby odtwarzać tego testu.
 - [ ] Faza 2: EquipmentReader / Slot / PlayerMap / MetaData
 - [ ] Faza 3: DataTypeProvider
 - [ ] Faza 4: Chunk / ChunkSection

@@ -2,6 +2,7 @@ package config;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
+import game.UnsupportedMinecraftVersionException;
 import game.data.WorldManager;
 import game.data.registries.RegistryLoader;
 import game.data.registries.RegistryManager;
@@ -34,7 +35,7 @@ import util.LocalDateTimeAdapter;
 import util.PathUtils;
 
 public class Config {
-    private static final int DEFAULT_VERSION = 340;
+    private static final int DEFAULT_VERSION = Version.V26_2.protocolVersion;
     private static Path configPath;
 
     private static PacketInjector injector;
@@ -121,7 +122,22 @@ public class Config {
         return instance.connectionDetails;
     }
 
+    /**
+     * The lowest protocol version this proxy is willing to speak to. Clients below this are rejected
+     * outright in {@link #setProtocolVersion} instead of being silently matched to the oldest known
+     * protocol entry, which would otherwise lead to confusing packet-parsing failures further down the line.
+     */
+    private static final int MIN_SUPPORTED_PROTOCOL_VERSION = Version.V26_1.protocolVersion;
+
     public static void setProtocolVersion(int protocolVersion) {
+        if (protocolVersion > 0 && protocolVersion < MIN_SUPPORTED_PROTOCOL_VERSION) {
+            String message = "Unsupported Minecraft version (protocol " + protocolVersion + "). This proxy "
+                + "only supports Minecraft 26.1 and newer. Please connect with a 26.1+ client.";
+            System.err.println(message);
+            GuiManager.setStatusMessage(message);
+            throw new UnsupportedMinecraftVersionException(message);
+        }
+
         instance.protocolVersion = protocolVersion;
         instance.versionReporter = new VersionReporter(protocolVersion);
 

@@ -28,33 +28,6 @@ class ParticleRegistryTest {
     }
 
     @Test
-    void flameFallbackFor1_20_6_is31() {
-        setProtocol(766);
-        assertThat(ParticleRegistry.getInstance().getId("minecraft:flame")).isEqualTo(31);
-    }
-
-    @Test
-    void flameFallbackFor1_21_is31() {
-        setProtocol(767);
-        assertThat(ParticleRegistry.getInstance().getId("minecraft:flame")).isEqualTo(31);
-    }
-
-    @Test
-    void flameFallbackFor1_21_2_is31() {
-        // protocol 768 is not in protocol-versions.json, bestMatch falls back to 767 (1.21)
-        // whose dataVersion (3953) is >= V1_20_6 (3839) but < V26_1 (4786) → flame=31
-        setProtocol(768);
-        assertThat(ParticleRegistry.getInstance().getId("minecraft:flame")).isEqualTo(31);
-    }
-
-    @Test
-    void flameFallbackFor1_21_4_is31() {
-        // protocol 769 is not in protocol-versions.json, bestMatch falls back to 767 (1.21)
-        setProtocol(769);
-        assertThat(ParticleRegistry.getInstance().getId("minecraft:flame")).isEqualTo(31);
-    }
-
-    @Test
     void flameFallbackFor26_1_is32() {
         setProtocol(775);
         assertThat(ParticleRegistry.getInstance().getId("minecraft:flame")).isEqualTo(32);
