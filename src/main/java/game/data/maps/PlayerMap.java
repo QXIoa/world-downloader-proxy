@@ -1,8 +1,6 @@
 package game.data.maps;
 
 import config.Config;
-import config.Option;
-import config.Version;
 import game.data.WorldManager;
 import game.data.dimension.Dimension;
 import packets.DataTypeProvider;
@@ -10,11 +8,16 @@ import se.llbit.nbt.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Collectors;
 
-public abstract class PlayerMap {
+/**
+ * Parses and stores a player-created map item. If a future Minecraft version changes the "Map Data" packet
+ * layout again, add a new subclass overriding {@link #parse}/{@link #parseIcons}/{@link #addNbtTags} and
+ * pick it in {@link #getVersioned(int)} (see the pre-26.x history of this class in git for an example).
+ */
+public class PlayerMap {
     int id;
     byte scale;
-    boolean trackingPosition;
     boolean locked;
     byte[] colors;
 
@@ -34,11 +37,7 @@ public abstract class PlayerMap {
     }
 
     public static PlayerMap getVersioned(int id) {
-        return Config.versionReporter().select(PlayerMap.class,
-                Option.of(Version.V1_17, () -> new PlayerMap_1_17(id)),
-                Option.of(Version.V1_14, () -> new PlayerMap_1_14(id)),
-                Option.of(Version.V1_12, () -> new PlayerMap_1_12(id))
-        );
+        return new PlayerMap(id);
     }
 
     public SpecificTag toNbt() {
@@ -64,8 +63,14 @@ public abstract class PlayerMap {
         return root;
     }
 
-    protected void addNbtTags(CompoundTag data) { };
+    protected void addNbtTags(CompoundTag data) {
+        data.add("dimension", new StringTag(dimension.toString()));
+        data.add("banners", new ListTag(Tag.TAG_COMPOUND, icons.stream().map(Icon::toNbt).collect(Collectors.toList())));
+        data.add("frames", new ListTag(Tag.TAG_COMPOUND, Collections.emptyList()));
 
+        // we lock the map and set the scale to 1, these don't matter for the client anyway
+        data.add("locked", new ByteTag(1));
+    }
 
     protected void parseMapImage(DataTypeProvider provider) {
         int columns = provider.readNext() & 0xFF;
@@ -91,7 +96,30 @@ public abstract class PlayerMap {
         }
     }
 
-    public abstract void parse(DataTypeProvider provider);
+    public void parse(DataTypeProvider provider) {
+        byte scale = provider.readNext();
+        if (scale != 0) {
+            this.scale = scale;
+        }
+
+        this.locked = provider.readBoolean();
+
+        parseIcons(provider);
+        parseMapImage(provider);
+    }
+
+    protected void parseIcons(DataTypeProvider provider) {
+        boolean hasIcons = provider.readBoolean();
+        if (!hasIcons) { return; }
+
+        int iconCount = provider.readVarInt();
+        for (int i = 0; i < iconCount; i++) {
+            Icon icon = Icon.of(provider);
+            if (icon != null) {
+                icons.add(icon);
+            }
+        }
+    }
 }
 
 class Icon {
