@@ -21,12 +21,25 @@ public class ConnectionManager {
 
     private NetworkMode mode = NetworkMode.STATUS;
 
+    // Tracks the currently active game handler so its background resources (the selection
+    // particle renderer's scheduler) can be shut down before it's discarded. Without this, an
+    // abrupt disconnect (e.g. a client crash) never sends "ConfigurationAcknowledged", so the
+    // old handler's scheduler thread keeps running and injects stale LevelParticles packets into
+    // whatever connection is active next — including before that connection reaches the Play
+    // state, where the client rejects them as an unknown packet.
+    private ServerBoundGamePacketHandler serverBoundGamePacketHandler;
+
     public NetworkMode getMode() {
         return mode;
     }
 
     public void setMode(NetworkMode mode) {
         this.mode = mode;
+
+        if (serverBoundGamePacketHandler != null) {
+            serverBoundGamePacketHandler.shutdown();
+            serverBoundGamePacketHandler = null;
+        }
 
         switch (mode) {
             case STATUS:
@@ -41,7 +54,8 @@ public class ConnectionManager {
                 break;
             case GAME:
                 PacketHandler.setProtocol(Config.getGameProtocol());
-                serverBoundDataReader.setPacketHandler(new ServerBoundGamePacketHandler(this));
+                serverBoundGamePacketHandler = new ServerBoundGamePacketHandler(this);
+                serverBoundDataReader.setPacketHandler(serverBoundGamePacketHandler);
                 clientBoundDataReader.setPacketHandler(ClientBoundGamePacketHandler.of(this));
                 break;
             case HANDSHAKE:
@@ -72,6 +86,7 @@ public class ConnectionManager {
         proxy.runServer(serverBoundDataReader, clientBoundDataReader);
 
         Config.registerPacketInjector(this.getEncryptionManager().getPacketInjector());
+        Config.registerEncryptionManager(this.getEncryptionManager());
     }
 
     /**

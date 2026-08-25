@@ -95,6 +95,9 @@ public class DataTypeProvider {
     }
 
     public byte readNext() {
+        if (pos >= finalFullPacket.length) {
+            return 0;
+        }
         return finalFullPacket[pos++];
     }
 
@@ -109,7 +112,10 @@ public class DataTypeProvider {
     public byte[] readByteArray(int size) {
         byte[] res = new byte[size];
 
-        System.arraycopy(finalFullPacket, pos, res, 0, size);
+        int available = Math.min(size, finalFullPacket.length - pos);
+        if (available > 0) {
+            System.arraycopy(finalFullPacket, pos, res, 0, available);
+        }
         pos += size;
 
         return res;
@@ -341,6 +347,28 @@ public class DataTypeProvider {
 
     public int remaining() {
         return this.finalFullPacket.length - pos;
+    }
+
+    /**
+     * @return the current read position in the underlying byte array.
+     */
+    public int position() {
+        return pos;
+    }
+
+    /**
+     * @return the total length of the underlying byte array.
+     */
+    public int finalFullPacketLength() {
+        return finalFullPacket.length;
+    }
+
+    /**
+     * Extract a copy of the bytes in the range [start, end) from the underlying array.
+     * Does not change the current read position.
+     */
+    public byte[] extractBytes(int start, int end) {
+        return Arrays.copyOfRange(finalFullPacket, start, end);
     }
 
     @Override

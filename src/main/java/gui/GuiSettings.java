@@ -74,6 +74,7 @@ public class GuiSettings {
     public AuthTabController authController;
     public CheckBox enableDrawExtendedChunks;
     public CheckBox enableCaveRenderMode;
+    public CheckBox schematicMode;
     public Label authResult;
 
 
@@ -99,7 +100,7 @@ public class GuiSettings {
         }
 
         heights = Map.of(
-            generalTab, 360,
+            generalTab, 390,
             realmsTab, 320
         );
 
@@ -123,6 +124,7 @@ public class GuiSettings {
         enableInfoMessages.setSelected(!config.disableInfoMessages);
         enableCaveRenderMode.setSelected(config.enableCaveRenderMode);
         enableDrawExtendedChunks.setSelected(config.drawExtendedChunks);
+        schematicMode.setSelected(config.schematicMode);
 
         // realms tab
         if (config.isStarted()) {
@@ -325,6 +327,7 @@ public class GuiSettings {
         config.disableInfoMessages = !enableInfoMessages.isSelected();
         config.enableCaveRenderMode = enableCaveRenderMode.isSelected();
         config.drawExtendedChunks = enableDrawExtendedChunks.isSelected();
+        config.schematicMode = schematicMode.isSelected();
 
         Config.save();
     }

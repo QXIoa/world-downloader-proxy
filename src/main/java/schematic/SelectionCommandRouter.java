@@ -1,0 +1,136 @@
+package schematic;
+
+import game.data.WorldManager;
+import game.data.coordinates.Coordinate3D;
+import game.data.dimension.Dimension;
+import schematic.export.SchematicExportService;
+
+/**
+ * Parses {@code /world-downloader-proxy <subcommand>} chat messages and routes them to the
+ * selection state / export service. Any other chat message (including the player's own, unrelated
+ * commands) is reported as "not handled" so the caller forwards the original packet unchanged.
+ *
+ * Input is expected to already have any leading {@code /} stripped by the caller, since whether the
+ * slash is present on the wire differs between protocol versions (see
+ * {@code SelectionInputInterceptor}) - this class only deals with plain text, not packets.
+ */
+public class SelectionCommandRouter {
+    private static final String COMMAND_ROOT = "world-downloader-proxy";
+
+    private final SelectionState selectionState;
+    private final SelectionFeedback feedback;
+    private final SchematicExportService exportService;
+    private final CreativeMode creativeMode;
+    private Runnable onSelectionModeChanged;
+
+    public SelectionCommandRouter(SelectionState selectionState, SelectionFeedback feedback,
+                                   SchematicExportService exportService,
+                                   CreativeMode creativeMode) {
+        this.selectionState = selectionState;
+        this.feedback = feedback;
+        this.exportService = exportService;
+        this.creativeMode = creativeMode;
+    }
+
+    /**
+     * Set a callback that is invoked whenever selection mode is toggled on or off.
+     * Used by {@code ServerBoundGamePacketHandler} to start/stop the particle renderer.
+     */
+    public void setOnSelectionModeChanged(Runnable callback) {
+        this.onSelectionModeChanged = callback;
+    }
+
+    public CreativeMode getCreativeMode() {
+        return creativeMode;
+    }
+
+    /**
+     * @param chatMessage the raw text the player typed, with any leading '/' already stripped
+     * @return true if this was one of our commands (caller must not forward the packet), false if
+     *         it should be treated as a normal chat message/command and forwarded as-is
+     */
+    public boolean handle(String chatMessage) {
+        String trimmed = chatMessage.trim();
+        // Be lenient about the leading '/' - 1.19+ ChatCommand packets omit it on the wire,
+        // while legacy Chat packets and what the player literally typed include it.
+        if (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+        String[] parts = trimmed.split("\\s+");
+        if (parts.length == 0 || !parts[0].equalsIgnoreCase(COMMAND_ROOT)) {
+            return false;
+        }
+
+        if (parts.length < 2) {
+            feedback.send("Usage: /" + COMMAND_ROOT + " <area-selection|schematic-export|pos1|pos2|fly>");
+            return true;
+        }
+
+        SelectionCommand command = SelectionCommand.fromArgument(parts[1]);
+        if (command == null) {
+            feedback.send("Unknown subcommand '" + parts[1] + "'.");
+            return true;
+        }
+
+        switch (command) {
+            case TOGGLE_SELECTION -> handleToggle();
+            case EXPORT -> exportService.exportAndClear(selectionState);
+            case POS1 -> handleSetCorner(true);
+            case POS2 -> handleSetCorner(false);
+            case FLY -> handleFly();
+        }
+        return true;
+    }
+
+    private void handleToggle() {
+        boolean nowEnabled = selectionState.toggle();
+        if (nowEnabled) {
+            feedback.send("Selection mode ENABLED. Left-click sets pos1, right-click sets pos2.");
+        } else {
+            feedback.send("Selection mode disabled.");
+        }
+        if (onSelectionModeChanged != null) {
+            onSelectionModeChanged.run();
+        }
+    }
+
+    /**
+     * Set pos1 or pos2 to the block under the player's feet.
+     * Only works while selection mode is enabled (use area-selection first).
+     */
+    private void handleSetCorner(boolean isFirstCorner) {
+        if (!selectionState.isEnabled()) {
+            feedback.send("Selection mode is off. Use /" + COMMAND_ROOT + " area-selection first.");
+            return;
+        }
+        // Use the raw double position and floor it so we get the block actually
+        // under the player's feet. getPlayerPosition() truncates toward zero,
+        // which gives the wrong block for negative coordinates.
+        game.data.coordinates.CoordinateDouble3D raw = WorldManager.getInstance().getPlayerPositionDouble();
+        Coordinate3D pos = new Coordinate3D(
+                (int) Math.floor(raw.getX()),
+                (int) Math.floor(raw.getY()),
+                (int) Math.floor(raw.getZ())
+        );
+        Dimension dim = WorldManager.getInstance().getDimension();
+        if (isFirstCorner) {
+            selectionState.setPos1(pos, dim);
+            feedback.send("pos1 set: " + pos);
+        } else {
+            selectionState.setPos2(pos, dim);
+            feedback.send("pos2 set: " + pos);
+        }
+        if (selectionState.hasCompleteSelection()) {
+            feedback.send("Selection: " + selectionState.toBoundingBox());
+        }
+    }
+
+    private void handleFly() {
+        boolean nowActive = creativeMode.toggle();
+        if (nowActive) {
+            feedback.send("Fly mode ENABLED. You can fly freely; server position is frozen.");
+        } else {
+            feedback.send("Fly mode disabled. Restored game mode.");
+        }
+    }
+}

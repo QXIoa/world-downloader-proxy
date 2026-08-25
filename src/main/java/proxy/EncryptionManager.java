@@ -29,6 +29,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import packets.builder.PacketBuilder;
+import java.util.List;
 import packets.lib.ByteQueue;
 import proxy.auth.ClientAuthenticator;
 import proxy.auth.ServerAuthenticator;
@@ -154,7 +155,7 @@ public class EncryptionManager {
      * any injected packets queued to be sent to the client.
      * @param bytes the bytes to stream
      */
-    public void streamToClient(ByteQueue bytes) throws IOException {
+    public synchronized void streamToClient(ByteQueue bytes) throws IOException {
         streamTo(streamToClient, bytes, this::clientBoundEncrypt);
 
         // if we need to insert packets, send at most 100 at a time
@@ -164,6 +165,25 @@ public class EncryptionManager {
             streamTo(streamToClient, packetInjector.getNext(), this::clientBoundEncrypt);
         }
 
+    }
+
+    /**
+     * Send a batch of packets directly to the client in one burst, bypassing the injector
+     * queue. Used by the selection particle renderer so all particles appear simultaneously
+     * instead of being throttled by the 100-packet-per-flush limit in {@link #streamToClient}.
+     */
+    public synchronized void streamToClientBatch(List<PacketBuilder> builders) throws IOException {
+        for (PacketBuilder pb : builders) {
+            streamTo(streamToClient, pb.build(compressionManager), this::clientBoundEncrypt);
+        }
+    }
+
+    /**
+     * Send a single packet directly to the client immediately, bypassing the injector queue.
+     * Used for packets that must reach the client right away (e.g. spectator mode toggle).
+     */
+    public synchronized void streamToClientDirect(PacketBuilder pb) throws IOException {
+        streamTo(streamToClient, pb.build(compressionManager), this::clientBoundEncrypt);
     }
 
     /**
@@ -353,6 +373,13 @@ public class EncryptionManager {
     public void streamToServer(ByteQueue bytes) throws IOException {
         // System.out.println("Writing bytes to server: " + bytes.size() + " :: " + bytes);
         streamTo(streamToServer, bytes, this::serverBoundEncrypt);
+    }
+
+    /**
+     * Convenience method: build a PacketBuilder with compression and send it to the server.
+     */
+    public void streamToServer(PacketBuilder builder) throws IOException {
+        streamToServer(builder.build(compressionManager));
     }
 
     /**

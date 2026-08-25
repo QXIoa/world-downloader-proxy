@@ -25,6 +25,15 @@ public class Protocol {
         return clientBoundInverse.get(packet);
     }
 
+    public int serverBound(String packet) {
+        for (Map.Entry<Integer, String> entry : serverBound.entrySet()) {
+            if (entry.getValue().equals(packet)) {
+                return entry.getKey();
+            }
+        }
+        return -1;
+    }
+
     protected String clientBound(int packet) {
         return clientBound.getOrDefault(packet, "UNKNOWN");
     }

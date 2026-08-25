@@ -60,6 +60,11 @@ public class PlayerEntity implements IMovableEntity {
 
     @Override
     public void incrementPosition(int dx, int dy, int dz) {
+        // PlayerEntity may be created via PlayerInfoUpdate (which has no position) before
+        // SpawnPlayer arrives. Ignore movement until we have a real position to move from.
+        if (pos == null) {
+            return;
+        }
         pos.increment(
                 dx / Entity.CHANGE_MULTIPLIER,
                 dy / Entity.CHANGE_MULTIPLIER,

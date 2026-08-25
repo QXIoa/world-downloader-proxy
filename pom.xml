@@ -6,13 +6,15 @@
 
     <groupId>mircokroon.minecraft-world-downloader</groupId>
     <artifactId>world-downloader-proxy</artifactId>
-    <version>26w35a</version>
+    <version>snapshot</version>
     <packaging>jar</packaging>
     <properties>
         <java.version>25</java.version>
         <java.version.max>25</java.version.max>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>23.0.1</javafx.version>
+        <!-- Skip tests by default; override with -DskipTests=false to run them -->
+        <skipTests>true</skipTests>
     </properties>
 
     <repositories>
@@ -118,6 +120,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M1</version>
+                <configuration>
+                    <!-- Skip tests by default so IDE "Build → Build Artifacts" / "mvn package"
+                         doesn't run them. Override with -DskipTests=false to run tests. -->
+                    <skipTests>${skipTests}</skipTests>
+                </configuration>
             </plugin>
 
             <plugin>

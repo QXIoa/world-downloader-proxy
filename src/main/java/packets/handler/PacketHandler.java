@@ -55,7 +55,16 @@ public abstract class PacketHandler {
             return true;
         }
 
-        return operator.apply(typeProvider);
+        try {
+            return operator.apply(typeProvider);
+        } catch (Exception e) {
+            // Swallow parsing errors on individual packets so one bad packet
+            // doesn't crash the entire connection. The packet will still be
+            // forwarded to the client (return true) since we couldn't fully
+            // process it.
+            System.out.println("Error handling packet " + packetType + ": " + e.getMessage());
+            return true;
+        }
     }
 
     public int indexOf(byte[] outerArray, byte[] smallerArray) {

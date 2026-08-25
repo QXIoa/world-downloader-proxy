@@ -6,6 +6,7 @@ import game.data.chunk.palette.BlockState;
 import game.data.chunk.palette.GlobalPaletteProvider;
 import game.data.chunk.palette.Palette;
 import game.data.chunk.palette.PaletteType;
+import game.data.chunk.version.ChunkSection_1_18;
 import game.data.coordinates.Coordinate2D;
 import game.data.coordinates.Coordinate3D;
 import game.data.coordinates.CoordinateDim2D;
@@ -346,6 +347,24 @@ public abstract class Chunk extends ChunkEntities {
         }
 
         return GlobalPaletteProvider.getGlobalPalette(getDataVersion()).getState(id);
+    }
+
+    /**
+     * Read the biome resource location at the given world-space coordinates. Returns {@code null}
+     * if the chunk section is missing or the section has no biome data (pre-1.18 versions).
+     */
+    public String getBiomeAt(int x, int y, int z) {
+        int sectionY = (int) Math.floor((double) y / SECTION_HEIGHT);
+        ChunkSection section = getChunkSection(sectionY);
+        if (section == null) {
+            return null;
+        }
+        if (section instanceof ChunkSection_1_18 s) {
+            return s.getBiomeAt(Math.floorMod(x, SECTION_WIDTH),
+                                Math.floorMod(y, SECTION_HEIGHT),
+                                Math.floorMod(z, SECTION_WIDTH));
+        }
+        return null;
     }
 
     /**

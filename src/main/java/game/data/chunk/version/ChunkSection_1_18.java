@@ -1,6 +1,7 @@
 package game.data.chunk.version;
 
 import game.data.chunk.Chunk;
+import game.data.chunk.palette.State;
 import game.data.chunk.palette.DirectPalette;
 import game.data.chunk.palette.Palette;
 import game.data.chunk.palette.PaletteTransformer;
@@ -180,5 +181,38 @@ public class ChunkSection_1_18 extends ChunkSection_1_16 {
      */
     public void setBlockCount(int blockCount) {
         this.blockCount = blockCount;
+    }
+
+    /**
+     * Read the biome name at the given block-local coordinates. Biomes in 1.18+ are stored in a
+     * 4×4×4 grid per section (64 entries), packed in the same long[] bit-array format as blocks.
+     *
+     * @param x  block-local X (0–15)
+     * @param y  block-local Y within the section (0–15)
+     * @param z  block-local Z (0–15)
+     * @return the biome resource location (e.g. {@code minecraft:plains}), or {@code null} if
+     *         the section or biome palette is missing
+     */
+    public String getBiomeAt(int x, int y, int z) {
+        if (biomePalette == null || biomes == null || biomes.length == 0) {
+            return null;
+        }
+
+        // biome grid is 4×4×4 within a 16×16×16 section
+        int biomeX = x / 4;
+        int biomeY = y / 4;
+        int biomeZ = z / 4;
+
+        int bitsPerEntry = biomePalette.getBitsPerBlock();
+        int paletteIndex;
+        if (bitsPerEntry == 0) {
+            paletteIndex = 0;
+        } else {
+            paletteIndex = getLocationEncoder().setTo(biomeX, biomeY, biomeZ, bitsPerEntry).fetch(biomes);
+        }
+
+        int biomeId = biomePalette.stateFromId(paletteIndex);
+        State state = biomePalette.lookupState(biomeId);
+        return state != null ? state.toString() : null;
     }
 }

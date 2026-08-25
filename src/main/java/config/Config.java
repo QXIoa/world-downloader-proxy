@@ -25,6 +25,7 @@ import org.kohsuke.args4j.Option;
 import packets.builder.PacketBuilder;
 import proxy.ConnectionDetails;
 import proxy.ConnectionManager;
+import proxy.EncryptionManager;
 import proxy.PacketInjector;
 import proxy.auth.AuthDetails;
 import proxy.auth.AuthenticationMethod;
@@ -37,6 +38,7 @@ public class Config {
     private static Path configPath;
 
     private static PacketInjector injector;
+    private static EncryptionManager encryptionManager;
     private static Config instance;
 
     // fields marked transient so they are not written to JSON file
@@ -194,6 +196,7 @@ public class Config {
         centerZ = (centerZ >> 9) << 9;
 
         WorldManager.getInstance().setWorldManagerVariables(markNewChunks, writeChunks());
+        WorldManager.getInstance().setSchematicMode(schematicMode);
         WorldManager.getInstance().updateExtendedRenderDistance(extendedRenderDistance);
 
         writeSettings();
@@ -336,6 +339,14 @@ public class Config {
         return injector;
     }
 
+    public static void registerEncryptionManager(EncryptionManager em) {
+        Config.encryptionManager = em;
+    }
+
+    public static EncryptionManager getEncryptionManager() {
+        return encryptionManager;
+    }
+
 
     @Option(name = "--help", aliases = {"-h", "help", "-help", "--h"},
             usage = "Show this help message.")
@@ -393,6 +404,15 @@ public class Config {
     @Option(name = "--disable-chunk-saving",
             usage = "Disable writing chunks to disk, mostly for debugging purposes.")
     public  boolean disableWriteChunks = false;
+
+    @Option(name = "--schematic-mode",
+            usage = "Keep downloaded chunks in memory for in-game schematic selection/export. Nothing is "
+                + "written to disk: no region files, no level.dat, no dimension data.")
+    public boolean schematicMode = false;
+
+    @Option(name = "--schematic-output-dir",
+            usage = "Directory .schem files exported via the in-game schematic selection are written to.")
+    public transient String schematicOutputDir = "schematic";
 
     @Option(name = "--disable-world-gen",
             usage = "Set world type to a superflat void to prevent new chunks from being added.")
@@ -454,8 +474,16 @@ public class Config {
         return instance.worldOutputDir;
     }
 
+    public static String getSchematicOutputDir() {
+        return instance.schematicOutputDir;
+    }
+
     public static boolean isInDevMode() {
         return instance.devMode;
+    }
+
+    public static boolean isSchematicMode() {
+        return instance.schematicMode;
     }
 
     public static int getDataVersion() {
@@ -470,6 +498,10 @@ public class Config {
 
     public static VersionReporter versionReporter() {
         return instance.versionReporter;
+    }
+
+    public static int getProtocolVersion() {
+        return instance.protocolVersion;
     }
 
     public static AuthDetails getManualAuthDetails() {

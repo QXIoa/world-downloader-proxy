@@ -12,6 +12,7 @@ import game.data.coordinates.CoordinateDim2D;
 import game.data.dimension.Dimension;
 import game.data.entity.version.EquipmentReader;
 import packets.DataTypeProvider;
+import packets.LpVec3;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.DoubleTag;
 import se.llbit.nbt.FloatTag;
@@ -123,12 +124,18 @@ public abstract class Entity extends PrimitiveEntity implements IMovableEntity {
     protected abstract void addNbtData(CompoundTag root);
 
     /**
-     * velocity is not saved but we still read it
+     * velocity is not saved but we still read it. As of 26.1 (protocol 774+) the wire format
+     * changed from three Shorts to the compact LpVec3 encoding, so we must consume the right
+     * number of bytes to keep the packet stream aligned.
      */
     protected static void parseVelocity(DataTypeProvider provider) {
-        int velX = provider.readShort();
-        int velY = provider.readShort();
-        int velZ = provider.readShort();
+        if (Config.versionReporter().isAtLeast(Version.V26_1)) {
+            LpVec3.read(provider);
+        } else {
+            provider.readShort();
+            provider.readShort();
+            provider.readShort();
+        }
     }
 
     public Integer getId() {

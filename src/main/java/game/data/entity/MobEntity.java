@@ -2,6 +2,8 @@ package game.data.entity;
 
 import game.data.entity.metadata.MetaData;
 import packets.DataTypeProvider;
+import config.Config;
+import config.Version;
 import se.llbit.nbt.CompoundTag;
 
 public class MobEntity extends Entity {
@@ -26,10 +28,24 @@ public class MobEntity extends Entity {
         if (ent == null) { return null; }
 
         ent.readPosition(provider);
-        ent.yaw = provider.readNext();
+
+        // As of 26.1 (protocol 774+), velocity (LpVec3) moved before the angles.
+        boolean velocityBeforeRotation = Config.versionReporter().isAtLeast(Version.V26_1);
+        if (velocityBeforeRotation) {
+            parseVelocity(provider);
+        }
+
         ent.pitch = provider.readNext();
+        ent.yaw = provider.readNext();
         byte headPitch = provider.readNext();
-        parseVelocity(provider);
+
+        if (Config.versionReporter().isAtLeast(Version.V1_19)) {
+            provider.readVarInt(); // data — not used by MobEntity but must be consumed
+        }
+
+        if (!velocityBeforeRotation) {
+            parseVelocity(provider);
+        }
 
         if (ent instanceof MobEntity) {
             ((MobEntity) ent).headPitch = headPitch;

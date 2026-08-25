@@ -2,7 +2,7 @@
 
 A Minecraft world downloader that works as a proxy server between the Minecraft client and server, reading and saving chunk data as you walk around the world. Downloaded chunks can also be sent back to the client to extend render distance.
 
-Fork of [mircokroon/minecraft-world-downloader](https://github.com/mircokroon/minecraft-world-downloader), maintained with support for newer Minecraft versions and platform-specific packaging.
+
 
 ### Downloads
 

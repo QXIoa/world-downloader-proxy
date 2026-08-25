@@ -264,5 +264,14 @@ public class Palette {
     public Stream<State> values() {
         return Arrays.stream(palette).mapToObj(el -> registry.getState(el));
     }
+
+    /**
+     * Look up the {@link State} for a given palette entry id (the value returned by
+     * {@link #stateFromId(int)}). Returns {@code null} if the registry has no entry for the id.
+     */
+    public State lookupState(int id) {
+        if (registry == null) { return null; }
+        return registry.getState(id);
+    }
 }
 

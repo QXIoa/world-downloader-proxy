@@ -75,6 +75,7 @@ public class WorldManager {
 
     private boolean markNewChunks;
     private boolean writeChunks;
+    private boolean schematicMode;
     private boolean isStarted;
     private boolean isPaused;
     private final Set<Dimension> savingDimension;
@@ -276,6 +277,21 @@ public class WorldManager {
     }
 
     /**
+     * Enable or disable schematic mode. While enabled, chunks are always retained in memory
+     * (regardless of {@link #writeChunks} or whether the GUI is drawing them) so that in-game
+     * selections can be read back later, but nothing is ever written to disk: no region files,
+     * no level.dat, no dimension data. This is independent from {@code --disable-chunk-saving},
+     * which (when the GUI is active) does not retain chunks in memory at all.
+     */
+    public void setSchematicMode(boolean schematicMode) {
+        this.schematicMode = schematicMode;
+    }
+
+    public boolean isSchematicMode() {
+        return schematicMode;
+    }
+
+    /**
      * Start the periodic saving service.
      */
     public void startSaveService() {
@@ -293,7 +309,7 @@ public class WorldManager {
      * @param chunk the chunk
      */
     public void loadChunk(Chunk chunk, boolean drawInGui, boolean overrideExisting) {
-        if (!drawInGui || writeChunks) {
+        if (!drawInGui || writeChunks || schematicMode) {
             CoordinateDim2D regionCoordinates = chunk.location.chunkToDimRegion();
 
             Region r = regions.computeIfAbsent(regionCoordinates, Region::new);
@@ -359,6 +375,19 @@ public class WorldManager {
         return c.getBlockStateAt(pos);
     }
 
+    /**
+     * Read the biome resource location at the given world-space coordinates, or {@code null} if
+     * the chunk is not loaded or the version does not support per-section biomes.
+     */
+    public String biomeAt(Coordinate3D coordinate3D) {
+        Chunk c = this.getChunk(coordinate3D.globalToChunk().addDimension(this.dimension));
+        if (c == null) {
+            return null;
+        }
+        Coordinate3D pos = coordinate3D.withinChunk();
+        return c.getBiomeAt(pos.getX(), pos.getY(), pos.getZ());
+    }
+
     public EntityNames getEntityMap() {
         return entityMap;
     }
@@ -401,6 +430,11 @@ public class WorldManager {
     public void setDimensionRegistry(DimensionRegistry registry) {
         dimensionCodec = registry;
 
+        // schematic mode never writes anything to disk
+        if (schematicMode) {
+            return;
+        }
+
         // We can immediately try to write the dimension data to the proper directory.
         try {
             Path p = PathUtils.toPath(Config.getWorldOutputDir(), "datapacks", "downloaded", "data");
@@ -430,7 +464,7 @@ public class WorldManager {
     private void save(Dimension dimension, Map<CoordinateDim2D, Region> regions) {
         checkAboveSurface();
 
-        if (!writeChunks) {
+        if (!writeChunks || schematicMode) {
             return;
         }
 
@@ -543,6 +577,10 @@ public class WorldManager {
 
     public Coordinate3D getPlayerPosition() {
         return playerPosition.discretize();
+    }
+
+    public CoordinateDouble3D getPlayerPositionDouble() {
+        return playerPosition;
     }
 
     public void setPlayerPosition(double x, double y, double z) {

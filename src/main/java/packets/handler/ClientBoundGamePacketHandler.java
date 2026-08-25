@@ -16,6 +16,9 @@ import game.data.entity.ObjectEntity;
 import packets.handler.version.*;
 import packets.handler.plugins.PluginChannelHandler;
 import proxy.ConnectionManager;
+import schematic.CommandTreeInjector;
+import schematic.CreativeMode;
+import schematic.CreativeModeRegistry;
 import se.llbit.nbt.SpecificTag;
 
 public class ClientBoundGamePacketHandler extends PacketHandler {
@@ -174,6 +177,44 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
             int dist = provider.readVarInt();
 
             return dist > Config.getExtendedRenderDistance();
+        });
+
+        operations.put("DeclareCommands", provider -> {
+            return new CommandTreeInjector().process(provider);
+        });
+
+        // Track the player's game mode from the server's GameEvent packets so CreativeMode
+        // can restore it when fly mode is disabled. While fly mode is active, block the
+        // server's gamemode-change events so the client stays in spectator and can noclip.
+        operations.put("GameEvent", provider -> {
+            int event = provider.readNext();
+            float value = provider.readFloat();
+            CreativeMode creativeMode = CreativeModeRegistry.get();
+            if (creativeMode != null) {
+                creativeMode.onServerGameEvent(event, value);
+                // Block server from changing our gamemode while we're in fly mode
+                if (event == 3 && creativeMode.shouldInterceptMovement()) {
+                    return false; // don't forward to client
+                }
+            }
+            return true;
+        });
+
+        // While in fly mode, swallow the server's position synchronization packets
+        // so the client doesn't get teleported back. Send AcceptTeleportation back so the
+        // server doesn't kick the player for not acknowledging the teleport.
+        operations.put("PlayerPosition", provider -> {
+            CreativeMode creativeMode = CreativeModeRegistry.get();
+            if (creativeMode == null || !creativeMode.shouldInterceptMovement()) {
+                return true; // forward to client normally
+            }
+            // Read the teleport ID so we can acknowledge it, then drop the packet.
+            // Format (1.21.6+): teleportId (VarInt), x/y/z (Double), velX/velY/velZ (Double),
+            //                   yaw (Float), pitch (Float), flags (Int)
+            int teleportId = provider.readVarInt();
+            // send AcceptTeleportation back to the server
+            creativeMode.sendAcceptTeleportation(teleportId);
+            return false; // don't forward to client
         });
     }
 

@@ -303,6 +303,13 @@ public class PacketBuilder {
         writeByteArray(buffer.array());
     }
 
+    public void writeDouble(double val) {
+        ByteBuffer buffer = ByteBuffer.allocate(Double.BYTES);
+        buffer.putDouble(val);
+        ((Buffer) buffer).flip();
+        writeByteArray(buffer.array());
+    }
+
     public void writeBitSet(BitSet bits) {
         long[] longs = bits.toLongArray();
         writeVarInt(longs.length);

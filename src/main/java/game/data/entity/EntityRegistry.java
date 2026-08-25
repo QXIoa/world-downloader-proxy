@@ -91,8 +91,11 @@ public class EntityRegistry {
                 UUID uuid = provider.readUUID();
 
                 if ((actions & 0x01) > 0) {
-                    PlayerEntity player = new PlayerEntity(uuid);
-                    players.put(uuid, player);
+                    // Only create a new PlayerEntity if we don't already have one - SpawnPlayer
+                    // (AddPlayer packet) sets the initial position; PlayerInfoUpdate just registers
+                    // the UUID/name and has no position, so overwriting an existing player here
+                    // would discard their position and cause NPEs on later MoveEntityPos packets.
+                    players.computeIfAbsent(uuid, PlayerEntity::new);
 
                     String name = provider.readString();
                     int properties = provider.readVarInt();

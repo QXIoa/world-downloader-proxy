@@ -5,6 +5,7 @@ import java.util.Map;
 import packets.handler.ClientBoundConfigurationPacketHandler;
 import packets.handler.PacketOperator;
 import proxy.ConnectionManager;
+import schematic.ParticleRegistry;
 
 public class ClientBoundConfigurationPacketHandler_1_20_6 extends ClientBoundConfigurationPacketHandler {
     public ClientBoundConfigurationPacketHandler_1_20_6(ConnectionManager connectionManager) {
@@ -16,6 +17,7 @@ public class ClientBoundConfigurationPacketHandler_1_20_6 extends ClientBoundCon
             switch (registry.name()) {
                 case "minecraft:worldgen/biome" -> WorldManager.getInstance().getDimensionRegistry().loadBiomes(registry);
                 case "minecraft:dimension_type" -> WorldManager.getInstance().getDimensionRegistry().loadDimensions(registry);
+                case "minecraft:particle_type" -> ParticleRegistry.getInstance().load(registry);
             }
             return true;
         });
