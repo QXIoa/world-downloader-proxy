@@ -1,10 +1,6 @@
 package game.data.chunk;
 
 import config.Config;
-import config.Option;
-import config.Version;
-import config.VersionReporter;
-import game.data.chunk.version.*;
 import game.data.coordinates.Coordinate3D;
 import game.data.coordinates.CoordinateDim2D;
 import game.data.WorldManager;
@@ -44,17 +40,7 @@ public class ChunkFactory {
      * @return the chunk matching the given version
      */
     private static Chunk getVersionedChunk(int dataVersion, CoordinateDim2D chunkPos) {
-        return VersionReporter.select(dataVersion, Chunk.class,
-              Option.of(Version.V26_1, () -> new Chunk_26_1(chunkPos, dataVersion)),
-              Option.of(Version.V1_20, () -> new Chunk_1_20(chunkPos, dataVersion)),
-              Option.of(Version.V1_18, () -> new Chunk_1_18(chunkPos, dataVersion)),
-              Option.of(Version.V1_17, () -> new Chunk_1_17(chunkPos, dataVersion)),
-              Option.of(Version.V1_16, () -> new Chunk_1_16(chunkPos, dataVersion)),
-              Option.of(Version.V1_15, () -> new Chunk_1_15(chunkPos, dataVersion)),
-              Option.of(Version.V1_14, () -> new Chunk_1_14(chunkPos, dataVersion)),
-              Option.of(Version.V1_13, () -> new Chunk_1_13(chunkPos, dataVersion)),
-              Option.of(Version.V1_12, () -> new Chunk_1_12(chunkPos, dataVersion))
-        );
+        return new Chunk(chunkPos, dataVersion);
     }
 
     /**

@@ -1,6 +1,6 @@
 package game.data.chunk.palette;
 
-import game.data.chunk.version.ChunkSection_1_16;
+import game.data.chunk.ChunkSection;
 import game.data.chunk.version.encoder.BlockLocationEncoder;
 import java.util.Arrays;
 
@@ -40,7 +40,7 @@ public class PaletteTransformer {
         newPalette.recomputeBitsPerBlock();
 
         // copy all blocks to the new palette
-        long[] newData = new long[ChunkSection_1_16.longsRequired(newPalette.getBitsPerBlock())];
+        long[] newData = new long[ChunkSection.longsRequired(newPalette.getBitsPerBlock())];
         for (int z = 0; z < 16; z++) {
             for (int x = 0; x < 16; x++) {
                 for (int y = 0; y < 16; y++) {

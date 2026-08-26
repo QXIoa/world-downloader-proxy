@@ -2,23 +2,25 @@ package game.data.chunk.version.encoder;
 
 import game.data.chunk.Chunk;
 
+/**
+ * Encodes/decodes a single block's palette index within a chunk section's packed {@code long[]} data
+ * array, using the packing introduced in 1.16: each block state occupies a whole number of longs
+ * (a state never straddles two longs), so some bits at the end of each long may go unused. This is
+ * the only packing format used by the supported versions (26.x).
+ *
+ * <p>This is the single (default) encoder since the legacy pre-1.16 multi-long packing was removed
+ * alongside pre-26.x version support. If a future Minecraft version changes the packing again,
+ * introduce a subclass overriding {@link #fetch}, {@link #write} and {@link #setTo} and return it
+ * from {@link game.data.chunk.ChunkSection#getLocationEncoder()} (see
+ * docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
+ */
 public class BlockLocationEncoder {
     int individualValueMask;
-    int startLong;
+    int longIndex;
     int startOffset;
-    int endLong;
-
-    public BlockLocationEncoder() {
-    }
 
     public int fetch(long[] blocks) {
-        int data;
-        if (startLong == endLong) {
-            data = (int) (blocks[startLong] >>> startOffset);
-        } else {
-            int endOffset = 64 - startOffset;
-            data = (int) (blocks[startLong] >>> startOffset | blocks[endLong] << endOffset);
-        }
+        int data = (int) (blocks[longIndex] >>> startOffset);
         data &= individualValueMask;
 
         return data;
@@ -28,22 +30,31 @@ public class BlockLocationEncoder {
         long data = newIndex & individualValueMask;
 
         // first set all relevant bits to 0, then use or to put the new bits in place
-        blocks[startLong] &= ~((long) individualValueMask << startOffset);
-        blocks[startLong] |= (data << startOffset);
-
-        if (startLong != endLong) {
-            blocks[endLong] &= ~(individualValueMask >> (64 - startOffset));
-            blocks[endLong] |= (data >> (64 - startOffset));
-        }
+        blocks[longIndex] &= ~((long) individualValueMask << startOffset);
+        blocks[longIndex] |= (data << startOffset);
     }
 
     public BlockLocationEncoder setTo(int x, int y, int z, int bitsPerBlock) {
         this.individualValueMask = (1 << bitsPerBlock) - 1;
 
         int blockNumber = (((y * Chunk.SECTION_HEIGHT) + z) * Chunk.SECTION_WIDTH) + x;
-        this.startLong = (blockNumber * bitsPerBlock) / 64;
-        this.startOffset = (blockNumber * bitsPerBlock) % 64;
-        this.endLong = ((blockNumber + 1) * bitsPerBlock - 1) / 64;
+
+        // bitsPerBlock can be 0 if we're trying to call the BlockLocationEncoder
+        // on a SingleValuePalette. Doing so would cause division by 0 errors!
+        if (bitsPerBlock == 0) {
+            longIndex = 0;
+            startOffset = 0;
+        } else {
+            int blocksPerLong = 64 / bitsPerBlock;
+            this.longIndex = blockNumber / blocksPerLong;
+            int indexInLong = blockNumber % blocksPerLong;
+            this.startOffset = indexInLong * bitsPerBlock;
+        }
+
+        if (longIndex < 0) {
+            System.out.println("INVALID LONG INDEX: ");
+            System.out.println("\t" + x +", " + y + ", " + z + " :: " + bitsPerBlock);
+        }
 
         return this;
     }

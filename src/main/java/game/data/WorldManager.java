@@ -2,7 +2,6 @@ package game.data;
 
 import static util.ExceptionHandling.attempt;
 
-import game.data.chunk.version.Chunk_1_17;
 import game.data.dimension.DimensionType;
 import gui.ChunkImageState;
 import java.io.File;
@@ -165,7 +164,7 @@ public class WorldManager {
 
     public void setDimensionType(DimensionType dimensionType) {
         this.dimensionType = dimensionType;
-        Chunk_1_17.setWorldHeight(dimensionType.getDimensionMinHeight(), dimensionType.getDimensionMaxHeight());
+        Chunk.setWorldHeight(dimensionType.getDimensionMinHeight(), dimensionType.getDimensionMaxHeight());
     }
 
     private void saveAndUnloadChunks() {

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 
 import config.Config;
 import game.data.chunk.version.encoder.BlockLocationEncoder;
-import game.data.chunk.version.encoder.BlockLocationEncoder_1_16;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +20,7 @@ public class PaletteTransformerTest {
     public void checkConversion() {
         // init data
         DirectPalette oldPalette = new DirectPalette(15);
-        BlockLocationEncoder ble = new BlockLocationEncoder_1_16();
+        BlockLocationEncoder ble = new BlockLocationEncoder();
         long[] blocks = new long[1024];
 
         // write unique block into every position

@@ -2,7 +2,7 @@ package game.data.chunk;
 
 import config.Config;
 import config.Version;
-import game.data.chunk.version.Chunk_1_17;
+import game.data.chunk.Chunk;
 import game.data.coordinates.CoordinateDim2D;
 import game.data.WorldManager;
 import game.data.chunk.palette.BlockColors;
@@ -42,7 +42,7 @@ class ChunkTest extends PacketBuilderAndParserTest {
         when(mock.getBlockColors()).thenReturn(mock(BlockColors.class));
         when(mock.getChunkFactory()).thenReturn(new ChunkFactory());
 
-        Chunk_1_17.setWorldHeight(-63, 384);
+        Chunk.setWorldHeight(-63, 384);
         DimensionRegistry codecMock = mock(DimensionRegistry.class);
         Map<String, Biome> biomeMap = new HashMap<>();
         biomeMap.put("minecraft:badlands", new Biome(0));
@@ -75,7 +75,7 @@ class ChunkTest extends PacketBuilderAndParserTest {
 
         assertThat(ChunkFactory.parseChunk(up, mock)).isEqualTo(c);
 
-        Chunk_1_17.setWorldHeight(0, 256);
+        Chunk.setWorldHeight(0, 256);
     }
 
     @Test

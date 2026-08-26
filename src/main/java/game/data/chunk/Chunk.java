@@ -6,13 +6,19 @@ import game.data.chunk.palette.BlockState;
 import game.data.chunk.palette.GlobalPaletteProvider;
 import game.data.chunk.palette.Palette;
 import game.data.chunk.palette.PaletteType;
-import game.data.chunk.version.ChunkSection_1_18;
 import game.data.coordinates.Coordinate2D;
 import game.data.coordinates.Coordinate3D;
 import game.data.coordinates.CoordinateDim2D;
 import game.data.dimension.Dimension;
+import game.data.chunk.BlockEntityRegistry;
+import game.data.registries.RegistryManager;
+import game.data.chunk.palette.BlockRegistry;
 import game.protocol.Protocol;
 import java.util.function.BiConsumer;
+import javafx.util.Pair;
+import java.util.BitSet;
+import java.util.InputMismatchException;
+import java.util.function.Function;
 import packets.DataTypeProvider;
 import packets.builder.PacketBuilder;
 import se.llbit.nbt.*;
@@ -21,9 +27,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Basic chunk class. May be extended by version-specific ones as they can have implementation differences.
+ * Basic chunk class. This is the single (flattened) implementation for the supported Minecraft
+ * versions (26.x), previously reached through the
+ * {@code Chunk_1_13 -> _1_14 -> _1_15 -> _1_16 -> _1_17 -> _1_18 -> _1_20 -> _26_1} inheritance
+ * chain. The effective 26.x behavior is folded in here directly.
+ *
+ * <p>The class is non-final and the version-differentiating methods ({@link #parse(DataTypeProvider)},
+ * {@link #parse(Tag)}, {@link #parseHeightMaps(DataTypeProvider)}, {@link #writeHeightMaps},
+ * {@link #readChunkColumn}, {@link #createNewChunkSection}, {@link #parseSection},
+ * {@link #toPacket}, {@link #toNbt}, {@link #addLevelNbtTags}, {@link #updateLight}) stay overridable
+ * so a future Minecraft version can add a subclass overriding just the delta (see
+ * docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
  */
-public abstract class Chunk extends ChunkEntities {
+public class Chunk extends ChunkEntities {
     private static final List<BiConsumer<Chunk, Tag>> chunkNbtModifiers = new ArrayList<>();
     public static void registerNbtModifier(BiConsumer<Chunk, Tag> fn) {
         chunkNbtModifiers.add(fn);
@@ -32,6 +48,11 @@ public abstract class Chunk extends ChunkEntities {
     public static final int SECTION_HEIGHT = 16;
     public static final int SECTION_WIDTH = 16;
     protected static final int LIGHT_SIZE = 2048;
+
+    static int minBlockSectionY = 0;
+    static int maxBlockSectionY = 15;
+    static int fullHeight;
+
     private final ChunkSection[] chunkSections;
     public CoordinateDim2D location;
     private Runnable afterParse;
@@ -48,6 +69,8 @@ public abstract class Chunk extends ChunkEntities {
 
     private final int dataVersion;
 
+    SpecificTag heightMap;
+
     public Chunk(CoordinateDim2D location, int dataVersion) {
         super();
 
@@ -57,6 +80,12 @@ public abstract class Chunk extends ChunkEntities {
         this.isNewChunk = false;
 
         chunkSections = new ChunkSection[getMaxLightSection() - getMinLightSection() + 1];
+    }
+
+    public static void setWorldHeight(int min_y, int height) {
+        fullHeight = height;
+        minBlockSectionY = min_y >> 4;
+        maxBlockSectionY = minBlockSectionY + (height >> 4) - 1;
     }
 
     protected ChunkSection getChunkSection(int y) {
@@ -74,19 +103,19 @@ public abstract class Chunk extends ChunkEntities {
     }
 
     protected int getMinLightSection() {
-        return 0;
+        return minBlockSectionY - 1;
     }
 
     protected int getMinBlockSection() {
-        return 0;
+        return minBlockSectionY;
     }
 
     protected int getMaxLightSection() {
-        return 15;
+        return maxBlockSectionY + 1;
     }
 
     protected int getMaxBlockSection() {
-        return 15;
+        return maxBlockSectionY;
     }
 
     protected Iterable<ChunkSection> getAllSections() {
@@ -128,86 +157,348 @@ public abstract class Chunk extends ChunkEntities {
         }
     }
 
+    /**
+     * Parse the chunk data (the 1.18+ {@code ClientboundLevelChunkWithLightPacket} layout).
+     *
+     * @param dataProvider network input
+     */
+    protected void parse(DataTypeProvider dataProvider) {
+        raiseEvent("parse from packet");
+
+        parseHeightMaps(dataProvider);
+
+        int size = dataProvider.readVarInt();
+
+        try {
+            readChunkColumn(dataProvider.ofLength(size));
+
+            parseBlockEntities(dataProvider);
+
+            updateLight(dataProvider);
+        } catch (Exception ex) {
+            // seems to happen when there's blocks above 192 under some conditions
+            System.out.println("Issue parse chunk at " + location + ". Cause: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        // if the packet layout this version expects doesn't match what was actually sent, we typically won't get an
+        // exception (reads just return whatever garbage bytes happen to be there) -- the surest sign of that is bytes
+        // left unread at the end of the packet. When that happens the chunk we just built is likely garbage/corrupt.
+        if (dataProvider.hasNext()) {
+            System.err.println(
+                "[chunk desync] " + dataProvider.remaining() + " unread byte(s) left over after parsing "
+                    + "LevelChunkWithLight for chunk " + location + " (protocol "
+                    + Config.versionReporter().getProtocol().getVersion() + "). The packet layout this version "
+                    + "expects no longer matches what the server sent, so this chunk is likely corrupt."
+            );
+        }
+
+        afterParse();
+    }
 
     /**
-     * Read a chunk column. Largely based on: <a href="https://wiki.vg/Protocol">https://wiki.vg/Protocol</a>
+     * As of protocol 775 (26.1), heightmaps in the chunk packet are no longer sent as an NBT
+     * compound, but as an explicit array of (type, long array) pairs. We still store them
+     * internally as the same NBT compound used by older versions (and by the on-disk chunk format),
+     * so only the network (de)serialization changes here.
      */
-    public void readChunkColumn(boolean full, BitSet mask, DataTypeProvider dataProvider) {
-        // Loop through section Y values, starting from the lowest section that has blocks inside it. Compute the index
-        // in the mask by subtracting the minimum chunk packet section, e.g. the lowest Y value we will find in the
-        // mask.
-        for (int sectionY = getMinBlockSection(); sectionY <= getMaxLightSection() && !mask.isEmpty(); sectionY++) {
-            ChunkSection section = getChunkSection(sectionY);
-
-            // A 1 in the position of the mask indicates this chunk section is present in the data buffer
-            int maskIndex = sectionY - getMinBlockSection();
-            if (!mask.get(maskIndex)) {
-                if (full && section != null) {
-                    section.resetBlocks();
-                }
-                continue;
-            }
-            // Set indices to 0 when read so that we can stop once the mask is empty
-            mask.set(maskIndex, false);
-
-            readBlockCount(dataProvider);
-
-            byte bitsPerBlock = dataProvider.readNext();
-            Palette palette = Palette.readPalette(bitsPerBlock, dataProvider, PaletteType.BLOCKS);
-
-            // A bitmask that contains bitsPerBlock set bits
-            int dataArrayLength = dataProvider.readVarInt();
-
-            if (section == null) {
-                section = createNewChunkSection((byte) (sectionY & 0xFF), palette);
-            }
-
-            // if the section has no blocks
-            if (dataArrayLength == 0) {
-                continue;
-            }
-
-            // parse blocks
-            section.setBlocks(dataProvider.readLongArray(dataArrayLength));
-
-            parseLights(section, dataProvider);
-
-            // May replace an existing section or a null one
-            setChunkSection(sectionY, section);
-        }
-
-        // biome data is only present in full chunks, for <= 1.14.4
-        if (full) {
-            parse2DBiomeData(dataProvider);
-        }
-    }
+    private static final String[] HEIGHTMAP_TYPES = {
+        "WORLD_SURFACE_WG",
+        "WORLD_SURFACE",
+        "OCEAN_FLOOR_WG",
+        "OCEAN_FLOOR",
+        "MOTION_BLOCKING",
+        "MOTION_BLOCKING_NO_LEAVES"
+    };
 
     protected void parseHeightMaps(DataTypeProvider dataProvider) {
+        CompoundTag tag = new CompoundTag();
+
+        int count = dataProvider.readVarInt();
+        for (int i = 0; i < count; i++) {
+            int type = dataProvider.readVarInt();
+            int longCount = dataProvider.readVarInt();
+            long[] data = dataProvider.readLongArray(longCount);
+
+            String name = type >= 0 && type < HEIGHTMAP_TYPES.length ? HEIGHTMAP_TYPES[type] : "UNKNOWN_" + type;
+            tag.add(name, new LongArrayTag(data));
+        }
+
+        heightMap = tag;
     }
 
-    protected void readBlockCount(DataTypeProvider provider) {
+    protected void writeHeightMaps(PacketBuilder packet) {
+        CompoundTag tag = heightMap != null ? heightMap.asCompound() : new CompoundTag();
+
+        packet.writeVarInt(tag.size());
+        for (NamedTag entry : tag) {
+            packet.writeVarInt(indexOfType(entry.name()));
+
+            long[] data = entry.getTag().longArray();
+            packet.writeVarInt(data.length);
+            packet.writeLongArray(data);
+        }
     }
 
-    public abstract ChunkSection createNewChunkSection(byte y, Palette palette);
-
-    protected abstract SpecificTag getNbtBiomes();
-
-    protected void parse2DBiomeData(DataTypeProvider provider) {
+    private int indexOfType(String name) {
+        for (int i = 0; i < HEIGHTMAP_TYPES.length; i++) {
+            if (HEIGHTMAP_TYPES[i].equals(name)) {
+                return i;
+            }
+        }
+        return 0;
     }
 
-    protected void parse3DBiomeData(DataTypeProvider provider) {
+    public ChunkSection createNewChunkSection(byte y, Palette palette) {
+        return new ChunkSection(y, palette, this);
     }
 
-    protected void parseLights(ChunkSection section, DataTypeProvider dataProvider) {
-        section.setBlockLight(dataProvider.readByteArray(LIGHT_SIZE));
+    protected ChunkSection parseSection(int sectionY, SpecificTag section) {
+        return new ChunkSection(sectionY, section, this);
+    }
 
-        if (WorldManager.getInstance().getDimension() != Dimension.NETHER) {
-            section.setSkyLight(dataProvider.readByteArray(LIGHT_SIZE));
+    /**
+     * Read a chunk column for 26.1+. Same as the 1.18 layout, except: a "fluid count" short follows
+     * the block count, and the block/biome data arrays are no longer length-prefixed - their length
+     * is derived from bits-per-entry instead.
+     */
+    public void readChunkColumn(DataTypeProvider dataProvider) {
+        for (int sectionY = getMinBlockSection(); sectionY <= getMaxBlockSection() && dataProvider.hasNext(); sectionY++) {
+            ChunkSection section = getChunkSection(sectionY);
+
+            int blockCount = dataProvider.readShort();
+            dataProvider.readShort(); // fluid count, not tracked separately
+
+            Palette blockPalette = Palette.readPalette(dataProvider, PaletteType.BLOCKS);
+
+            if (section == null) {
+                section = createNewChunkSection((byte) (sectionY & 0xFF), blockPalette);
+            } else {
+                section.setBlockPalette(blockPalette);
+            }
+
+            section.setBlockCount(blockCount);
+            section.setBlocks(dataProvider.readLongArray(ChunkSection.longsRequired(blockPalette.getBitsPerBlock())));
+
+            Palette biomePalette = Palette.readPalette(dataProvider, PaletteType.BIOMES);
+            section.setBiomePalette(biomePalette);
+            section.setBiomes(dataProvider.readLongArray(ChunkSection.longsRequiredBiomes(biomePalette.getBitsPerBlock())));
+
+            setChunkSection(sectionY, section);
+
+            if (containsBlockEntities(blockPalette)) {
+                findBlockEntities(section, sectionY);
+            }
+        }
+    }
+
+    protected void findBlockEntities(ChunkSection section, int sectionY) {
+        BlockEntityRegistry blockEntities = RegistryManager.getInstance().getBlockEntityRegistry();
+        BlockRegistry globalPalette = GlobalPaletteProvider.getGlobalPalette(getDataVersion());
+
+        for (int y = 0; y < 16; y++) {
+            for (int z = 0; z < 16; z++) {
+                for (int x = 0; x < 16; x++) {
+                    BlockState state = globalPalette.getState(section.getNumericBlockStateAt(x, y, z));
+
+                    if (blockEntities.isBlockEntity(state.getName())) {
+                        Coordinate3D coords = new Coordinate3D(x, y, z).sectionLocalToGlobal(sectionY, this.location);
+                        this.addBlockEntity(coords, this.generateBlockEntity(state.getName(), coords));
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean containsBlockEntities(Palette p) {
+        BlockEntityRegistry blockEntities = RegistryManager.getInstance().getBlockEntityRegistry();
+        for (SpecificTag tag : p.toNbt()) {
+            if (blockEntities.isBlockEntity(tag.get("Name").stringValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected void parseBlockEntities(DataTypeProvider dataProvider) {
+        int blockEntityCount = dataProvider.readVarInt();
+        for (int i = 0; i < blockEntityCount; i++) {
+            byte xz = dataProvider.readNext();
+            int x = xz >> 4;
+            int z = xz & 0b1111;
+            int y = dataProvider.readShort();
+            int type = dataProvider.readVarInt();
+
+            // Get the exact coordinates in the world
+            x = (this.getLocation().getX() * 16) + x;
+            z = (this.getLocation().getZ() * 16) + z;
+
+            SpecificTag tag = dataProvider.readNbtTag();
+            if (tag instanceof CompoundTag entity) {
+                String blockEntityID = RegistryManager.getInstance().getBlockEntityRegistry().getBlockEntityName(type);
+
+                entity.add("id", new StringTag(blockEntityID));
+                addBlockEntity(new Coordinate3D(x, y, z), entity);
+            }
         }
     }
 
     /**
-     * Convert this chunk to NBT tags.
+     * Generate network packet for this chunk (the 1.18+ {@code LevelChunkWithLight} packet, which
+     * embeds the light data).
+     */
+    public PacketBuilder toPacket() {
+        Protocol p = Config.versionReporter().getProtocol();
+        PacketBuilder packet = new PacketBuilder();
+        packet.writeVarInt(p.clientBound("LevelChunkWithLight"));
+
+        packet.writeInt(location.getX());
+        packet.writeInt(location.getZ());
+
+        writeHeightMaps(packet);
+        writeChunkSections(packet);
+
+        // we don't include block entities - these chunks will be far away so they shouldn't be rendered anyway
+        packet.writeVarInt(0);
+
+        writeLightEdgesTrusted(packet);
+        writeLightToPacket(packet);
+
+        return packet;
+    }
+
+    /**
+     * A separate light packet is not used in 1.18+ (light is embedded in the chunk packet), so this
+     * returns {@code null}.
+     */
+    public PacketBuilder toLightPacket() {
+        return null;
+    }
+
+    protected void writeChunkSections(PacketBuilder packet) {
+        PacketBuilder columns = writeSectionData();
+        byte[] columnArr = columns.toArray();
+        packet.writeVarInt(columnArr.length);
+        packet.writeByteArray(columnArr);
+    }
+
+    protected PacketBuilder writeSectionData() {
+        PacketBuilder column = new PacketBuilder();
+        for (ChunkSection section : getAllSections()) {
+            if (section.getY() >= getMinBlockSection()) {
+                section.write(column);
+            }
+        }
+
+        return column;
+    }
+
+    /**
+     * Versions &lt; 1.20 included a boolean for lighting data on edges; removed in 1.20+. No-op for
+     * 26.x, kept as an extension point.
+     */
+    void parseLightEdgesTrusted(DataTypeProvider provider) {
+    }
+
+    void writeLightEdgesTrusted(PacketBuilder packet) {
+    }
+
+    /**
+     * Write the embedded light data (sky + block light masks and arrays) into the chunk packet.
+     */
+    public void writeLightToPacket(PacketBuilder packet) {
+        Pair<BitSet, PacketBuilder> skyLight = writeLightToPacket(ChunkSection::getSkyLight);
+        Pair<BitSet, PacketBuilder> blockLight = writeLightToPacket(ChunkSection::getBlockLight);
+
+        packet.writeBitSet(skyLight.getKey());
+        packet.writeBitSet(blockLight.getKey());
+
+        // empty masks we just set to 0
+        packet.writeBitSet(new BitSet());
+        packet.writeBitSet(new BitSet());
+
+        packet.writeVarInt(skyLight.getKey().cardinality());
+        packet.writeByteArray(skyLight.getValue().toArray());
+
+        packet.writeVarInt(blockLight.getKey().cardinality());
+        packet.writeByteArray(blockLight.getValue().toArray());
+    }
+
+    /**
+     * Write one of the light arrays to a packet, return the mask and the array itself.
+     */
+    private Pair<BitSet, PacketBuilder> writeLightToPacket(Function<ChunkSection, byte[]> fn) {
+        PacketBuilder packet = new PacketBuilder();
+        BitSet mask = new BitSet();
+
+        for (ChunkSection section : getAllSections()) {
+            byte[] light = fn.apply(section);
+            if (light == null || light.length == 0) { continue; }
+
+            packet.writeVarInt(light.length);
+            packet.writeByteArray(light);
+
+            mask.set(section.getY() - getMinLightSection());
+        }
+
+
+        return new Pair<>(mask, packet);
+    }
+
+    public void updateLight(DataTypeProvider provider) {
+        parseLightEdgesTrusted(provider);
+
+        BitSet skyLightMask = provider.readBitSet();
+        BitSet blockLightMask = provider.readBitSet();
+
+        BitSet emptySkyLightMask = provider.readBitSet();
+        BitSet emptyBlockLightMask = provider.readBitSet();
+
+        int numSkyLight = provider.readVarInt();
+        if (skyLightMask.cardinality() != numSkyLight) {
+            throw new InputMismatchException("Number of provided skylight maps does not match provided mask: " + skyLightMask + " != " + numSkyLight);
+        }
+
+        parseLightArray(skyLightMask, emptySkyLightMask, provider, ChunkSection::setSkyLight, ChunkSection::getSkyLight);
+
+        int numBlockLight = provider.readVarInt();
+        if (blockLightMask.cardinality() != numBlockLight) {
+            throw new InputMismatchException("Number of provided blocklight maps does not match provided mask: " + blockLightMask + " != " + numBlockLight);
+        }
+
+        parseLightArray(blockLightMask, emptyBlockLightMask, provider, ChunkSection::setBlockLight, ChunkSection::getBlockLight);
+    }
+
+    protected void parseLightArray(BitSet mask, BitSet emptyMask, DataTypeProvider provider, BiConsumer<ChunkSection, byte[]> c, Function<ChunkSection, byte[]> get) {
+        for (int sectionY = getMinLightSection(); sectionY <= getMaxLightSection() && (!mask.isEmpty() || !emptyMask.isEmpty()); sectionY++) {
+            ChunkSection s = getChunkSection(sectionY);
+            if (s == null) {
+                s = createNewChunkSection((byte) sectionY, Palette.empty());
+                s.setBlocks(new long[256]);
+
+                setChunkSection(sectionY, s);
+            }
+
+            // Mask tells us if a section is present or not
+            if (!mask.get(sectionY - getMinLightSection())) {
+                if (!emptyMask.get(sectionY - getMinLightSection())) {
+                    c.accept(s, new byte[2048]);
+                }
+                emptyMask.set(sectionY - getMinLightSection(), false);
+                continue;
+            }
+            mask.set(sectionY - getMinLightSection(), false);
+
+            int skyLength = provider.readVarInt();
+            byte[] data = provider.readByteArray(skyLength);
+
+            c.accept(s, data);
+        }
+    }
+
+    /**
+     * Convert this chunk to NBT tags (the 1.18+ on-disk format: no {@code Level} wrapper, lowercase
+     * {@code sections}).
      *
      * @return the nbt root tag
      */
@@ -217,10 +508,9 @@ public abstract class Chunk extends ChunkEntities {
         }
 
         CompoundTag root = new CompoundTag();
-        root.add("Level", createNbtLevel());
-        root.add("DataVersion", new IntTag(getDataVersion()));
 
-        chunkNbtModifiers.forEach(fn -> fn.accept(this, root));
+        addLevelNbtTags(root);
+        root.add("DataVersion", new IntTag(getDataVersion()));
 
         return new NamedTag("", root);
     }
@@ -229,28 +519,21 @@ public abstract class Chunk extends ChunkEntities {
         return getAllSections().iterator().hasNext();
     }
 
-    /**
-     * Create the level tag in the NBT.
-     *
-     * @return the level tag
-     */
-    private CompoundTag createNbtLevel() {
-        CompoundTag levelTag = new CompoundTag();
-        addLevelNbtTags(levelTag);
-        return levelTag;
-    }
-
-    /**
-     * Add NBT tags to the level tag. May be overriden by versioned chunks to add extra tags. Those should probably
-     * call this (super) method.
-     */
     protected void addLevelNbtTags(CompoundTag map) {
-        super.addLevelNbtTags(map);
-
         addGeneralLevelTags(map);
+        map.add("yPos", new IntTag(getMinBlockSection()));
 
-        map.add("Biomes", getNbtBiomes());
-        map.add("Sections", new ListTag(Tag.TAG_COMPOUND, getSectionList()));
+        map.add("Heightmaps", heightMap);
+        map.add("Status", new StringTag("full"));
+
+        CompoundTag structures = new CompoundTag();
+        structures.add("References", new CompoundTag());
+        structures.add("Starts", new CompoundTag());
+        map.add("Structures", structures);
+
+        map.add("sections", new ListTag(Tag.TAG_COMPOUND, getSectionList()));
+
+        addBlockEntities(map);
     }
 
     protected void addGeneralLevelTags(CompoundTag map) {
@@ -272,59 +555,6 @@ public abstract class Chunk extends ChunkEntities {
                 .map(ChunkSection::toNbt)
                 .collect(Collectors.toList());
     }
-
-
-
-    /**
-     * Parse the chunk data.
-     *
-     * @param dataProvider network input
-     */
-    protected void parse(DataTypeProvider dataProvider) {
-        raiseEvent("parse from packet");
-
-        boolean full = dataProvider.readBoolean();
-        // if we don't have the partial chunk (anymore?), just make one from scratch
-        if (!full) {
-            this.markAsNew();
-        }
-
-        // for older versions, we use a BitSet as 1.17+ does. We construct it manually by turning the single int into
-        // a long.
-        long maskLong = dataProvider.readVarInt();
-        BitSet mask = BitSet.valueOf(new long[]{maskLong});
-
-        // for 1.14+
-        parseHeightMaps(dataProvider);
-
-        if (full) {
-            parse3DBiomeData(dataProvider);
-        }
-
-        int size = dataProvider.readVarInt();
-        readChunkColumn(full, mask, dataProvider.ofLength(size));
-
-        parseBlockEntities(dataProvider);
-        afterParse();
-    }
-
-    protected void parseBlockEntities(DataTypeProvider dataProvider) {
-        int tileEntityCount = dataProvider.readVarInt();
-        for (int i = 0; i < tileEntityCount; i++) {
-            addBlockEntity(dataProvider.readNbtTag());
-        }
-    }
-
-    protected void afterParse() {
-        // ensure the chunk is (re)saved
-        this.saved = false;
-
-        // run the callback if one exists
-        if (afterParse != null) {
-            afterParse.run();
-        }
-    }
-
 
     public int getNumericBlockStateAt(int x, int y, int z) {
         int sectionY = (int) Math.floor((double) y / SECTION_HEIGHT);
@@ -351,7 +581,7 @@ public abstract class Chunk extends ChunkEntities {
 
     /**
      * Read the biome resource location at the given world-space coordinates. Returns {@code null}
-     * if the chunk section is missing or the section has no biome data (pre-1.18 versions).
+     * if the chunk section is missing or the section has no biome data.
      */
     public String getBiomeAt(int x, int y, int z) {
         int sectionY = (int) Math.floor((double) y / SECTION_HEIGHT);
@@ -359,71 +589,20 @@ public abstract class Chunk extends ChunkEntities {
         if (section == null) {
             return null;
         }
-        if (section instanceof ChunkSection_1_18 s) {
-            return s.getBiomeAt(Math.floorMod(x, SECTION_WIDTH),
-                                Math.floorMod(y, SECTION_HEIGHT),
-                                Math.floorMod(z, SECTION_WIDTH));
+        return section.getBiomeAt(Math.floorMod(x, SECTION_WIDTH),
+                            Math.floorMod(y, SECTION_HEIGHT),
+                            Math.floorMod(z, SECTION_WIDTH));
+    }
+
+    protected void afterParse() {
+        // ensure the chunk is (re)saved
+        this.saved = false;
+
+        // run the callback if one exists
+        if (afterParse != null) {
+            afterParse.run();
         }
-        return null;
     }
-
-    /**
-     * Generate network packet for this chunk.
-     */
-    public PacketBuilder toPacket() {
-        Protocol p = Config.versionReporter().getProtocol();
-        PacketBuilder packet = new PacketBuilder();
-        packet.writeVarInt(p.clientBound("LevelChunk"));
-
-        packet.writeInt(location.getX());
-        packet.writeInt(location.getZ());
-        packet.writeBoolean(true);
-
-        writeBitMask(packet);
-        writeHeightMaps(packet);
-        writeBiomes(packet);
-        writeChunkSections(packet);
-
-        // we don't include block entities - these chunks will be far away so they shouldn't be rendered anyway
-        packet.writeVarInt(0);
-        return packet;
-    }
-
-    protected void writeChunkSections(PacketBuilder packet) {
-        PacketBuilder columns = writeSectionData();
-        byte[] columnArr = columns.toArray();
-        packet.writeVarInt(columnArr.length);
-        packet.writeByteArray(columnArr);
-    }
-
-    public PacketBuilder toLightPacket() { return null; }
-
-    protected void writeHeightMaps(PacketBuilder packet) {
-    }
-
-    protected PacketBuilder writeSectionData() {
-        PacketBuilder column = new PacketBuilder();
-        for (ChunkSection section : getAllSections()) {
-            if (section.getY() >= getMinBlockSection()) {
-                section.write(column);
-            }
-        }
-
-        return column;
-    }
-
-    private void writeBitMask(PacketBuilder packet) {
-        int res = 0;
-        for (ChunkSection section : getAllSections()) {
-            if (section.getY() >= getMinBlockSection()) {
-                res |= 1 << section.getY() - getMinBlockSection();
-            }
-        }
-
-        packet.writeVarInt(res);
-    }
-
-    protected void writeBiomes(PacketBuilder packet) { }
 
     /**
      * Mark this as a new chunk if it's sent in parts, which non-vanilla servers will do to send chunks to the client
@@ -439,25 +618,22 @@ public abstract class Chunk extends ChunkEntities {
         return isNewChunk;
     }
 
-
+    /**
+     * Parse this chunk from on-disk NBT (the 1.18+ format with lowercase {@code sections}).
+     */
     public void parse(Tag tag) {
         raiseEvent("parse from nbt");
 
-        tag.get("Level").asCompound().get("Sections").asList().forEach(section -> {
+        tag.asCompound().get("sections").asList().forEach(section -> {
             int sectionY = section.get("Y").byteValue();
             setChunkSection(sectionY, parseSection(sectionY, section));
         });
         parseHeightMaps(tag);
-        parseBiomes(tag);
     }
 
     protected void parseHeightMaps(Tag tag) {
+        heightMap = tag.asCompound().get("Heightmaps").asCompound();
     }
-
-    protected void parseBiomes(Tag tag) {
-    }
-
-    protected abstract ChunkSection parseSection(int sectionY, SpecificTag section);
 
     /**
      * Mark this chunk as unsaved.
@@ -475,13 +651,14 @@ public abstract class Chunk extends ChunkEntities {
 
         if (!Objects.equals(location, chunk.location)) return false;
         if (!Arrays.deepEquals(chunkSections, chunk.chunkSections)) return false;
-        return true;
+        return Objects.equals(heightMap, chunk.heightMap);
     }
 
     @Override
     public int hashCode() {
         int result = location != null ? location.hashCode() : 0;
         result = 31 * result + Arrays.hashCode(chunkSections);
+        result = 31 * result + (heightMap != null ? heightMap.hashCode() : 0);
         return result;
     }
 
@@ -550,38 +727,35 @@ public abstract class Chunk extends ChunkEntities {
     }
 
     /**
-     * Update a number of blocks. toUpdate keeps track of which blocks have changed so that we can only redraw the
-     * chunk if that's actually needed.
+     * Update a number of blocks (the 1.16+ multi-block change layout using varlong-packed records).
+     * toUpdate keeps track of which blocks have changed so that we can only redraw the chunk if
+     * that's actually needed.
      * @param pos chunk selection
      * @param provider network input
      */
     public void updateBlocks(Coordinate3D pos, DataTypeProvider provider) {
+        parseLightEdgesTrusted(provider);
+
         int count = provider.readVarInt();
         Collection<Coordinate3D> toUpdate = new ArrayList<>();
         while (count-- > 0) {
-            byte xz = provider.readNext();
-            int y = provider.readNext();
-            int x = (xz >>> 4) & 0x0F;
-            int z = xz & 0x0F;
+            long blockChange = provider.readVarLong();
+            int blockId = (int) blockChange >>> 12;
 
-            int blockId = provider.readVarInt();
+            int x = (int) (blockChange >> 8) & 0x0F;
+            int z = (int) (blockChange >> 4) & 0x0F;
+            int y = (int) (blockChange     ) & 0x0F;
 
-            Coordinate3D blockPos = new Coordinate3D(x, y, z);
+            // since updateBlock expects the height to be [0-256], we add in the section coordinates.
+            Coordinate3D blockPos = new Coordinate3D(x, pos.getY() * 16 + y, z);
             toUpdate.add(blockPos);
 
             updateBlock(blockPos, blockId, true);
         }
-        boolean wasChanged = this.chunkHeightHandler.recomputeHeights(toUpdate);
-        if (wasChanged) {
-            imageFactory.generateImages();
-        }
-    }
-
-    public void updateLight(DataTypeProvider provider) {
-        raiseEvent("update lighting");
+        this.getChunkHeightHandler().recomputeHeights(toUpdate);
     }
 
     public boolean hasSeparateEntities() {
-        return false;
+        return true;
     }
 }

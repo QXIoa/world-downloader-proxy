@@ -287,9 +287,31 @@ Krótka instrukcja "on-boarding", którą warto potem przenieść też do `READM
       usunięte przy okazji: się okazało że to martwy kod dla 26.x — od 1.18 światło jest zapisywane wprost
       w pakiecie `LevelChunkWithLight` (patrz `Chunk_1_18#toLightPacket` zwraca `null`), więc oddzielny
       pakiet światła i tak nigdy nie był używany dla 26.x; nie ma potrzeby odtwarzać tego testu.
-- [ ] Faza 2: EquipmentReader / Slot / PlayerMap / MetaData
-- [ ] Faza 3: DataTypeProvider
-- [ ] Faza 4: Chunk / ChunkSection
+- [x] Faza 2: EquipmentReader / Slot / PlayerMap / MetaData — spłaszczone do pojedynczych klas
+      bazowych (commit `ca2a176`). `Slot_1_12` zostawiony do Fazy 3 (używany przez `readSlot()`
+      w starym `DataTypeProvider`).
+- [x] Faza 3: DataTypeProvider — łańcuch `_1_13→_1_14→_1_20_2→_1_20_6` i `Slot_1_12` spłaszczone
+      do jednej klasy `DataTypeProvider` (commit `6c6e25c`). `ofPacket()` zwraca bezpośrednio
+      `new DataTypeProvider(...)`. `readCoordinates`/`readNbtTag`/`readSlot` przyjmują zachowanie
+      liścia (1.14+/1.20.2+/1.20.6+). Testy bezpośrednio używające usuniętych podklas
+      (`LpVec3Test`, `PacketBuilderAndParserTest`, `SelectionInputInterceptorTest`) przestawione
+      na `DataTypeProvider`; przypadki NBT w `PacketBuilderAndParserTest` używają teraz
+      `writeNbtDirect()` (zgodne z nowym `readNbtTag()` czytającym bajt typu na początku).
+- [x] Faza 4: Chunk / ChunkSection — łańcuchy `Chunk_1_13→…→Chunk_26_1` i
+      `ChunkSection_1_13→…→ChunkSection_26_1` spłaszczone do pojedynczych klas `Chunk` i
+      `ChunkSection` (zachowanie liścia 26.x). `BlockLocationEncoder_1_16` scalone jako jedyna
+      implementacja `BlockLocationEncoder` (stary pre-1.16 multi-long encoder usunięty).
+      `ChunkFactory.getVersionedChunk` zwraca bezpośrednio `new Chunk(...)`. `PaletteTransformer`
+      używa `ChunkSection.longsRequired`. `Chunk.setWorldHeight` (było `Chunk_1_17.setWorldHeight`)
+      wywoływane z `Dimension`/`WorldManager`/`ChunkTest`. `PaletteTransformerTest` używa
+      `new BlockLocationEncoder()`. Usunięto 17 plików `*_1_XX`/`*_26_1`/`BlockLocationEncoder_1_16`.
+      Martwy kod 26.x usunięty: `readChunkColumn(boolean,BitSet,…)`, `parse2D/3DBiomeData`,
+      `parseLights`, `getNbtBiomes`/`setBiomes`/`writeBiomes`/`parseBiomes`, `writeSectionDataBiomes`,
+      `writeBitMask`, `buildLightPacket`, standalone `toLightPacket` (1_14/1_17), `readBlockCount`,
+      pre-1_16 `resizeBlocksIfRequired`/`setBlockAt`/`write`/`addNbtTags`. Punkty rozszerzenia
+      (`parse`, `parseHeightMaps`, `writeHeightMaps`, `readChunkColumn`, `createNewChunkSection`,
+      `parseSection`, `toPacket`, `toNbt`, `addLevelNbtTags`, `updateLight`, `getLocationEncoder`,
+      `write`) zachowane jako protected/non-final.
 - [ ] Faza 5: Packet handlery (Game/Configuration)
 - [ ] Faza 6: rozproszone `isAtLeast`/`Version.V1_*` (4.5)
 - [ ] Faza 7: RegistryLoader + zasoby 1.12.2/1.13.2 + Forge 1.12
