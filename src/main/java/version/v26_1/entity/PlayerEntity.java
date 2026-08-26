@@ -5,6 +5,7 @@ import core.schematic.SelectionCommand;
 import core.interfaces.IPlayerEntity;
 import com.google.gson.Gson;
 import core.coordinates.CoordinateDouble3D;
+import core.messages.Messages;
 import kong.unirest.Unirest;
 import version.v26_1.packets.DataTypeProvider;
 import version.v26_1.packets.UUID;
@@ -41,7 +42,7 @@ public class PlayerEntity implements IMovableEntity, IPlayerEntity {
         hasRequestedName = true;
 
         if (knownNames.containsKey(uuid)) {
-            System.out.println("Retrieved from map: " + knownNames.get(uuid));
+            System.out.println(Messages.console("console.auth.retrieved_name", knownNames.get(uuid)));
             this.name = knownNames.get(uuid);
             return;
         }

@@ -4,6 +4,7 @@ import core.schematic.SelectionCommand;
 
 import core.config.Config;
 import core.coordinates.CoordinateDim2D;
+import core.messages.Messages;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,18 +37,18 @@ public abstract class ChunkEvents {
     protected void printEventLog() {
         if (events.get(getLocation()) == null) { return; }
 
-        System.out.println("Events for " + getLocation() + ": " + System.identityHashCode(this));
+        System.out.println(Messages.console("console.chunk.events_for", getLocation(), System.identityHashCode(this)));
         for (ChunkEvent event : events.get(getLocation())) {
-            System.out.println("\t" + event);
+            System.out.println(Messages.console("console.chunk.event_entry", event));
         }
     }
 
     public static void printEventLog(CoordinateDim2D pos) {
         if (events.get(pos) == null) { return; }
 
-        System.out.println("Events for " + pos + ": ");
+        System.out.println(Messages.console("console.chunk.events_for", pos, ""));
         for (ChunkEvent event : events.get(pos)) {
-            System.out.println("\t" + event);
+            System.out.println(Messages.console("console.chunk.event_entry", event));
         }
     }
 

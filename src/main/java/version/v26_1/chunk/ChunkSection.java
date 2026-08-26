@@ -14,6 +14,7 @@ import version.v26_1.chunk.palette.SingleValuePalette;
 import version.v26_1.chunk.palette.State;
 import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
 import core.coordinates.Coordinate3D;
+import core.messages.Messages;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -160,7 +161,7 @@ public class ChunkSection {
         List<SpecificTag> paletteItems = palette.toNbt();
         if (paletteItems.isEmpty()) {
             // this shouldn't ever happen
-            System.err.println("Empty palette @ " + getY() + " :: " + palette);
+            System.err.println(Messages.console("console.chunk.empty_palette", getY(), palette));
         } else {
             tag.add("palette", new ListTag(tagType, paletteItems));
         }

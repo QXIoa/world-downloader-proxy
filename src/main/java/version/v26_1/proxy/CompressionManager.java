@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import org.apache.commons.io.IOUtils;
+import core.messages.Messages;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,7 +47,7 @@ public class CompressionManager {
             return IOUtils.toByteArray(inflater);
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Could not decompress");
+            System.out.println(Messages.console("console.compression.decompress_error"));
         }
         return new byte[0];
     }

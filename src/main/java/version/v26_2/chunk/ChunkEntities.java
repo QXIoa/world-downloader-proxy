@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import core.config.Config;
+import core.messages.Messages;
 import version.v26_2.world.WorldManager;
 import version.v26_2.chunk.palette.BlockState;
 import version.v26_2.commandblock.CommandBlock;
@@ -197,7 +198,7 @@ public abstract class ChunkEntities extends ChunkEvents {
      */
     protected void addBlockEntity(SpecificTag nbtTag) {
         if (!(nbtTag instanceof CompoundTag)) {
-            System.out.println("Block entity is not a compound");
+            System.out.println(Messages.console("console.chunk.block_entity_not_compound"));
             return;
         }
 

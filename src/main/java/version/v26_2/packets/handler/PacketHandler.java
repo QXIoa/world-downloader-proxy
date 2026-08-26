@@ -7,6 +7,7 @@ import version.v26_2.protocol.Protocol;
 import version.v26_2.packets.DataProvider;
 import version.v26_2.packets.DataTypeProvider;
 import version.v26_2.proxy.ConnectionManager;
+import core.messages.Messages;
 
 import javax.naming.SizeLimitExceededException;
 import java.util.Map;
@@ -64,7 +65,7 @@ public abstract class PacketHandler {
             // doesn't crash the entire connection. The packet will still be
             // forwarded to the client (return true) since we couldn't fully
             // process it.
-            System.out.println("Error handling packet " + packetType + ": " + e.getMessage());
+            System.out.println(Messages.console("console.packet.error", packetType, e.getMessage()));
             return true;
         }
     }

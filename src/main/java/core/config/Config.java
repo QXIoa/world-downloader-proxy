@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonReader;
 import core.UnsupportedMinecraftVersionException;
 import core.gui.GuiManager;
 import core.interfaces.VersionModule;
+import core.messages.Messages;
 import core.proxy.ConnectionDetails;
 import core.auth.AuthDetails;
 import core.auth.AuthenticationMethod;
@@ -86,7 +87,7 @@ public class Config {
                 return Objects.requireNonNullElseGet(config, () -> new Config());
             }
         } catch (Exception ex) {
-            System.out.println("Cannot read " + configPath.toString());
+            System.out.println(Messages.console("console.app.cant_read_config", configPath.toString()));
             ex.printStackTrace();
         }
         return new Config();
@@ -105,10 +106,9 @@ public class Config {
         }
 
         if (instance.showHelp) {
-            System.out.println("When running this application without the -s parameter, the settings UI will be \n" +
-                                "shown on startup. When running with --no-gui, the -s parameter is required.\n");
+            System.out.println(Messages.console("console.app.no_args"));
 
-            System.out.println("Available parameters:");
+            System.out.println(Messages.console("console.app.available_params"));
             parser.printUsage(System.out);
             System.exit(1);
         }
@@ -134,8 +134,7 @@ public class Config {
 
     public static void setProtocolVersion(int protocolVersion) {
         if (protocolVersion > 0 && protocolVersion < MIN_SUPPORTED_PROTOCOL_VERSION) {
-            String message = "Unsupported Minecraft version (protocol " + protocolVersion + "). This proxy "
-                + "only supports Minecraft 26.1 and newer. Please connect with a 26.1+ client.";
+            String message = Messages.gui("gui.unsupported_version", protocolVersion);
             System.err.println(message);
             GuiManager.setStatusMessage(message);
             throw new UnsupportedMinecraftVersionException(message);
@@ -270,7 +269,7 @@ public class Config {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.err.println("Unable to delete settings.");
+            System.err.println(Messages.console("console.app.unable_delete_settings"));
         }
     }
 
@@ -280,8 +279,7 @@ public class Config {
         }
 
         if (!devMode && !forceConsoleOutput) {
-            System.out.println("Application seems to be running without console. Redirecting error output to GUI. " +
-                    "If this is not desired, run with --force-console.");
+            System.out.println(Messages.console("console.app.no_console"));
 
             Platform.runLater(GuiManager::redirectErrorOutput);
         }
@@ -327,7 +325,7 @@ public class Config {
 
         new Thread(() -> module.loadRegistries()).start();
 
-        System.out.println("Using protocol of game version " + instance.gameVersion + " (" + instance.protocolVersion + ")");
+        System.out.println(Messages.console("console.version.using", instance.gameVersion, instance.protocolVersion));
         return p;
     }
 

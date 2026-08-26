@@ -2,6 +2,7 @@ package core;
 
 import core.config.Config;
 import core.interfaces.VersionModule;
+import core.messages.Messages;
 import core.sniffer.VersionRegistry;
 import core.util.AppVersion;
 import core.util.PathUtils;
@@ -15,7 +16,7 @@ import static core.util.ExceptionHandling.attemptQuiet;
 
 public class Launcher {
     public static void main(String[] args) throws URISyntaxException {
-        System.out.println("World Downloader Proxy " + AppVersion.get());
+        System.out.println(Messages.console("console.app.title", AppVersion.get()));
         fixCwd();
 
         // Bootstrap: discover per-version modules via Java SPI and register the
@@ -43,7 +44,7 @@ public class Launcher {
         // if we can't write to the working directory, try the jar file's location
         Path jarPath = Paths.get(Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
         if (Files.isWritable(jarPath)) {
-            System.out.println("Can't write to working directory. Writing to " + jarPath);
+            System.out.println(Messages.console("console.app.cant_write_jar", jarPath));
             PathUtils.setWorkingDirectory(jarPath);
 
             return;
@@ -53,14 +54,14 @@ public class Launcher {
         Path mcPath = Paths.get(Config.getDefaultMinecraftPath(), "world-downloader");
         attemptQuiet(() -> Files.createDirectories(mcPath));
         if (Files.isWritable(mcPath)) {
-            System.out.println("Can't write to working directory. Writing to " + mcPath);
+            System.out.println(Messages.console("console.app.cant_write_mc", mcPath));
             PathUtils.setWorkingDirectory(mcPath);
 
             return;
         }
 
 
-        System.err.println("Unable to write data. Consider running with more permissions.");
+        System.err.println(Messages.console("console.app.unable_write_data"));
         System.exit(1);
     }
 }

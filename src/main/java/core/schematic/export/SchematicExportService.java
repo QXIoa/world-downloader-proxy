@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import core.schematic.BoundingBox;
 import core.interfaces.ISelectionFeedback;
 import core.schematic.SelectionState;
+import core.messages.Messages;
 
 /**
  * Orchestrates exporting the current selection: validates it, picks an output file name, delegates
@@ -62,12 +63,12 @@ public class SchematicExportService {
     public void exportAndClear(SelectionState state) {
         try {
             if (!state.hasCompleteSelection()) {
-                feedback.send("No selection to export - set both pos1 and pos2 first.");
+                feedback.send(Messages.server("server.export.no_selection"));
                 return;
             }
 
             if (!state.getDimension().equals(core.config.Config.getVersionModule().getWorldManager().getDimension())) {
-                feedback.send("Selection was made in a different dimension. Switch back or make a new selection.");
+                feedback.send(Messages.server("server.export.wrong_dimension"));
                 return;
             }
 
@@ -97,35 +98,35 @@ public class SchematicExportService {
             // the underlying NBT writer silently failed or was a no-op.
             Path absoluteTarget = target.toAbsolutePath();
             if (!Files.exists(absoluteTarget)) {
-                feedback.send("Export failed: file was not created (" + target.getFileName() + ")");
+                feedback.send(Messages.server("server.export.failed_no_file", target.getFileName()));
                 return;
             }
             long size;
             try {
                 size = Files.size(absoluteTarget);
             } catch (IOException ioex) {
-                feedback.send("Export failed: could not verify file (" + ioex.getMessage() + ")");
+                feedback.send(Messages.server("server.export.failed_verify", ioex.getMessage()));
                 return;
             }
             if (size == 0) {
-                feedback.send("Export failed: file is empty (" + target.getFileName() + ")");
+                feedback.send(Messages.server("server.export.failed_empty_file", target.getFileName()));
                 return;
             }
 
-            feedback.send("Schematic exported: " + target.getFileName() + " (" + formatSize(size) + ")");
+            feedback.send(Messages.server("server.export.success", target.getFileName(), formatSize(size)));
             // After a brief pause, prompt for the next selection — but only if the
             // player hasn't already started making one (e.g. set a new pos1).
             scheduler.schedule(() -> {
                 if (!state.hasCompleteSelection() && state.getPos1() == null) {
-                    feedback.send("Waiting for new selection...  LMB=pos1, RMB=pos2");
+                    feedback.send(Messages.server("server.selection.waiting"));
                 }
             }, 3, TimeUnit.SECONDS);
         } catch (IOException e) {
-            feedback.send("Export failed: " + e.getMessage());
+            feedback.send(Messages.server("server.export.failed_io", e.getMessage()));
         } catch (Exception e) {
             // Catch runtime exceptions too — the file may have been partially or fully written
             // before the error, so the player needs to know something went wrong.
-            feedback.send("Export failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            feedback.send(Messages.server("server.export.failed_generic", e.getClass().getSimpleName(), e.getMessage()));
         }
     }
 

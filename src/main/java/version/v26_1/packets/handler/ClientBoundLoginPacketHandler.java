@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import version.v26_1.proxy.ConnectionManager;
+import core.messages.Messages;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +15,7 @@ public class ClientBoundLoginPacketHandler extends PacketHandler {
 
         operations.put("LoginDisconnect", provider -> {
             String reason = provider.readString();
-            System.out.println("Disconnect: " + reason);
+            System.out.println(Messages.console("console.packet.disconnect", reason));
             return true;
         });
 
@@ -36,7 +37,7 @@ public class ClientBoundLoginPacketHandler extends PacketHandler {
             String uuid = provider.readUUID().toString();
 
             String username = provider.readString();
-            System.out.println("Login success: " + username + " logged in with uuid " + uuid);
+            System.out.println(Messages.console("console.auth.login_success", username, uuid));
 
             // 1.20.2+ transitions through a Configuration phase before Game, so we don't switch
             // to GAME here; that's the only path used by the supported versions (26.x).

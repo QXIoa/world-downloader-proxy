@@ -2,6 +2,7 @@ package core.auth;
 
 import com.google.gson.Gson;
 import core.gui.GuiManager;
+import core.messages.Messages;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
@@ -51,14 +52,14 @@ public class ClientAuthenticator extends AuthDetailsManager {
         body.put("selectedProfile", details.getUuid());
         body.put("serverId", hash);
 
-        GuiManager.setStatusMessage("Authenticating with Mojang servers...");
+        GuiManager.setStatusMessage(Messages.gui("gui.auth.authenticating"));
 
         HttpResponse<String> str = Unirest.post(AUTH_URL)
                 .header("Content-Type", "application/json")
                 .body(new Gson().toJson(body))
                 .asString();
 
-        GuiManager.setStatusMessage("");
+        GuiManager.setStatusMessage(Messages.gui("gui.auth.clear"));
 
         if (!str.isSuccess()) {
             GuiManager.setAuthenticationFailed();
@@ -77,14 +78,14 @@ public class ClientAuthenticator extends AuthDetailsManager {
             throw new AuthenticationException("Cannot get valid authentication details.", e);
         }
 
-        GuiManager.setStatusMessage("Requesting encryption keys...");
+        GuiManager.setStatusMessage(Messages.gui("gui.auth.requesting_keys"));
 
         HttpResponse<JsonNode> res = Unirest.post(KEY_URL)
             .header("Authorization", "Bearer " + details.getAccessToken())
             .asJson();
 
         if (!res.isSuccess()) {
-            GuiManager.setStatusMessage("");
+            GuiManager.setStatusMessage(Messages.gui("gui.auth.clear"));
             throw new RuntimeException("Cannot get client public key: " + res.getStatus() + ": " + res.getStatusText());
         }
 
@@ -102,6 +103,6 @@ public class ClientAuthenticator extends AuthDetailsManager {
 
         em.setClientProfileKeyPair(privateKey, publicKey);
 
-        GuiManager.setStatusMessage("");
+        GuiManager.setStatusMessage(Messages.gui("gui.auth.clear"));
     }
 }

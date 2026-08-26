@@ -8,6 +8,7 @@ import core.config.Config;
 import core.gui.components.DefaultIntField;
 import core.gui.components.IntField;
 import core.gui.components.LongField;
+import core.messages.Messages;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -96,7 +97,7 @@ public class GuiSettings {
     @FXML
     void initialize() {
         if (config.isStarted()) {
-            saveButton.setText("Save");
+            saveButton.setText(Messages.gui("gui.button.save"));
         }
 
         heights = Map.of(
@@ -148,7 +149,7 @@ public class GuiSettings {
         }
         disableWhenRunning(Arrays.asList(server, portLocal, centerX, centerZ, worldOutputDir));
 
-        GuiManager.bindTooltip(portVerifyLabel, new Tooltip("Is the downloader already running?"));
+        GuiManager.bindTooltip(portVerifyLabel, new Tooltip(Messages.gui("gui.port.tooltip")));
 
         openWorldDir.setOnAction(e -> attemptQuiet(() -> {
             Path p = PathUtils.toPath(worldOutputDir.getText());
@@ -230,7 +231,7 @@ public class GuiSettings {
 
     private void verifyLocalPort() {
         if (portInUse(portLocal.getAsInt())) {
-            portVerifyLabel.setText("Port in use!");
+            portVerifyLabel.setText(Messages.gui("gui.port.in_use"));
             portInUse = true;
         } else {
             portVerifyLabel.setText("");
@@ -299,7 +300,7 @@ public class GuiSettings {
 
         if (!config.isStarted()) {
             if (portInUse(config.portLocal)) {
-                System.err.println("Port in use");
+                System.err.println(Messages.console("console.proxy.port_in_use"));
                 return;
             }
         }
@@ -379,10 +380,10 @@ public class GuiSettings {
 
     private void validateAuth() {
         AuthDetailsManager.validateAuthStatus(username -> {
-            authResult.setText("Username: " + username);
+            authResult.setText(Messages.gui("gui.auth.username", username));
             authResult.getStyleClass().remove("label-err");
         }, str -> {
-            authResult.setText("Not logged in");
+            authResult.setText(Messages.gui("gui.auth.not_logged_in"));
             authResult.getStyleClass().add("label-err");
         });
     }

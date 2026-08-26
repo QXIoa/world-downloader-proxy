@@ -217,14 +217,15 @@ public class GuiManager extends Application {
 
     private <T> T loadScene(String name, Stage stage, Class<T> controllerType) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/" + name + ".fxml"));
+        loader.setResources(core.messages.Messages.guiBundle());
 
 
         Scene scene = new Scene(loader.load());
 
         if (name.equals("Settings")) {
-            stage.setTitle(TITLE + " - Settings");
+            stage.setTitle(TITLE + " - " + core.messages.Messages.gui("gui.window.settings"));
         } else if (name.equals("MicrosoftAuth")) {
-            stage.setTitle(TITLE + " - Microsoft Authentication");
+            stage.setTitle(TITLE + " - " + core.messages.Messages.gui("gui.window.microsoft_auth"));
         } else {
             stage.setTitle(TITLE);
         }

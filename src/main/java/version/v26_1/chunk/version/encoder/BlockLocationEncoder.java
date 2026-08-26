@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import version.v26_1.chunk.Chunk;
+import core.messages.Messages;
 
 /**
  * Encodes/decodes a single block's palette index within a chunk section's packed {@code long[]} data
@@ -54,8 +55,8 @@ public class BlockLocationEncoder {
         }
 
         if (longIndex < 0) {
-            System.out.println("INVALID LONG INDEX: ");
-            System.out.println("\t" + x +", " + y + ", " + z + " :: " + bitsPerBlock);
+            System.out.println(Messages.console("console.chunk.invalid_long_index"));
+            System.out.println(Messages.console("console.chunk.block_location", x, y, z, bitsPerBlock));
         }
 
         return this;

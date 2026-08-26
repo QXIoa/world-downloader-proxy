@@ -4,6 +4,7 @@ import core.config.Config;
 import core.interfaces.IWorldManager;
 import core.interfaces.IChunkBinary;
 import core.interfaces.IMcaFile;
+import core.messages.Messages;
 
 
 import core.coordinates.Coordinate2D;
@@ -27,13 +28,13 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 
 public class RightClickMenu extends ContextMenu {
-    final static String PROMPT_PAUSE = "Pause chunk saving";
-    final static String PROMPT_RESUME = "Resume chunk saving";
+    final static String PROMPT_PAUSE = Messages.gui("gui.menu.pause_saving");
+    final static String PROMPT_RESUME = Messages.gui("gui.menu.resume_saving");
 
     final List<MenuItem> renderModes = List.of(
-        construct("Automatic", e -> setRenderMode(null, e)),
-        construct("Surface", e -> setRenderMode(ImageMode.NORMAL, e)),
-        construct("Caves", e -> setRenderMode(ImageMode.CAVES, e))
+        construct(Messages.gui("gui.menu.render_automatic"), e -> setRenderMode(null, e)),
+        construct(Messages.gui("gui.menu.render_surface"), e -> setRenderMode(ImageMode.NORMAL, e)),
+        construct(Messages.gui("gui.menu.render_caves"), e -> setRenderMode(ImageMode.CAVES, e))
     );
 
     private void setRenderMode(ImageMode mode, Event e) {
@@ -59,13 +60,13 @@ public class RightClickMenu extends ContextMenu {
             handler.setStatusMessage("");
         }));
 
-        menu.add(construct("Delete all downloaded chunks", e -> {
+        menu.add(construct(Messages.gui("gui.menu.delete_all"), e -> {
             Alert alert = new Alert(Alert.AlertType.NONE,
-                    "Are you sure you want to delete all downloaded chunks? This cannot be undone.",
+                    Messages.gui("gui.menu.delete_confirm_msg"),
                     ButtonType.CANCEL, ButtonType.YES
             );
             GuiManager.addIcon((Stage) alert.getDialogPane().getScene().getWindow());
-            alert.setTitle("Confirm delete");
+            alert.setTitle(Messages.gui("gui.menu.delete_confirm_title"));
             var darkCss = getClass().getResource("/ui/dark.css");
             if (darkCss != null) {
                 alert.getDialogPane().getStylesheets().add(darkCss.toExternalForm());
@@ -80,19 +81,19 @@ public class RightClickMenu extends ContextMenu {
 
         menu.add(new SeparatorMenuItem());
 
-        menu.add(construct("Redraw nearby chunks", e -> {
+        menu.add(construct(Messages.gui("gui.menu.redraw_nearby"), e -> {
             Coordinate2D region = handler.getCursorCoordinates().globalToRegion();
             new Thread(() -> Config.getVersionModule().getWorldManager().drawExistingChunks(region)).start();
         }));
 
-        menu.add(construct("Redraw region", e -> {
+        menu.add(construct(Messages.gui("gui.menu.redraw_region"), e -> {
             Coordinate2D region = handler.getCursorCoordinates().globalToRegion();
             handler.getRegionHandler().resetRegion(region);
             new Thread(() -> Config.getVersionModule().getWorldManager().drawExistingRegion(region)).start();
         }));
 
 
-        menu.add(construct("Copy coordinates", e -> {
+        menu.add(construct(Messages.gui("gui.menu.copy_coords"), e -> {
             Coordinate2D coords = handler.getCursorCoordinates();
             String coordsString = String.format("%d ~ %d", coords.getX(), coords.getZ());
             StringSelection selection = new StringSelection(coordsString);
@@ -105,10 +106,10 @@ public class RightClickMenu extends ContextMenu {
         ImageMode current = RegionImageHandler.getOverrideMode();
 
 
-        menu.add(new Menu("Render mode", null, renderModes.toArray(new MenuItem[0])));
-        menu.add(construct("Settings", e -> GuiManager.loadWindowSettings()));
+        menu.add(new Menu(Messages.gui("gui.menu.render_mode"), null, renderModes.toArray(new MenuItem[0])));
+        menu.add(construct(Messages.gui("gui.menu.settings"), e -> GuiManager.loadWindowSettings()));
 
-        menu.add(construct("Save & Exit", e -> {
+        menu.add(construct(Messages.gui("gui.menu.save_exit"), e -> {
             GuiManager.saveAndExit();
         }));
 
@@ -120,7 +121,7 @@ public class RightClickMenu extends ContextMenu {
     private void addDevOptions(List<MenuItem> menu, GuiMap handler) {
         menu.add(new SeparatorMenuItem());
 
-        menu.add(construct("Write chunk", e -> {
+        menu.add(construct(Messages.gui("gui.menu.write_chunk"), e -> {
 
             CoordinateDim2D chunk = handler.getCursorCoordinates().globalToChunk().addDimension(Config.getVersionModule().overworld());
             CoordinateDim2D region = handler.getCursorCoordinates().globalToRegion().addDimension(Config.getVersionModule().overworld());
@@ -132,14 +133,14 @@ public class RightClickMenu extends ContextMenu {
             ObjectOutputStream o = new ObjectOutputStream(f);
             o.writeObject(cb);
 
-            System.out.println("Written chunk " + chunk + " to " + filename);
+            System.out.println(Messages.console("console.chunk.written", chunk, filename));
         }));
 
-        menu.add(construct("Write all chunks as text", e -> {
+        menu.add(construct(Messages.gui("gui.menu.write_all_chunks"), e -> {
            Config.toggleWriteChunkNbt();
         }));
 
-        menu.add(construct("Print stats", e -> {
+        menu.add(construct(Messages.gui("gui.menu.print_stats"), e -> {
             int regions = Config.getVersionModule().getWorldManager().countActiveRegions();
             int binaryChunks = Config.getVersionModule().getWorldManager().countActiveBinaryChunks();
             int unpasedChunks = Config.getVersionModule().getWorldManager().countQueuedChunks();
@@ -150,21 +151,19 @@ public class RightClickMenu extends ContextMenu {
             int maps = Config.getVersionModule().getWorldManager().countActiveMaps();
             String imageStats = handler.imageStats();
 
-            System.out.printf("Statistics:" +
-                            "\n\tActive regions: %d" +
-                            "\n\tActive binary chunks: %d" +
-                            "\n\tActive unparsed chunks: %d" +
-                            "\n\tActive chunks: %d" +
-                            "\n\tActive extended chunks: %d" +
-                            "\n\tActive entities: %d" +
-                            "\n\tActive players: %d" +
-                            "\n\tActive maps: %d" +
-                            "\n\tActive region images: %s" +
-                            "\n",
-                    regions, binaryChunks, unpasedChunks, chunks, extendedChunks, entities, players, maps, imageStats);
+            System.out.println(Messages.console("console.stats.header"));
+            System.out.println(Messages.console("console.stats.active_regions", regions));
+            System.out.println(Messages.console("console.stats.active_binary_chunks", binaryChunks));
+            System.out.println(Messages.console("console.stats.active_unparsed_chunks", unpasedChunks));
+            System.out.println(Messages.console("console.stats.active_chunks", chunks));
+            System.out.println(Messages.console("console.stats.active_extended_chunks", extendedChunks));
+            System.out.println(Messages.console("console.stats.active_entities", entities));
+            System.out.println(Messages.console("console.stats.active_players", players));
+            System.out.println(Messages.console("console.stats.active_maps", maps));
+            System.out.println(Messages.console("console.stats.active_region_images", imageStats));
         }));
 
-        menu.add(construct("Print chunk events", e -> {
+        menu.add(construct(Messages.gui("gui.menu.print_chunk_events"), e -> {
             Config.getVersionModule().printChunkEventLog(handler.getCursorCoordinates().globalToChunk().addDimension(Config.getVersionModule().overworld()));
         }));
     }

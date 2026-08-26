@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import version.v26_1.module.VersionAccessors;
+import core.messages.Messages;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -168,7 +169,7 @@ public final class CommandTreeInjector {
         try {
             return processInternal(provider, injector);
         } catch (Exception e) {
-            System.out.println("[CommandTreeInjector] Failed to modify command tree: " + e.getMessage());
+            System.out.println(Messages.console("console.commandtree.failed", e.getMessage()));
             e.printStackTrace();
             return true; // forward original on error
         }
@@ -429,7 +430,7 @@ public final class CommandTreeInjector {
             default:
                 // Unknown parser — assume no properties.
                 // This is safer than guessing and corrupting the stream.
-                System.out.println("[CommandTreeInjector] Unknown parser: " + parser + " — assuming no properties");
+                System.out.println(Messages.console("console.commandtree.unknown_parser", parser));
                 break;
         }
     }

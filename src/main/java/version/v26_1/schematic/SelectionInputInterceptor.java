@@ -1,6 +1,7 @@
 package version.v26_1.schematic;
 import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
+import core.messages.Messages;
 
 import version.v26_1.world.WorldManager;
 import core.coordinates.Coordinate3D;
@@ -76,14 +77,14 @@ public class SelectionInputInterceptor {
 
         if (isFirstCorner) {
             selectionState.setPos1(position, dimension);
-            feedback.send("pos1 set: " + position);
+            feedback.send(Messages.server("server.selection.pos1_set", position));
         } else {
             selectionState.setPos2(position, dimension);
-            feedback.send("pos2 set: " + position);
+            feedback.send(Messages.server("server.selection.pos2_set", position));
         }
 
         if (selectionState.hasCompleteSelection()) {
-            feedback.send("Selection: " + selectionState.toBoundingBox());
+            feedback.send(Messages.server("server.selection.bbox", selectionState.toBoundingBox()));
         }
     }
 }

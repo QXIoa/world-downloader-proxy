@@ -1,6 +1,7 @@
 package version.v26_2.schematic;
 import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
+import core.messages.Messages;
 
 import version.v26_2.world.WorldManager;
 import core.coordinates.Coordinate3D;
@@ -64,13 +65,13 @@ public class SelectionCommandRouter {
         }
 
         if (parts.length < 2) {
-            feedback.send("Usage: /" + COMMAND_ROOT + " <area-selection|schematic-export|pos1|pos2|fly>");
+            feedback.send(Messages.server("server.selection.usage", COMMAND_ROOT));
             return true;
         }
 
         SelectionCommand command = SelectionCommand.fromArgument(parts[1]);
         if (command == null) {
-            feedback.send("Unknown subcommand '" + parts[1] + "'.");
+            feedback.send(Messages.server("server.selection.unknown_subcommand", parts[1]));
             return true;
         }
 
@@ -87,9 +88,9 @@ public class SelectionCommandRouter {
     private void handleToggle() {
         boolean nowEnabled = selectionState.toggle();
         if (nowEnabled) {
-            feedback.send("Selection mode ENABLED. Left-click sets pos1, right-click sets pos2.");
+            feedback.send(Messages.server("server.selection.enabled"));
         } else {
-            feedback.send("Selection mode disabled.");
+            feedback.send(Messages.server("server.selection.disabled"));
             // Remove the boss bar shortly after the "disabled" message so it doesn't linger.
             new Thread(() -> {
                 try { Thread.sleep(2000); } catch (InterruptedException ignored) { }
@@ -107,7 +108,7 @@ public class SelectionCommandRouter {
      */
     private void handleSetCorner(boolean isFirstCorner) {
         if (!selectionState.isEnabled()) {
-            feedback.send("Selection mode is off. Use /" + COMMAND_ROOT + " area-selection first.");
+            feedback.send(Messages.server("server.selection.off", COMMAND_ROOT));
             return;
         }
         // Use the raw double position and floor it so we get the block actually
@@ -122,22 +123,22 @@ public class SelectionCommandRouter {
         Dimension dim = WorldManager.getInstance().getDimension();
         if (isFirstCorner) {
             selectionState.setPos1(pos, dim);
-            feedback.send("pos1 set: " + pos);
+            feedback.send(Messages.server("server.selection.pos1_set", pos));
         } else {
             selectionState.setPos2(pos, dim);
-            feedback.send("pos2 set: " + pos);
+            feedback.send(Messages.server("server.selection.pos2_set", pos));
         }
         if (selectionState.hasCompleteSelection()) {
-            feedback.send("Selection: " + selectionState.toBoundingBox());
+            feedback.send(Messages.server("server.selection.bbox", selectionState.toBoundingBox()));
         }
     }
 
     private void handleFly() {
         boolean nowActive = creativeMode.toggle();
         if (nowActive) {
-            feedback.send("Fly mode ENABLED. You can fly freely; server position is frozen.");
+            feedback.send(Messages.server("server.fly.enabled"));
         } else {
-            feedback.send("Fly mode disabled. Restored game mode.");
+            feedback.send(Messages.server("server.fly.disabled"));
         }
     }
 }

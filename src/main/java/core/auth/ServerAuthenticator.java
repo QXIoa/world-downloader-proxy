@@ -1,6 +1,7 @@
 package core.auth;
 
 
+import core.messages.Messages;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
@@ -29,7 +30,7 @@ public class ServerAuthenticator {
             .asJson();
 
         if (str.getStatus() != 200) {
-            System.out.println("WARNING: Connection attempt by using pretending to be you! Closing connection.");
+            System.out.println(Messages.console("console.proxy.warning_connection"));
             throw new RuntimeException("Server could not authenticate client! " + str.getBody());
         } else {
             devPrint("User identity confirmed with Mojang.");

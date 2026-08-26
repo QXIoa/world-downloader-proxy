@@ -5,6 +5,7 @@ import core.schematic.SelectionCommand;
 
 import version.v26_2.module.VersionAccessors;
 import core.config.Config;
+import core.messages.Messages;
 import version.v26_2.world.WorldManager;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
@@ -95,8 +96,7 @@ public class SelectionParticleRenderer {
 
         boolean logFirstPacket = loggedDiagnostics.compareAndSet(false, true);
         if (logFirstPacket) {
-            System.out.println("[SelectionParticleRenderer] protocol=" + Config.getProtocolVersion()
-                + " flameId=" + flameId + " registryLoaded=" + ParticleRegistry.getInstance().isLoaded());
+            System.out.println(Messages.console("console.particle.protocol", Config.getProtocolVersion(), flameId, ParticleRegistry.getInstance().isLoaded()));
         }
 
         CoordinateDouble3D playerPos = WorldManager.getInstance().getPlayerPosition().toDouble();
@@ -135,8 +135,7 @@ public class SelectionParticleRenderer {
                 for (byte b : raw) {
                     hex.append(String.format("%02X ", b));
                 }
-                System.out.println("[SelectionParticleRenderer] first packet body (" + raw.length
-                    + " bytes, excl. length prefix): " + hex);
+                System.out.println(Messages.console("console.particle.first_body", raw.length, hex));
             }
         }
 
@@ -173,13 +172,13 @@ public class SelectionParticleRenderer {
         }
         StringBuilder sb = new StringBuilder();
         if (p1 != null) {
-            sb.append("Pos1: ").append(p1.getX()).append(' ').append(p1.getY()).append(' ').append(p1.getZ());
+            sb.append(Messages.server("server.selection.particle_pos1", p1.getX(), p1.getY(), p1.getZ()));
         }
         if (p2 != null) {
             if (sb.length() > 0) {
-                sb.append("  |  ");
+                sb.append(Messages.server("server.selection.particle_separator"));
             }
-            sb.append("Pos2: ").append(p2.getX()).append(' ').append(p2.getY()).append(' ').append(p2.getZ());
+            sb.append(Messages.server("server.selection.particle_pos2", p2.getX(), p2.getY(), p2.getZ()));
         }
         feedback.send(sb.toString());
     }

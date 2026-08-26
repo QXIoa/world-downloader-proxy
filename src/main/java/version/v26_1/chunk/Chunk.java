@@ -13,6 +13,7 @@ import version.v26_1.chunk.palette.PaletteType;
 import core.coordinates.Coordinate2D;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
+import core.messages.Messages;
 import version.v26_1.dimension.Dimension;
 import version.v26_1.chunk.BlockEntityRegistry;
 import version.v26_1.registries.RegistryManager;
@@ -176,7 +177,7 @@ public class Chunk extends ChunkEntities implements IChunk {
             updateLight(dataProvider);
         } catch (Exception ex) {
             // seems to happen when there's blocks above 192 under some conditions
-            System.out.println("Issue parse chunk at " + location + ". Cause: " + ex.getMessage());
+            System.out.println(Messages.console("console.chunk.parse_issue", location, ex.getMessage()));
             ex.printStackTrace();
         }
 

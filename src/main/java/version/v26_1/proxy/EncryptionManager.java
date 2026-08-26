@@ -6,6 +6,7 @@ import core.interfaces.IEncryptionManager;
 import static core.util.PrintUtils.devPrintFormat;
 
 import core.config.Config;
+import core.messages.Messages;
 import core.proxy.IExceptionHandler;
 import core.proxy.ConnectionDetails;
 import java.io.IOException;
@@ -112,7 +113,7 @@ public class EncryptionManager implements IEncryptionManager {
             r.run();
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.out.println("Encryption failure! Terminating.");
+            System.out.println(Messages.console("console.proxy.encryption_failure"));
             System.exit(1);
         }
     }
@@ -435,7 +436,7 @@ public class EncryptionManager implements IEncryptionManager {
             this.clientProfileKeyPair = new KeyPair(keyPublic, keyPrivate);
 
             if (!clientProfilePublicKey.equals(keyPublic)) {
-                System.err.println("Provided client key does not match. This may cause issues. Restarting Minecraft might fix this.");
+                System.err.println(Messages.console("console.proxy.key_mismatch"));
             }
         });
     }

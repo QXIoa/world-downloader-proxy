@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import core.interfaces.IChunkImageFactory;
+import core.messages.Messages;
 import version.v26_2.world.WorldManager;
 import version.v26_2.chunk.palette.BlockState;
 import core.chunk.palette.SimpleColor;
@@ -193,7 +194,7 @@ public class ChunkImageFactory implements IChunkImageFactory {
                 format, output, 0, Chunk.SECTION_WIDTH
             );
         } catch (Exception ex) {
-            System.out.println("Unable to draw picture for chunk at " + c.location);
+            System.out.println(Messages.console("console.chunk.unable_draw", c.location));
             ex.printStackTrace();
             clearAdjacentChunks();
         }

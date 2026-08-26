@@ -3,6 +3,7 @@ import core.schematic.SelectionState;
 import core.schematic.SelectionCommand;
 
 import version.v26_2.world.WorldManager;
+import core.messages.Messages;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,7 @@ public class Palette {
         this.palette = new int[1];
         this.registry = GlobalPaletteProvider.getGlobalPalette();
         if (this.registry == null) {
-            System.out.println("No state provider available: GlobalPaletteProvider.getGlobalPalette()");
+            System.out.println(Messages.console("console.world.no_state_provider"));
         }
     }
 

@@ -7,6 +7,7 @@ import static core.util.ExceptionHandling.attempt;
 import core.config.Config;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
+import core.messages.Messages;
 import version.v26_1.dimension.Dimension;
 import se.llbit.nbt.*;
 import version.v26_1.util.NbtUtil;
@@ -114,7 +115,7 @@ public class LevelData {
         if (savingBroken) { return; }
         if (data == null) {
             savingBroken = true;
-            System.err.println("Unable to read in valid 'level.dat' file. Chunks will be saved, but they cannot be opened in-game without manually providing a 'level.dat' file.");
+            System.err.println(Messages.console("console.dimension.level_dat_error"));
             return;
         }
 

@@ -1,6 +1,7 @@
 package core.auth;
 
 import com.google.gson.Gson;
+import core.messages.Messages;
 import java.io.IOException;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
@@ -47,7 +48,7 @@ public class AuthDetails {
             .header("Authorization", "Bearer " + accessToken).asString();
 
         if (!str.isSuccess() || str.getStatus() != 200) {
-            System.err.println("Could not get details from access token'. Status: " + str.getStatus());
+            System.err.println(Messages.console("console.auth.token_failed", str.getStatus()));
             throw new MinecraftAuthenticationException("Cannot get profile.");
         }
         UuidNameResponse res = new Gson().fromJson(str.getBody(), UuidNameResponse.class);
@@ -105,7 +106,7 @@ public class AuthDetails {
     private static UuidNameResponse uuidFromUsername(String username) throws IOException {
         HttpResponse<String> str = Unirest.get(UUID_URL + username).asString();
         if (!str.isSuccess() || str.getStatus() != 200) {
-            System.err.println("Could not get UUID for user '" + username + "'. Status: " + str.getStatus());
+            System.err.println(Messages.console("console.auth.uuid_failed", username, str.getStatus()));
             throw new IOException("Cannot find username");
         }
 

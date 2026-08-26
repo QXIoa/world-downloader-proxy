@@ -3,6 +3,7 @@ package core.auth;
 import core.config.Config;
 
 import core.gui.GuiManager;
+import core.messages.Messages;
 import java.io.IOException;
 import java.util.function.Consumer;
 
@@ -36,7 +37,7 @@ public abstract class AuthDetailsManager {
      * because the other one won't be valid in this case.
      */
     public static AuthDetails loadAuthDetails() throws IOException {
-        GuiManager.setStatusMessage("Getting Minecraft authentication details...");
+        GuiManager.setStatusMessage(Messages.gui("gui.auth.getting_details"));
 
         return switch (Config.getAuthMethod()) {
             case AUTOMATIC -> retrieveDetailsFromProcess();
@@ -73,18 +74,18 @@ public abstract class AuthDetailsManager {
     }
 
     protected void printAuthErrorMessage() {
-        System.err.println("Something went wrong while trying to authenticate your Minecraft account.\n");
+        System.err.println(Messages.console("console.auth.error"));
 
         if (Config.inGuiMode()) {
-            System.err.println("Authentication details are retrieved from the Minecraft game directly. Make sure that the game is running.");
-            System.err.println("If you have a username set in the authentication tab, ensure that it matches the one you are trying to connect with.");
-            System.err.println("If you are in an environment where this does not work, please set the correct username and token in the authentication tab.");
+            System.err.println(Messages.console("console.auth.gui_help1"));
+            System.err.println(Messages.console("console.auth.gui_help2"));
+            System.err.println(Messages.console("console.auth.gui_help3"));
         } else {
-            System.err.println("Authentication details are retrieved from the Minecraft process's launch arguments. The game must be running for this to work.");
-            System.err.println("Alternatively, use options --username and --token to specify the details manually.");
+            System.err.println(Messages.console("console.auth.cli_help1"));
+            System.err.println(Messages.console("console.auth.cli_help2"));
         }
 
-        System.err.println("See https://github.com/mircokroon/minecraft-world-downloader/wiki/Authentication for more details.");
+        System.err.println(Messages.console("console.auth.wiki"));
         System.err.println();
     }
 }

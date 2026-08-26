@@ -5,6 +5,7 @@ import core.schematic.SelectionCommand;
 import core.config.Config;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
+import core.messages.Messages;
 import version.v26_1.world.WorldManager;
 import version.v26_1.packets.DataTypeProvider;
 import se.llbit.nbt.NamedTag;
@@ -97,7 +98,7 @@ public class ChunkFactory {
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.err.println("Chunk could not be parsed!");
+                System.err.println(Messages.console("console.chunk.parse_error"));
                 unparsedChunks.remove(k);
             }
         }

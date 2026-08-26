@@ -12,6 +12,7 @@ import core.coordinates.CoordinateDim2D;
 import core.interfaces.IDimension;
 import core.gui.Bounds;
 import core.gui.ChunkImageState;
+import core.messages.Messages;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -125,7 +126,7 @@ public class RegionImageHandler {
             if (imageHandlerExecutor != null) {
                 attempt(() -> {
                     if (!imageHandlerExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-                        System.out.println("Warning: image handler did not terminate within 10s");
+                        System.out.println(Messages.console("console.world.image_warning"));
                     }
                 });
             }

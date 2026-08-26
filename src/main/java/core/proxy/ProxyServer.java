@@ -3,6 +3,7 @@ package core.proxy;
 import core.NetworkMode;
 import core.interfaces.IConnectionManager;
 import core.interfaces.IDataReader;
+import core.messages.Messages;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,7 +46,7 @@ public class ProxyServer extends Thread {
         setName("Proxy");
         
         String friendlyHost = connectionDetails.getFriendlyHost();
-        System.out.println("Starting proxy for " + friendlyHost + ". Make sure to connect to localhost:" + connectionDetails.getPortLocal() + " instead of the regular server address.");
+        System.out.println(Messages.console("console.proxy.starting", friendlyHost, connectionDetails.getPortLocal()));
 
         // Create a ServerSocket to listen for connections with
         AtomicReference<ServerSocket> ss = new AtomicReference<>();
@@ -72,7 +73,7 @@ public class ProxyServer extends Thread {
 
                 // If the server cannot connect, close client connection
                 attempt(() -> server.set(connectionDetails.getClientSocket()), (ex) -> {
-                    System.err.println("Cannot connect to " + friendlyHost + ". The server may be down or on a different address. (" + ex.getClass().getCanonicalName() + ")");
+                    System.err.println(Messages.console("console.proxy.cannot_connect", friendlyHost, ex.getClass().getCanonicalName()));
                     attempt(client.get()::close);
                 });
 
@@ -93,7 +94,7 @@ public class ProxyServer extends Thread {
                         if (cause != null) {
                             cause.printStackTrace();
                         }
-                        System.out.println("Server probably disconnected. Waiting for new connection...");
+                        System.out.println(Messages.console("console.proxy.server_disconnected"));
                         connectionManager.reset();
                     });
                     // the client closed the connection to us, so close our connection to the server.
@@ -113,7 +114,7 @@ public class ProxyServer extends Thread {
                     if (cause != null) {
                         cause.printStackTrace();
                     }
-                    System.out.println("Client probably disconnected. Waiting for new connection...");
+                    System.out.println(Messages.console("console.proxy.client_disconnected"));
                     connectionManager.reset();
                 });
 

@@ -4,6 +4,7 @@ import core.schematic.SelectionCommand;
 
 import version.v26_2.packets.UUID;
 import core.queue.ByteQueue;
+import core.messages.Messages;
 import version.v26_2.proxy.CompressionManager;
 import se.llbit.nbt.SpecificTag;
 
@@ -50,13 +51,13 @@ public class DebugPacketBuilder extends PacketBuilder {
 
     @Override
     public ByteQueue build() {
-        System.out.println("Packet[" +String.join(" ", parts) + "]");
+        System.out.println(Messages.console("console.packet.debug", String.join(" ", parts)));
         return super.build();
     }
 
     @Override
     public ByteQueue build(CompressionManager compressionManager) {
-        System.out.println("Packet[" +String.join(" ", parts) + "]");
+        System.out.println(Messages.console("console.packet.debug", String.join(" ", parts)));
         return super.build(compressionManager);
     }
 

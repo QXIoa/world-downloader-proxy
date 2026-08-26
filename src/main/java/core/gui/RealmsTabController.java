@@ -45,6 +45,7 @@ public class RealmsTabController {
                 // load tab layout from fxml file
                 attempt(() -> {
                     FXMLLoader loader = new FXMLLoader(RealmsTabController.class.getResource("/ui/RealmItem.fxml"));
+                    loader.setResources(core.messages.Messages.guiBundle());
                     loader.setController(new RealmItemController(realmEntry, settings));
 
                     setGraphic(((Parent) loader.load()).lookup("#item"));

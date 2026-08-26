@@ -4,6 +4,7 @@ import core.schematic.SelectionCommand;
 
 import core.interfaces.IChunkBinary;
 import core.config.Config;
+import core.messages.Messages;
 import version.v26_2.world.WorldManager;
 import core.coordinates.CoordinateDim2D;
 import version.v26_2.region.McaFile;
@@ -66,7 +67,7 @@ public class ChunkBinary implements Serializable, IChunkBinary {
         try {
             nbt.write(new DataOutputStream(output));
         } catch (Exception ex) {
-            System.err.println("Unable to write chunk " + chunk.location.getX() + ", " + chunk.location.getZ());
+            System.err.println(Messages.console("console.chunk.unable_write", chunk.location.getX(), chunk.location.getZ()));
             ex.printStackTrace();
             return null;
         }

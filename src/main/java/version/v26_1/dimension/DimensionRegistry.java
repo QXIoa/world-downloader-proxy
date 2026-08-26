@@ -6,6 +6,7 @@ import version.v26_1.dimension.Dimension;
 import core.interfaces.IDimensionRegistry;
 import com.google.gson.*;
 import core.config.Config;
+import core.messages.Messages;
 import version.v26_1.chunk.palette.Registry;
 import java.util.List;
 import version.v26_1.packets.DataTypeProvider;
@@ -120,7 +121,7 @@ public class DimensionRegistry implements IDimensionRegistry {
         var dim = dimensions.get(name);
 
         if (dim == null) {
-            System.out.println("Warning: Dimension " + name + " not found, using overworld");
+            System.out.println(Messages.console("console.dimension.not_found", name));
             return Dimension.OVERWORLD;
         }
 

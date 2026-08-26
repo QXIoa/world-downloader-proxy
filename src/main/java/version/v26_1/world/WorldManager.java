@@ -30,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import core.config.Config;
+import core.messages.Messages;
 import version.v26_1.chunk.Chunk;
 import version.v26_1.chunk.ChunkBinary;
 import version.v26_1.chunk.ChunkEntities;
@@ -447,7 +448,7 @@ public class WorldManager implements IWorldManager {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Could not write dimension codec. Custom dimensions may not work properly.");
+            System.err.println(Messages.console("console.dimension.codec_error"));
         }
     }
 
@@ -468,11 +469,11 @@ public class WorldManager implements IWorldManager {
         }
 
         if (savingDimension.contains(dimension)) {
-            System.out.println("Dimension " + dimension + " already being saved");
+            System.out.println(Messages.console("console.dimension.already_saving", dimension));
             if (saveService != null) {
                 attempt(() -> {
                     if (!saveService.awaitTermination(30, TimeUnit.SECONDS)) {
-                        System.out.println("Warning: save service did not terminate within 30s");
+                        System.out.println(Messages.console("console.world.save_warning"));
                     }
                 });
             }
@@ -545,12 +546,12 @@ public class WorldManager implements IWorldManager {
 
     public void pauseSaving() {
         isPaused = true;
-        System.out.println("Pausing");
+        System.out.println(Messages.console("console.world.pausing"));
     }
 
     public void resumeSaving() {
         isPaused = false;
-        System.out.println("Resuming");
+        System.out.println(Messages.console("console.world.resuming"));
     }
 
     public void deleteAllExisting() {
@@ -564,7 +565,7 @@ public class WorldManager implements IWorldManager {
                 FileUtils.cleanDirectory(dir);
             }
         } catch (IOException ex) {
-            System.out.println("Could not delete region files. Reason: " + ex.getMessage());
+            System.out.println(Messages.console("console.world.delete_regions_failed", ex.getMessage()));
         }
 
         GuiManager.clearChunks();

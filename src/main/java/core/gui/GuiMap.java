@@ -3,6 +3,7 @@ package core.gui;
 import core.interfaces.IChunk;
 import core.config.Config;
 import core.interfaces.IChunkImageFactory;
+import core.messages.Messages;
 import core.coordinates.Coordinate2D;
 import core.coordinates.CoordinateDim2D;
 import core.coordinates.CoordinateDouble2D;
@@ -140,7 +141,7 @@ public class GuiMap {
         entityCanvas.setOnMouseEntered(e -> {
             mouseOver = true;
             if (playerHasConnected && !showErrorPrompt) {
-                helpLabel.setText("Right-click to open context menu. Scroll or +/- to zoom. Drag to pan. Shift-click to measure distance.");
+                helpLabel.setText(Messages.gui("gui.map.help"));
             }
         });
         entityCanvas.setOnMouseMoved(e -> {
@@ -433,7 +434,7 @@ public class GuiMap {
 
     private void updateStatusPrompt() {
         if (this.showErrorPrompt) {
-            this.statusLabel.setText("An error has occured. 'Right click' -> 'Settings' to view.");
+            this.statusLabel.setText(Messages.gui("gui.map.error"));
             this.statusLabel.setStyle("-fx-text-fill: red;");
         } else {
             this.statusLabel.setText(statusMessage);

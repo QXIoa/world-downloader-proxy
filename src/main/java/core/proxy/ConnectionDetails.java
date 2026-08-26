@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import core.messages.Messages;
+
 import static core.util.ExceptionHandling.attempt;
 
 public class ConnectionDetails {
@@ -61,7 +63,7 @@ public class ConnectionDetails {
     }
 
     public String getConnectionHint() {
-        return "Connect to address localhost:" + portLocal + " to start downloading.";
+        return Messages.gui("gui.connection.hint", portLocal);
     }
 
 

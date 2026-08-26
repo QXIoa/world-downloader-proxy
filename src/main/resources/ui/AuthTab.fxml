@@ -18,13 +18,13 @@
          <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="67.0" />
          <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="149.0" />
         </rowConstraints>
-        <Button fx:id="checkButton" mnemonicParsing="false" onAction="#checkButtonPressed" prefHeight="27.0" prefWidth="220.0" text="Check authentication status" GridPane.columnIndex="3" />
+        <Button fx:id="checkButton" mnemonicParsing="false" onAction="#checkButtonPressed" prefHeight="27.0" prefWidth="220.0" text="%gui.auth_tab.check_status" GridPane.columnIndex="3" />
       <VBox fx:id="radioContainer" prefHeight="89.0" prefWidth="167.0" GridPane.columnIndex="1" GridPane.rowSpan="2">
          <GridPane.margin>
             <Insets top="5.0" />
          </GridPane.margin>
          <children>
-            <Label text="Authentication method" />
+            <Label text="%gui.auth_tab.method" />
          </children></VBox>
         <Pane fx:id="manualAuthPane" prefHeight="150.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="2">
          <children>
@@ -38,9 +38,9 @@
                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Hyperlink fx:id="infoLink" prefHeight="23.0" prefWidth="156.0" text="More information" textAlignment="RIGHT" GridPane.columnIndex="1" />
-                  <TextField fx:id="accessToken" promptText="Access Token" GridPane.columnSpan="2" GridPane.rowIndex="1" />
-                  <Label text="Access Token" GridPane.rowIndex="0" />
+                  <Hyperlink fx:id="infoLink" prefHeight="23.0" prefWidth="156.0" text="%gui.auth_tab.more_info" textAlignment="RIGHT" GridPane.columnIndex="1" />
+                  <TextField fx:id="accessToken" promptText="%gui.auth_tab.access_token" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                  <Label text="%gui.auth_tab.access_token" GridPane.rowIndex="0" />
                </children>
             </GridPane>
          </children>
@@ -57,15 +57,15 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                     <children>
-                        <TextField fx:id="linkCopyField" editable="false" promptText="Link" GridPane.columnSpan="2" GridPane.rowIndex="1" />
-                        <Label text="Copy this link into your browser:" GridPane.rowIndex="0" />
+                        <TextField fx:id="linkCopyField" editable="false" promptText="%gui.auth_tab.link_prompt" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                        <Label text="%gui.auth_tab.copy_link" GridPane.rowIndex="0" />
                     </children>
                 </GridPane>
             </children>
         </Pane>
       <Pane fx:id="msAuthPane" prefHeight="101.0" prefWidth="467.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2">
          <children>
-              <Button fx:id="microsoftAuthButton" layoutY="15.0" mnemonicParsing="false" onAction="#msAuthPressed" prefHeight="27.0" prefWidth="220.0" text="Microsoft login" />
+              <Button fx:id="microsoftAuthButton" layoutY="15.0" mnemonicParsing="false" onAction="#msAuthPressed" prefHeight="27.0" prefWidth="220.0" text="%gui.settings.microsoft_login" />
          </children>
       </Pane>
       <Label fx:id="statusText" alignment="TOP_LEFT" prefHeight="249.0" prefWidth="245.0" text="" wrapText="true" GridPane.columnIndex="3" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.rowSpan="2" GridPane.vgrow="ALWAYS">
@@ -74,7 +74,7 @@
          </GridPane.margin></Label>
       <Pane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="3">
          <children>
-            <Label fx:id="authFailedLabel" layoutY="6.0" styleClass="label-err" text="Authentication was not successful, try using a different method." />
+            <Label fx:id="authFailedLabel" layoutY="6.0" styleClass="label-err" text="%gui.auth_tab.failed" />
          </children>
       </Pane>
     </GridPane>
