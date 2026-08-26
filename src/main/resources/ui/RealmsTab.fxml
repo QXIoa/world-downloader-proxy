@@ -5,7 +5,7 @@
 
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="gui.RealmsTabController"
+            fx:controller="core.gui.RealmsTabController"
             prefHeight="340.0" prefWidth="600.0">
         <GridPane layoutX="11.0" layoutY="10.0" prefHeight="187.0" prefWidth="579.0">
                 <columnConstraints>

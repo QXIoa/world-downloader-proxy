@@ -1,0 +1,18 @@
+package version.v26_1.chunk.palette;
+import core.schematic.SelectionState;
+import core.schematic.SelectionCommand;
+
+import se.llbit.nbt.SpecificTag;
+
+/**
+ * Interface for data source of palettes.
+ */
+public interface Registry {
+    State getState(int i);
+
+    State getState(SpecificTag nbt);
+
+    int getStateId(SpecificTag nbt);
+
+    State getDefaultState();
+}

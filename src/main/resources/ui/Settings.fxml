@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import gui.components.*?>
+<?import core.gui.components.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="264.0" prefWidth="590.0" stylesheets="/ui/dark.css" xmlns="http://javafx.com/javafx/1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.GuiSettings">
+<AnchorPane prefHeight="264.0" prefWidth="590.0" stylesheets="/ui/dark.css" xmlns="http://javafx.com/javafx/1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="core.gui.GuiSettings">
     <TabPane fx:id="tabPane" prefHeight="264.0" prefWidth="590.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="Connection">
             <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="215.0" prefWidth="620.0">

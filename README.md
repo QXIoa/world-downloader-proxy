@@ -39,7 +39,7 @@ Instead of connecting to the server directly, connect to `localhost` in Minecraf
 ### Requirements
 
 - Java 25 or higher
-- Minecraft 1.12.2+ / 1.13.2+ / 1.14.1+ / 1.15.2+ / 1.16.2+ / 1.17+ / 1.18+ / 1.19.3+ / 1.20+ / 1.21+ / 26.1+ / 26.2+
+- Minecraft 26.1+ (26.1 and 26.2 supported)
 - For Minecraft **26.1+** servers: a **Java 25+** JDK must be installed somewhere on your system. Minecraft's `server.jar` is used to generate that version's block/item data; the downloader detects and uses it automatically on first connect.
 
 ### Command-line

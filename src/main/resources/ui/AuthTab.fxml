@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="340.0" prefWidth="578.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.AuthTabController">
+<AnchorPane prefHeight="340.0" prefWidth="578.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="core.gui.AuthTabController">
     <GridPane layoutX="11.0" layoutY="8.0" prefHeight="305.0" prefWidth="565.0">
         <columnConstraints>
             <ColumnConstraints maxWidth="101.0" minWidth="98.0" prefWidth="98.0" />

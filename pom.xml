@@ -75,13 +75,18 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <minimizeJar>true</minimizeJar>
+                    <minimizeJar>false</minimizeJar>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
                             <excludes>
-                                <exclude>META-INF/**</exclude>
+                                <exclude>META-INF/*</exclude>
                                 <exclude>module-info.class</exclude>
+                                <!-- dnsjava ships a Java 21+ InetAddressResolverProvider SPI in a
+                                     multi-release jar (META-INF/versions/21/...). Shade doesn't flatten
+                                     MRJARs so the class isn't at the base path and ServiceLoader fails.
+                                     We don't need custom DNS resolution — the JDK default is fine. -->
+                                <exclude>META-INF/services/java.net.spi.InetAddressResolverProvider</exclude>
                             </excludes>
                         </filter>
                         <filter>
@@ -101,8 +106,9 @@
                     </filters>
                     <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>Launcher</mainClass>
+                            <mainClass>core.Launcher</mainClass>
                         </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                     </transformers>
                     <finalName>world-downloader-proxy-${project.version}-${jar.suffix}</finalName>
                 </configuration>
@@ -147,14 +153,14 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.18.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <version>3.18.0</version>
         </dependency>
 
         <dependency>
@@ -167,6 +173,13 @@
             <groupId>com.konghq</groupId>
             <artifactId>unirest-java</artifactId>
             <version>3.13.8</version>
+        </dependency>
+
+        <!-- Override transitive commons-codec from unirest to fix WS-2019-0379 -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.18.0</version>
         </dependency>
 
         <dependency>

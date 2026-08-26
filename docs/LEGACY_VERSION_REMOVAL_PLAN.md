@@ -321,9 +321,36 @@ Krótka instrukcja "on-boarding", którą warto potem przenieść też do `READM
       `PlayerInfoUpdate`, `StartConfiguration`, `RegistryData` w formie per-registry z 1.20.6).
       Usunięto 10 plików `*_1_XX` oraz pusty katalog `packets/handler/version/`. Martwe importy
       handlerów w `PacketBuilder` usunięte.
-- [ ] Faza 6: rozproszone `isAtLeast`/`Version.V1_*` (4.5)
-- [ ] Faza 7: RegistryLoader + zasoby 1.12.2/1.13.2 + Forge 1.12
-- [ ] Faza 8: przycięcie `Version` enum + `protocol-versions.json`
-- [ ] Faza 9: zasoby/testy
-- [ ] Faza 10: dokumentacja (README, help CLI)
-- [ ] Faza 11: finalny przegląd + `mvn clean package`
+- [x] Faza 6: rozproszone `isAtLeast`/`Version.V1_*` (4.5) —
+      zweryfikowane ponownie: brak `isAtLeast(Version.V1_*)` w kodzie (tylko komentarze
+      dokumentacyjne). Pozostały tylko realne sprawdzenia 26.x: `isAtLeast(Version.V26_2)` w
+      `ParticleRegistry` (flame id 32 vs 39) oraz infrastruktura `VersionReporter.isAtLeast`/`select`.
+- [x] Faza 7: RegistryLoader + zasoby 1.12.2/1.13.2 + Forge 1.12 —
+      zweryfikowane ponownie: `RegistryLoader` oczyszczone (brak 1.12.2/1.13.2/versionSupports),
+      legacy JSON usunięte (blocks/entities/items-1.12.2/1.13.2.json), Forge usunięte
+      (ForgeRegistryHandler, PluginChannelHandler1_12, modded/), chunk NBT modifier usunięte
+      (registerNbtModifier/chunkNbtModifiers), level data modifier usunięte
+      (registerLevelDataModifier/levelDataModifiers). `Config.setProtocolVersion` ustawia
+      `dataVersion`/`gameVersion`. `PaletteTransformerTest` używa realny `Config`.
+- [x] Faza 8: przycięcie `Version` enum + `protocol-versions.json` —
+      `Version` enum przycięty do `V26_1(775,4786)`, `V26_2(776,4903)`, `ANY(0,0)`. Usunięto 15
+      starych wpisów (`V1_12`..`V1_21_4`). `protocol-versions.json` przycięty z 907 do 124 linii
+      (tylko `775`/`776`). `ProtocolVersionHandlerTest` zaktualizowany (tylko 775/776).
+      `ConfigTest` zaktualizowany (literały 317/769 zamiast `Version.V1_12`/`V1_21_4`).
+- [x] Faza 9: zasoby/testy —
+      Zasoby główne: `block-colors.json`, `level.dat`, `pack.mcmeta`, `protocol-versions.json`,
+      `ui/`, `version.txt`, `world-gen-settings-1.19.dat` — wszystkie używane przez 26.x.
+      `world-gen-settings-1.19.dat` to template dla world gen settings (format stabilny od 1.19
+      do 26.x, komentarz w `LevelData` potwierdza). Zasoby testowe: tylko `chunkdata_26_1` i
+      `chunkdata_26_2`. Brak starych zasobów/testów do usunięcia. Komentarze historyczne w kodzie
+      (np. "1.18+ format", "1.16+ layout") zostawione jako dokumentacja kontekstowa.
+- [x] Faza 10: dokumentacja (README, help CLI) —
+      README.md: sekcja "Requirements" zaktualizowana z "1.12.2+ / 1.13.2+ / ... / 26.1+ / 26.2+"
+      na "Minecraft 26.1+ (26.1 and 26.2 supported)". Brak innych referencji do starych wersji
+      w GUI/Launcher.
+- [x] Faza 11: finalny przegląd + `mvn clean package` —
+      `mvn clean package` BUILD SUCCESS. JAR (12MB arm64) zawiera tylko zasoby 26.x:
+      `protocol-versions.json` (tylko 775/776), `block-colors.json`, `level.dat`,
+      `pack.mcmeta`, `world-gen-settings-1.19.dat`, `ui/`. Brak legacy resources
+      (blocks-1.12.2.json, entities-1.12.2.json, items-1.12.2.json, Forge, PluginChannelHandler1_12).
+      93 testy przechodzą.
