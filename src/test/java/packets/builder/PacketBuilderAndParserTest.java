@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import packets.DataTypeProvider;
 import packets.UUID;
 import packets.lib.ByteQueue;
-import packets.version.DataTypeProvider_1_13;
-import packets.version.DataTypeProvider_1_14;
 import se.llbit.nbt.*;
 
 import java.util.Arrays;
@@ -40,7 +38,7 @@ public class PacketBuilderAndParserTest {
         byte[] arr = new byte[built.size()];
         built.copyTo(arr);
 
-        parser = new DataTypeProvider_1_14(arr);
+        parser = new DataTypeProvider(arr);
         int length = parser.readVarInt();
         assertThat(length).isGreaterThan(0);
 
@@ -147,7 +145,7 @@ public class PacketBuilderAndParserTest {
         CompoundTag before = new CompoundTag();
         before.add("someKey", new IntTag(30));
 
-        builder.writeNbt(before);
+        builder.writeNbtDirect(before);
 
         assertThat(getParser().readNbtTag()).isEqualTo(before);
     }
@@ -160,7 +158,7 @@ public class PacketBuilderAndParserTest {
                 new StringTag("c")
         ));
 
-        builder.writeNbt(before);
+        builder.writeNbtDirect(before);
 
         assertThat(getParser().readNbtTag()).isEqualTo(before);
     }

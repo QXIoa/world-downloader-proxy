@@ -1,19 +1,10 @@
 package packets;
 
-import config.Config;
-import config.Option;
-import config.Version;
 import game.data.coordinates.Coordinate3D;
 import game.data.container.Slot;
-import game.data.container.Slot_1_12;
 import game.data.coordinates.CoordinateDouble3D;
 import java.util.Optional;
 import java.util.function.Supplier;
-import packets.version.DataTypeProvider_1_13;
-import packets.version.DataTypeProvider_1_14;
-import packets.version.DataTypeProvider_1_20_2;
-import packets.version.DataTypeProvider_1_20_6;
-import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.SpecificTag;
 
 import java.io.DataInputStream;
@@ -29,6 +20,11 @@ import se.llbit.nbt.Tag;
 /**
  * Class to provide an interface between the raw byte data and the various data types. Most methods are
  * self-explanatory.
+ *
+ * <p>If a future Minecraft version changes one of the wire formats read here again, add a subclass
+ * overriding just the affected method(s) (and {@link #ofLength}) and pick it in {@link #ofPacket}, the
+ * same pattern used before this class was flattened down to a single (26.x) implementation (see the git
+ * history of this class, and docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
  */
 public class DataTypeProvider {
     private static final int MAX_SHORT_VAL = 1 << 15;
@@ -56,13 +52,7 @@ public class DataTypeProvider {
     }
 
     public static DataTypeProvider ofPacket(byte[] finalFullPacket) {
-        return Config.versionReporter().select(DataTypeProvider.class,
-                Option.of(Version.V1_20_6, () -> new DataTypeProvider_1_20_6(finalFullPacket)),
-                Option.of(Version.V1_20_2, () -> new DataTypeProvider_1_20_2(finalFullPacket)),
-                Option.of(Version.V1_14, () -> new DataTypeProvider_1_14(finalFullPacket)),
-                Option.of(Version.V1_13, () -> new DataTypeProvider_1_13(finalFullPacket)),
-                Option.of(Version.ANY, () -> new DataTypeProvider(finalFullPacket))
-        );
+        return new DataTypeProvider(finalFullPacket);
     }
 
     public DataTypeProvider ofLength(int length) {
@@ -153,15 +143,10 @@ public class DataTypeProvider {
     }
 
     public Coordinate3D readCoordinates() {
-        long var = readLong();
-        int mask = 0x3FFFFFF;
-        int x = (int) (var >> 38) & mask;
-        int y = (int) (var >> 26) & 0xFFF;
-        int z = (int) var & mask;
-
-        if (x >= 1 << 25) { x -= 1 << 26; }
-        if (y >= 1 << 11) { y -= 1 << 12; }
-        if (z >= 1 << 25) { z -= 1 << 26; }
+        long val = readLong();
+        int x = (int) (val >> 38);
+        int y = (int) (val & 0xFFF) << 20 >> 20;
+        int z = (int) ((val << 26) >> 38);
 
         return new Coordinate3D(x, y, z);
     }
@@ -220,7 +205,7 @@ public class DataTypeProvider {
 
     public SpecificTag readNbtTag() {
         try {
-            return (SpecificTag) NamedTag.read(new DataInputStream(new InputStream() {
+            return (SpecificTag) SpecificTag.read(readNext(), new DataInputStream(new InputStream() {
                 @Override
                 public int read() {
                     return readNext() & 0xFF;
@@ -279,17 +264,14 @@ public class DataTypeProvider {
         return slots;
     }
 
-    /**
-     * 1.12 version for slot reading, slightly different from 1.13+
-     */
     public Slot readSlot() {
-        int itemId = readShort();
+        int count = readVarInt();
 
-        if (itemId == -1) {
-            return null;
+        // TODO: handle 1.20.6+ item components
+        if (count > 0) {
+            return new Slot(readVarInt(), (byte) count, null);
         }
-
-        return new Slot_1_12(itemId, readNext(), readShort(), readNbtTag());
+        return null;
     }
 
     public static int readOptVarInt(DataTypeProvider provider) {

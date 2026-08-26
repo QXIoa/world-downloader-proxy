@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.within;
 import org.junit.jupiter.api.Test;
 import packets.builder.PacketBuilder;
 import packets.lib.ByteQueue;
-import packets.version.DataTypeProvider_1_14;
 
 class LpVec3Test {
 
@@ -18,7 +17,7 @@ class LpVec3Test {
         ByteQueue built = builder.build();
         byte[] arr = new byte[built.size()];
         built.copyTo(arr);
-        DataTypeProvider provider = new DataTypeProvider_1_14(arr);
+        DataTypeProvider provider = new DataTypeProvider(arr);
         provider.readVarInt(); // packet length
         provider.readVarInt(); // packet id
         return provider;

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import packets.DataTypeProvider;
 import packets.builder.PacketBuilder;
 import packets.lib.ByteQueue;
-import packets.version.DataTypeProvider_1_14;
 
 class SelectionInputInterceptorTest {
     private SelectionState state;
@@ -60,7 +59,7 @@ class SelectionInputInterceptorTest {
         ByteQueue built = builder.build();
         byte[] arr = new byte[built.size()];
         built.copyTo(arr);
-        DataTypeProvider provider = new DataTypeProvider_1_14(arr);
+        DataTypeProvider provider = new DataTypeProvider(arr);
         provider.readVarInt(); // packet length
         provider.readVarInt(); // packet id
         return provider;
