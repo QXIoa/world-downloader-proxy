@@ -1,26 +1,41 @@
 package packets.handler;
 
-import java.util.HashMap;
-import java.util.Map;
+import static packets.builder.NetworkType.BOOL;
+import static packets.builder.NetworkType.INT;
+import static packets.builder.NetworkType.VARINT;
 
 import config.Config;
-import config.Option;
-import config.Version;
+import game.NetworkMode;
 import game.data.WorldManager;
 import game.data.coordinates.Coordinate3D;
 import game.data.coordinates.CoordinateDim2D;
-import game.data.dimension.Dimension;
 import game.data.entity.EntityRegistry;
 import game.data.entity.MobEntity;
 import game.data.entity.ObjectEntity;
-import packets.handler.version.*;
+import game.data.registries.RegistryManager;
+import java.util.HashMap;
+import java.util.Map;
+import packets.DataTypeProvider;
+import packets.builder.PacketBuilder;
 import packets.handler.plugins.PluginChannelHandler;
 import proxy.ConnectionManager;
 import schematic.CommandTreeInjector;
 import schematic.CreativeMode;
 import schematic.CreativeModeRegistry;
+import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.SpecificTag;
+import se.llbit.nbt.StringTag;
 
+/**
+ * Handles client-bound game packets for the supported Minecraft versions (26.x).
+ *
+ * <p>This is the single (flattened) implementation, previously reached through the
+ * {@code ClientBoundGamePacketHandler_1_14 -> _1_16 -> _1_17 -> _1_18 -> _1_19 -> _1_20_2 ->
+ * _1_20_6} inheritance chain. The effective 26.x operators are registered directly in the
+ * constructor. The class is non-final and {@link #getOperators()} returns a mutable map, so a
+ * future Minecraft version can add a subclass overriding individual operators (see
+ * docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
+ */
 public class ClientBoundGamePacketHandler extends PacketHandler {
     private final HashMap<String, PacketOperator> operations = new HashMap<>();
     public ClientBoundGamePacketHandler(ConnectionManager connectionManager) {
@@ -78,23 +93,47 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
         });
 
         operations.put("Login", provider -> {
-            provider.readInt();
-            provider.readNext();
-            int dimensionEnum = provider.readInt();
+            PacketBuilder replacement = new PacketBuilder(Config.versionReporter().getProtocol().clientBound("Login"));
 
-            worldManager.setDimension(Dimension.fromId(dimensionEnum));
+            replacement.copy(provider, INT, BOOL); /* playerId, hardcore */
 
-            return true;
+            int numLevels = provider.readVarInt();
+            String[] levels = provider.readStringArray(numLevels);
+
+            replacement.writeVarInt(numLevels);
+            replacement.writeStringArray(levels);
+
+            replacement.copy(provider, VARINT); /* maxPlayers */
+
+            // extend view distance communicated to the client to the given value
+            int viewDist = provider.readVarInt();
+            replacement.writeVarInt(Math.max(viewDist, Config.getExtendedRenderDistance()));
+
+            replacement.copy(provider, VARINT, BOOL, BOOL, BOOL); /* simulationDist, reducedDebug, showDeathScreen, limitedCrafting */
+
+            commonInfo(provider, replacement);
+
+            getConnectionManager().getEncryptionManager().sendImmediately(replacement);
+            return false;
         });
 
         operations.put("Respawn", provider -> {
-            int dimensionEnum = provider.readInt();
-            worldManager.setDimension(Dimension.fromId(dimensionEnum));
-            worldManager.getEntityRegistry().reset();
+            commonInfo(provider, null);
+
             return true;
         });
 
         operations.put("LevelChunk", provider -> {
+            try {
+                worldManager.getChunkFactory().addChunk(provider);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            return true;
+        });
+
+        // 1.18+ embeds light in the chunk packet itself
+        operations.put("LevelChunkWithLight", provider -> {
             try {
                 worldManager.getChunkFactory().addChunk(provider);
             } catch (Exception ex) {
@@ -114,9 +153,8 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
             return true;
         });
         operations.put("SectionBlocksUpdate", provider -> {
-            int x = provider.readInt();
-            int z = provider.readInt();
-            worldManager.multiBlockChange(new Coordinate3D(x, 0, z), provider);
+            Coordinate3D pos = provider.readSectionCoordinates();
+            WorldManager.getInstance().multiBlockChange(pos, provider);
 
             return true;
         });
@@ -132,19 +170,20 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
             byte action = provider.readNext();
             SpecificTag entityData = provider.readNbtTag();
 
+            if (entityData instanceof CompoundTag entity) {
+                entity.add("id", new StringTag(RegistryManager.getInstance().getBlockEntityRegistry().getBlockEntityName(action)));
+            }
             worldManager.getChunkFactory().updateTileEntity(position, entityData);
             return true;
         });
 
         operations.put("OpenScreen", provider -> {
             int windowId = provider.readNext();
-            String windowType = provider.readString();
+
+            int windowType = provider.readVarInt();
             String windowTitle = provider.readChat();
 
-            int numSlots = provider.readNext() & 0xFF;
-
-            worldManager.getContainerManager().openWindow_1_12(windowId, numSlots, windowTitle);
-
+            WorldManager.getInstance().getContainerManager().openWindow(windowId, windowType, windowTitle);
             return true;
         });
         operations.put("ContainerClose", provider -> {
@@ -157,8 +196,9 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
         operations.put("ContainerSetContent", provider -> {
             int windowId = provider.readNext();
 
-            int count = provider.readShort();
-            worldManager.getContainerManager().items(windowId, count, provider);
+            int stateId = provider.readVarInt();
+            int count = provider.readVarInt();
+            WorldManager.getInstance().getContainerManager().items(windowId, count, provider);
 
             return true;
         });
@@ -181,6 +221,16 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
 
         operations.put("DeclareCommands", provider -> {
             return new CommandTreeInjector().process(provider);
+        });
+
+        operations.put("PlayerInfoUpdate", provider -> {
+            entityRegistry.updatePlayerAction(provider);
+            return true;
+        });
+
+        operations.put("StartConfiguration", dataTypeProvider -> {
+            getConnectionManager().setMode(NetworkMode.CONFIGURATION);
+            return true;
         });
 
         // Track the player's game mode from the server's GameEvent packets so CreativeMode
@@ -218,18 +268,28 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
         });
     }
 
+    /**
+     * Read the trailing dimension type/name from a Login or Respawn packet, set the active
+     * dimension + dimension type on the world manager, and (when {@code replacement != null})
+     * copy them plus the remainder of the packet into the rebuilt Login packet.
+     */
+    private void commonInfo(DataTypeProvider provider, PacketBuilder replacement) {
+        int dimensionType = provider.readVarInt();
+        String dimensionName = provider.readString();
+
+        WorldManager world = WorldManager.getInstance();
+        world.setDimension(world.getDimensionRegistry().getDimension(dimensionName));
+        world.setDimensionType(world.getDimensionRegistry().getDimensionType(dimensionType));
+
+        if (replacement != null) {
+            replacement.writeVarInt(dimensionType);
+            replacement.writeString(dimensionName);
+            replacement.copyRemainder(provider);
+        }
+    }
+
     public static PacketHandler of(ConnectionManager connectionManager) {
-        return Config.versionReporter().select(PacketHandler.class,
-                Option.of(Version.V1_20_6, () -> new ClientBoundGamePacketHandler_1_20_6(connectionManager)),
-                Option.of(Version.V1_20_2, () -> new ClientBoundGamePacketHandler_1_20_2(connectionManager)),
-                Option.of(Version.V1_19, () -> new ClientBoundGamePacketHandler_1_19(connectionManager)),
-                Option.of(Version.V1_18, () -> new ClientBoundGamePacketHandler_1_18(connectionManager)),
-                Option.of(Version.V1_17, () -> new ClientBoundGamePacketHandler_1_17(connectionManager)),
-                Option.of(Version.V1_16, () -> new ClientBoundGamePacketHandler_1_16(connectionManager)),
-                Option.of(Version.V1_15, () -> new ClientBoundGamePacketHandler_1_15(connectionManager)),
-                Option.of(Version.V1_14, () -> new ClientBoundGamePacketHandler_1_14(connectionManager)),
-                Option.of(Version.ANY, () -> new ClientBoundGamePacketHandler(connectionManager))
-        );
+        return new ClientBoundGamePacketHandler(connectionManager);
     }
 
     @Override

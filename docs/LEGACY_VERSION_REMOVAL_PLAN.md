@@ -312,7 +312,15 @@ Krótka instrukcja "on-boarding", którą warto potem przenieść też do `READM
       (`parse`, `parseHeightMaps`, `writeHeightMaps`, `readChunkColumn`, `createNewChunkSection`,
       `parseSection`, `toPacket`, `toNbt`, `addLevelNbtTags`, `updateLight`, `getLocationEncoder`,
       `write`) zachowane jako protected/non-final.
-- [ ] Faza 5: Packet handlery (Game/Configuration)
+- [x] Faza 5: Packet handlery (Game/Configuration) — łańcuchy
+      `ClientBoundGamePacketHandler_1_14→…→_1_20_6` i warianty `ClientBoundConfigurationPacketHandler_1_20_2/_1_20_6`
+      spłaszczone do pojedynczych klas bazowych. `of()` zwraca bezpośrednio `new XHandler(...)`.
+      Efektywne operatory 26.x zarejestrowane w konstruktorze (Login/Respawn z `commonInfo`,
+      `LevelChunkWithLight`, `BlockEntityData` z id z rejestru, `SectionBlocksUpdate` z
+      `readSectionCoordinates`, `ContainerSetContent` ze stateId, `OpenScreen` z VarInt,
+      `PlayerInfoUpdate`, `StartConfiguration`, `RegistryData` w formie per-registry z 1.20.6).
+      Usunięto 10 plików `*_1_XX` oraz pusty katalog `packets/handler/version/`. Martwe importy
+      handlerów w `PacketBuilder` usunięte.
 - [ ] Faza 6: rozproszone `isAtLeast`/`Version.V1_*` (4.5)
 - [ ] Faza 7: RegistryLoader + zasoby 1.12.2/1.13.2 + Forge 1.12
 - [ ] Faza 8: przycięcie `Version` enum + `protocol-versions.json`
