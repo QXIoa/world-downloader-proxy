@@ -40,11 +40,6 @@ import java.util.stream.Collectors;
  * docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
  */
 public class Chunk extends ChunkEntities {
-    private static final List<BiConsumer<Chunk, Tag>> chunkNbtModifiers = new ArrayList<>();
-    public static void registerNbtModifier(BiConsumer<Chunk, Tag> fn) {
-        chunkNbtModifiers.add(fn);
-    }
-
     public static final int SECTION_HEIGHT = 16;
     public static final int SECTION_WIDTH = 16;
     protected static final int LIGHT_SIZE = 2048;

@@ -19,19 +19,6 @@ public class EntityNames {
     }
 
     /**
-     * Read entity names from the json file of the current version
-     */
-    public static EntityNames fromJson(String version) {
-        String file = "entities-" + version + ".json";
-        InputStream input = EntityNames.class.getClassLoader().getResourceAsStream(file);
-
-        // if the file doesn't exist, there is no palette for this version.
-        if (input == null) { return new EntityNames(); }
-
-        return new Gson().fromJson(new InputStreamReader(input), EntityNames.class);
-    }
-
-    /**
      * Read entity names from auto-generated registries file
      */
     public static EntityNames fromRegistry(InputStream input) {

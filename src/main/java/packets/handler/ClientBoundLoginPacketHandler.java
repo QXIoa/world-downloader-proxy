@@ -1,9 +1,5 @@
 package packets.handler;
 
-import config.Config;
-import config.Option;
-import config.Version;
-import game.NetworkMode;
 import proxy.ConnectionManager;
 
 import java.util.HashMap;
@@ -25,27 +21,23 @@ public class ClientBoundLoginPacketHandler extends PacketHandler {
             byte[] pubKey = provider.readByteArray(provider.readVarInt());
             byte[] nonce = provider.readByteArray(provider.readVarInt());
 
-            if (Config.versionReporter().isAtLeast(Version.V1_20_6)) {
-                boolean shouldAuthenticate = provider.readBoolean();
-                getConnectionManager().getEncryptionManager().setServerEncryptionRequest(pubKey, nonce, serverId, shouldAuthenticate);
-            } else {
-                getConnectionManager().getEncryptionManager().setServerEncryptionRequest(pubKey, nonce, serverId);
-            }
+            // 1.20.6+ includes an explicit "should authenticate" boolean; that's the only layout
+            // used by the supported versions (26.x).
+            boolean shouldAuthenticate = provider.readBoolean();
+            getConnectionManager().getEncryptionManager().setServerEncryptionRequest(pubKey, nonce, serverId, shouldAuthenticate);
 
             return false;
         });
         operations.put("GameProfile", provider -> {
-            String uuid = Config.versionReporter().select(String.class,
-                    Option.of(Version.V1_16, () -> provider.readUUID().toString()),
-                    Option.of(Version.ANY, provider::readString)
-            );
+            // 1.16+ sends the UUID as a raw UUID rather than a string; that's the only layout used
+            // by the supported versions (26.x).
+            String uuid = provider.readUUID().toString();
 
             String username = provider.readString();
             System.out.println("Login success: " + username + " logged in with uuid " + uuid);
 
-            if (!Config.versionReporter().isAtLeast(Version.V1_20_2)) {
-                getConnectionManager().setMode(NetworkMode.GAME);
-            }
+            // 1.20.2+ transitions through a Configuration phase before Game, so we don't switch
+            // to GAME here; that's the only path used by the supported versions (26.x).
             return true;
         });
         operations.put("LoginCompression", provider -> {

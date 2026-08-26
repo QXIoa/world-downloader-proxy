@@ -1,6 +1,5 @@
 package game.data.entity;
 
-import config.Version;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -54,15 +53,9 @@ public abstract class Entity extends PrimitiveEntity implements IMovableEntity {
         List<DoubleTag> motion = Arrays.asList(new DoubleTag(0), new DoubleTag(0), new DoubleTag(0));
         root.add("Motion", new ListTag(ListTag.TAG_DOUBLE, motion));
 
-        // https://minecraft.fandom.com/wiki/Universally_unique_identifier#Representation
-        // The "Most/Least representation is deprecated in 1.16. Should use the
-        // new version instead for 1.16 and beyond
-        if (Config.versionReporter().isAtLeast(Version.V1_16)) {
-            root.add("UUID", new IntArrayTag(uuid.asIntArray()));
-        } else {
-            root.add("UUIDLeast", new LongTag(uuid.getLower()));
-            root.add("UUIDMost", new LongTag(uuid.getUpper()));
-        }
+        // 1.16+ uses the IntArray UUID representation (UUIDLeast/UUIDMost is deprecated).
+        // That's the only format used by the supported versions (26.x).
+        root.add("UUID", new IntArrayTag(uuid.asIntArray()));
         root.add("id", new StringTag(typeName));
 
         List<FloatTag> pos = Arrays.asList(new FloatTag(angleToRotation(yaw)), new FloatTag(angleToRotation(pitch)));
@@ -129,13 +122,9 @@ public abstract class Entity extends PrimitiveEntity implements IMovableEntity {
      * number of bytes to keep the packet stream aligned.
      */
     protected static void parseVelocity(DataTypeProvider provider) {
-        if (Config.versionReporter().isAtLeast(Version.V26_1)) {
-            LpVec3.read(provider);
-        } else {
-            provider.readShort();
-            provider.readShort();
-            provider.readShort();
-        }
+        // As of 26.1, velocity uses the compact LpVec3 encoding instead of three Shorts.
+        // That's the only format used by the supported versions (26.x).
+        LpVec3.read(provider);
     }
 
     public Integer getId() {

@@ -96,42 +96,7 @@ public final class ParticleRegistry {
         }
         // 26.1 (protocol 775): flame=32
         // (copper_fire_flame inserted at id=5, shifting flame from 31→32)
-        if (vr.isAtLeast(Version.V26_1)) {
-            return 32;
-        }
-        // 1.20.6 – 1.21.4 (protocol 766–769): flame=31
-        if (vr.isAtLeast(Version.V1_20_6)) {
-            return 31;
-        }
-        // 1.20.4 (protocol 765): flame=31
-        if (vr.isAtLeast(Version.V1_20_4)) {
-            return 31;
-        }
-        // 1.19 – 1.20.2 (protocol 759–764): flame=28
-        if (vr.isAtLeast(Version.V1_19)) {
-            return 28;
-        }
-        // 1.18 (protocol 757): flame=27
-        if (vr.isAtLeast(Version.V1_18)) {
-            return 27;
-        }
-        // 1.17 (protocol 755): flame=28
-        if (vr.isAtLeast(Version.V1_17)) {
-            return 28;
-        }
-        // 1.14 – 1.16 (protocol 440–701): flame=26
-        if (vr.isAtLeast(Version.V1_14)) {
-            return 26;
-        }
-        // 1.13 (protocol 341): flame=23
-        if (vr.isAtLeast(Version.V1_13)) {
-            return 23;
-        }
-        // 1.12 (protocol 317): flame=26
-        if (vr.isAtLeast(Version.V1_12)) {
-            return 26;
-        }
-        return -1;
+        return 32;
     }
 
     /**

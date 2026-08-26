@@ -3,13 +3,9 @@ package game.data;
 import static util.ExceptionHandling.attempt;
 
 import config.Config;
-import config.Version;
 import game.data.coordinates.Coordinate3D;
 import game.data.coordinates.CoordinateDouble3D;
 import game.data.dimension.Dimension;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import se.llbit.nbt.*;
 import util.NbtUtil;
 import util.PathUtils;
@@ -32,18 +28,11 @@ public class LevelData {
     private boolean savingBroken;
 
 
-    private List<Consumer<Tag>> levelDataModifiers;
-
     public LevelData(WorldManager worldManager) {
         this.worldManager = worldManager;
         this.outputDir = PathUtils.toPath(Config.getWorldOutputDir());
         this.file = Paths.get(outputDir.toString(), "level.dat").toFile();
-        this.levelDataModifiers = new ArrayList<>();
         attempt(this::load);
-    }
-
-    public void registerModifier(Consumer<Tag> fn) {
-        levelDataModifiers.add(fn);
     }
 
     public CoordinateDouble3D getPlayerPosition() {
@@ -110,11 +99,9 @@ public class LevelData {
     }
 
     private static String getGeneratorSettingsName() {
-        if (Config.versionReporter().isAtLeast(Version.V1_19)) {
-            return "world-gen-settings-1.19.dat";
-        } else {
-            return "world-gen-settings-1.16.dat";
-        }
+        // 1.19+ uses the 1.19 world-gen-settings format; that's the only one used by the
+        // supported versions (26.x).
+        return "world-gen-settings-1.19.dat";
     }
 
     /**
@@ -183,32 +170,24 @@ public class LevelData {
             enableWorldGeneration(data);
         }
 
-        // check for modifiers
-        levelDataModifiers.forEach(fn -> fn.accept(root));
-
         // write the file
         NbtUtil.write(root, file.toPath());
     }
 
     private void enableWorldGeneration(CompoundTag data) {
-        if (Config.versionReporter().isAtLeast(Version.V1_16)) {
-            LongTag seed = new LongTag(Config.getLevelSeed());
+        // 1.16+ uses seed-based world gen settings; that's the only path used by the supported
+        // versions (26.x).
+        LongTag seed = new LongTag(Config.getLevelSeed());
 
-            CompoundTag dimensions = this.worldGenSettings.get("dimensions").asCompound();
-            for (Dimension dim : Dimension.DEFAULTS)  {
-                Tag generator = dimensions.get(dim.getName()).get("generator");
-                generator.asCompound().add("seed", seed);
-                generator.get("biome_source").asCompound().add("seed", seed);
-            }
-            this.worldGenSettings.asCompound().add("seed", seed);
-
-            applyWorldGenSettings(this.worldGenSettings);
-        } else {
-            data.add("generatorVersion", new IntTag(1));
-            data.add("generatorName", new StringTag("default"));
-            // this is the 1.12.2 superflat format, but it still works in later versions.
-            data.add("generatorOptions", new StringTag(""));
+        CompoundTag dimensions = this.worldGenSettings.get("dimensions").asCompound();
+        for (Dimension dim : Dimension.DEFAULTS)  {
+            Tag generator = dimensions.get(dim.getName()).get("generator");
+            generator.asCompound().add("seed", seed);
+            generator.get("biome_source").asCompound().add("seed", seed);
         }
+        this.worldGenSettings.asCompound().add("seed", seed);
+
+        applyWorldGenSettings(this.worldGenSettings);
     }
 
 
@@ -217,7 +196,9 @@ public class LevelData {
      * Set world type to a superflat void world.
      */
     private void disableWorldGeneration(CompoundTag data) {
-        if (Config.versionReporter().isAtLeast(Version.V1_16)) {
+        // 1.16+ uses the seed-based flat-generator form; that's the only path used by the
+        // supported versions (26.x).
+        {
             CompoundTag generator = new CompoundTag();
             generator.add("type", new StringTag("minecraft:flat"));
             generator.add("settings", new CompoundTag(Arrays.asList(
@@ -246,11 +227,6 @@ public class LevelData {
                     new NamedTag("seed", new LongTag(Config.getLevelSeed())),
                     new NamedTag("dimensions", dimensions)
             )));
-        } else {
-            data.add("generatorVersion", new IntTag(1));
-            data.add("generatorName", new StringTag("flat"));
-            // this is the 1.12.2 superflat format, but it still works in later versions.
-            data.add("generatorOptions", new StringTag("3;minecraft:air;127"));
         }
     }
 
@@ -260,11 +236,8 @@ public class LevelData {
      * data files (see MapRegistry's idcounts.dat). Before that, they're just added straight into level.dat.
      */
     private void applyWorldGenSettings(SpecificTag settings) {
-        if (!Config.versionReporter().isAtLeast(Version.V26_1)) {
-            data.add("WorldGenSettings", settings);
-            return;
-        }
-
+        // As of 26.1, world gen settings live in their own file (data/minecraft/world_gen_settings.dat)
+        // rather than embedded in level.dat's Data compound.
         try {
             Path dataDir = PathUtils.toPath(outputDir.toString(), "data", "minecraft");
             Files.createDirectories(dataDir);

@@ -1,8 +1,5 @@
 package packets.handler.plugins;
 
-import config.Config;
-import config.Option;
-import config.Version;
 import packets.DataTypeProvider;
 
 public abstract class PluginChannelHandler {
@@ -11,10 +8,10 @@ public abstract class PluginChannelHandler {
 
     public static PluginChannelHandler getInstance() {
         if (instance == null) {
-            instance = Config.versionReporter().select(PluginChannelHandler.class,
-                   Option.of(Version.V1_12, PluginChannelHandler1_12::new),
-                   Option.of(Version.ANY, DefaultPluginChannelHandler::new)
-            );
+            // The 1.12 Forge plugin-channel handler is not used by the supported versions (26.x).
+            // If Forge/modded-server support is reintroduced for a future version, add a version
+            // check here (see docs/LEGACY_VERSION_REMOVAL_PLAN.md section 3.1).
+            instance = new DefaultPluginChannelHandler();
         }
         return instance;
     }

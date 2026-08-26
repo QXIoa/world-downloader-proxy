@@ -1,8 +1,6 @@
 package packets.builder;
 
 import config.Config;
-import config.Option;
-import config.Version;
 import game.protocol.Protocol;
 import java.util.Arrays;
 import packets.DataTypeProvider;
@@ -56,29 +54,14 @@ public class PacketBuilder {
      */
     public static PacketBuilder constructClientMessage(Chat message, MessageTarget target) {
         Protocol protocol = Config.versionReporter().getProtocol();
-        String packetName = Config.versionReporter().select(String.class,
-            Option.of(Version.V1_20_6, () -> "SetActionBarText"),
-            Option.of(Version.V1_19, () -> "SystemChat"),
-            Option.of(Version.ANY, () -> "Chat")
-        );
+        // 1.20.6+ uses SetActionBarText; that's the only packet used by the supported versions (26.x).
+        String packetName = "SetActionBarText";
 
         PacketBuilder builder = new PacketBuilder(protocol.clientBound(packetName));
 
-        if (Config.versionReporter().isAtLeast(Version.V1_20_6)) {
-            builder.writeNbtDirect(message.toNbt());
-        } else {
-            builder.writeString(message.toJson());
-        }
+        // 1.20.6+ serialises chat components as NBT; that's the only form used by 26.x.
+        builder.writeNbtDirect(message.toNbt());
 
-        // 1.20.6 has separate packet for action bar text, so dont need to give identifier anymore
-        if (!Config.versionReporter().isAtLeast(Version.V1_20_6)) {
-            builder.writeByte(target.getIdentifier());
-        }
-
-        // uuid is only included from 1.16, from 1.19 player chat is a different packet
-        if (Config.versionReporter().isAtLeast(Version.V1_16) && !Config.versionReporter().isAtLeast(Version.V1_19)) {
-            builder.writeUUID(new UUID(0L, 0L));
-        }
         return builder;
     }
 

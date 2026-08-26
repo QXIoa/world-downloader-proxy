@@ -1,8 +1,5 @@
 package game.data.entity.specific;
 
-import config.Config;
-import config.Option;
-import config.Version;
 import game.data.container.Slot;
 import game.data.entity.ObjectEntity;
 import game.data.entity.metadata.MetaData;
@@ -54,10 +51,10 @@ public class ItemFrame extends ObjectEntity {
     @Override
     public void parseMetadata(DataTypeProvider provider) {
         if (metaData == null) {
-            metaData = Config.versionReporter().select(ItemFrameMetaData.class,
-                    Option.of(Version.V1_17, ItemFrameMetaData_1_17::new),
-                    Option.of(Version.ANY, ItemFrameMetaData::new)
-            );
+            // 1.17+ reordered the item-frame metadata fields; that order is the only one used by
+            // the supported versions (26.x). The base ItemFrameMetaData keeps the pre-1.17 order
+            // as an extension point should a future version revert it.
+            metaData = new ItemFrameMetaData_1_17();
         }
         try {
             metaData.parse(provider);

@@ -4,10 +4,8 @@ import static util.ExceptionHandling.attempt;
 
 import com.google.gson.Gson;
 import config.Config;
-import config.Version;
 import game.data.WorldManager;
 import game.data.chunk.Chunk;
-import se.llbit.nbt.SpecificTag;
 import util.PathUtils;
 
 import java.io.IOException;
@@ -91,15 +89,6 @@ public class Dimension {
     public String getPath() {
         // as of 26.1, world storage was reorganised: every dimension (including the vanilla ones, which used to be
         // special-cased below) now lives under dimensions/<namespace>/<name> instead of the world root/DIM-1/DIM1.
-        if (!Config.versionReporter().isAtLeast(Version.V26_1) && namespace.equals("minecraft")) {
-            switch (name) {
-                case "the_nether": return "DIM-1";
-                case "the_end": return "DIM1";
-                case "overworld": return "";
-            }
-            return name;
-        }
-
         return Paths.get("dimensions", namespace, name).toString();
     }
 
@@ -113,29 +102,6 @@ public class Dimension {
         DimensionDefinition definition = new DimensionDefinition(type);
 
         Files.write(destination, Collections.singleton(new Gson().toJson(definition)));
-    }
-
-    /**
-     * When we join a dimension, we can use the dimension type information to try and link this to the registered
-     * type in the codec. For 1.17+ we need to give the world height/depth information to the chunk.
-     */
-    public void registerType(SpecificTag dimensionNbt) {
-        if (Config.versionReporter().isAtLeast(Version.V1_17)) {
-            Chunk.setWorldHeight(dimensionNbt.get("min_y").intValue(), dimensionNbt.get("height").intValue());
-        }
-
-        if (this.type != null) {
-            return;
-        }
-
-        int hash = dimensionNbt.hashCode();
-        DimensionType type = WorldManager.getInstance().getDimensionRegistry().getDimensionType(hash);
-        if (type != null) {
-            this.type = type.getName();
-
-            // re-write since we write the dimension information on join otherwise
-            attempt(() -> write(PathUtils.toPath(Config.getWorldOutputDir(), "datapacks", "downloaded", "data")));
-        }
     }
 
     @Override

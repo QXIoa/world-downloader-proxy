@@ -2,7 +2,6 @@ package game.data.container;
 
 import com.google.gson.Gson;
 
-import game.data.chunk.palette.BlockRegistry;
 import game.data.registries.RegistriesJson;
 
 import java.io.FileInputStream;
@@ -14,15 +13,6 @@ import java.util.Map;
 public class ItemRegistry {
     private Map<Integer, String> idToName;
     private Map<String, Integer> nameToId;
-
-    public static ItemRegistry fromJson(String version) {
-        InputStream x = BlockRegistry.class.getClassLoader().getResourceAsStream("items-" + version + ".json");
-        if (x == null) {
-            return null;
-        }
-        Gson g = new Gson();
-        return g.fromJson(new InputStreamReader(x), ItemRegistry.class);
-    }
 
     public static ItemRegistry fromRegistry(FileInputStream input) {
         if (input == null) { return new ItemRegistry(); }

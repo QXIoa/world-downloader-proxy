@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import config.Config;
+import config.Version;
+import game.data.WorldManager;
 import game.data.chunk.version.encoder.BlockLocationEncoder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,8 +14,9 @@ public class PaletteTransformerTest {
 
     @BeforeAll
     public static void setup() {
-        Config cfg = mock(Config.class);
-        Config.setInstance(cfg);
+        WorldManager.setInstance(mock(WorldManager.class));
+        Config.setInstance(new Config());
+        Config.setProtocolVersion(Version.V26_2.protocolVersion);
     }
 
     @Test

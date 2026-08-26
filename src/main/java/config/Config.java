@@ -142,6 +142,14 @@ public class Config {
         instance.versionReporter = new VersionReporter(protocolVersion);
 
         try {
+            Protocol p = ProtocolVersionHandler.getInstance().getProtocolByProtocolVersion(protocolVersion);
+            instance.dataVersion = p.getDataVersion();
+            instance.gameVersion = p.getVersion();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        try {
             WorldManager.getInstance().loadLevelData();
         } catch (Exception ex) {
             ex.printStackTrace();

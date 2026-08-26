@@ -1,16 +1,13 @@
 package game.data.villagers;
 
 import config.Config;
-import config.Version;
 import game.data.entity.EntityRegistry;
 import game.data.entity.IMovableEntity;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import game.data.WorldManager;
-import game.data.container.Slot;
 import game.data.coordinates.CoordinateDim3D;
 import game.data.entity.specific.Villager;
 import packets.DataTypeProvider;
@@ -44,56 +41,8 @@ public class VillagerManager {
     
     public void parseAndStoreVillagerTrade(DataTypeProvider provider) {
         // TODO: villager trades cannot be saved since readSlot is broken in 1.20.2+ due to the
-        //  new item components
-        if (Config.versionReporter().isAtLeast(Version.V1_20_2)) {
-            return;
-        }
-
-        if (lastInteractedWith == null) {
-            return; // This should be impossible
-        }
-
-        List<VillagerTrade> trades = new ArrayList<>();
-
-        int windowId = provider.readVarInt(); // Window ID
-
-        int numberOfTrades;
-
-        if (Config.versionReporter().isAtLeast(Version.V1_19)) {
-            numberOfTrades = provider.readVarInt();
-        } else {
-            numberOfTrades = provider.readNext();
-        }
-
-        for (byte i = 0; i < numberOfTrades; i++) {
-            Slot firstItem = provider.readSlot();
-            Slot receivedItem = provider.readSlot();
-
-            Slot secondItem = null;
-            
-            if (Config.versionReporter().isAtLeast(Version.V1_19_3) || provider.readBoolean()) {
-                secondItem = provider.readSlot();
-            }
-
-            provider.readBoolean(); // Trade disabled
-            int uses = provider.readInt();
-            int maxUses = provider.readInt();
-            int xp = provider.readInt();
-            int specialPrice = provider.readInt();
-            float priceMultiplier = provider.readFloat();
-            int demand = provider.readInt();
-
-            trades.add(new VillagerTrade(
-                    firstItem, secondItem, receivedItem, demand, maxUses, priceMultiplier, specialPrice, uses, xp
-            ));
-        }
-        int villagerLevel = provider.readVarInt();
-        int villagerExp = provider.readVarInt();
-        provider.readBoolean(); // Is regular villager
-        provider.readBoolean(); // Can restock
-
-        lastInteractedWith.updateTrades(trades, villagerLevel, villagerExp, lastInteractedLocation);
-        knownTrades.put(windowId, new VillagerData(trades, villagerLevel, villagerExp, lastInteractedLocation));
+        //  new item components. This is a no-op for all supported versions (26.x).
+        return;
     }
 
     public void closeWindow(int windowId) {

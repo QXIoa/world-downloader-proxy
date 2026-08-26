@@ -42,11 +42,11 @@ class SelectionInputInterceptorTest {
 
     private DataTypeProvider buildUseItemOn(int x, int y, int z) {
         PacketBuilder builder = new PacketBuilder(0x00);
-        // Default protocol is 340 (1.13.2): position first, then face, then hand
+        // 26.x layout: hand (VarInt) first, then position, then face (VarInt)
+        builder.writeVarInt(0); // hand
         long encoded = ((x & 0x3FFFFFFL) << 38) | ((z & 0x3FFFFFFL) << 12) | (y & 0xFFFL);
         builder.writeLong(encoded);
         builder.writeVarInt(0); // face/direction
-        builder.writeVarInt(0); // hand
         return skipPrefix(builder);
     }
 

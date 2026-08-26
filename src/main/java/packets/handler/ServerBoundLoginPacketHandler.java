@@ -2,8 +2,6 @@ package packets.handler;
 
 import static util.PrintUtils.devPrint;
 
-import config.Config;
-import config.Version;
 import game.NetworkMode;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,11 +31,9 @@ public class ServerBoundLoginPacketHandler extends PacketHandler {
         });
 
         operations.put("LoginAcknowledged", provider -> {
-            if (Config.versionReporter().isAtLeast(Version.V1_20_2)) {
-                getConnectionManager().setMode(NetworkMode.CONFIGURATION);
-            } else {
-                getConnectionManager().setMode(NetworkMode.GAME);
-            }
+            // 1.20.2+ transitions through a Configuration phase before Game; that's the only
+            // path used by the supported versions (26.x).
+            getConnectionManager().setMode(NetworkMode.CONFIGURATION);
             return true;
         });
     }

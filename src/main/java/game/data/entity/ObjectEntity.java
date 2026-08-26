@@ -1,7 +1,6 @@
 package game.data.entity;
 
 import config.Config;
-import config.Version;
 import packets.DataTypeProvider;
 import se.llbit.nbt.CompoundTag;
 
@@ -28,25 +27,15 @@ public class ObjectEntity extends Entity {
 
         devPrint("[spawn_entity] id=" + primitive.id + " remaining after position=" + provider.remaining());
 
-        // as of 26.1, velocity moved from the end of the packet to right after the position
-        boolean velocityBeforeRotation = Config.versionReporter().isAtLeast(Version.V26_1);
-        if (velocityBeforeRotation) {
-            parseVelocity(provider);
-        }
+        // as of 26.1, velocity moved from the end of the packet to right after the position.
+        // That's the only layout used by the supported versions (26.x).
+        parseVelocity(provider);
 
         ent.pitch = provider.readNext();
         ent.yaw = provider.readNext();
-        int data;
-        if (Config.versionReporter().isAtLeast(Version.V1_19)) {
-            provider.readNext(); // head rotation
-            data = provider.readVarInt();
-        } else {
-            data = provider.readInt();
-        }
-
-        if (!velocityBeforeRotation) {
-            parseVelocity(provider);
-        }
+        // 1.19+ includes head rotation and uses VarInt for data; that's the only layout used by 26.x.
+        provider.readNext(); // head rotation
+        int data = provider.readVarInt();
 
         // only if it's an ObjectEntity do we actually set the data bit
         if (ent instanceof ObjectEntity) {

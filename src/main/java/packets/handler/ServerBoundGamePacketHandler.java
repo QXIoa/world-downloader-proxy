@@ -108,10 +108,8 @@ public class ServerBoundGamePacketHandler extends PacketHandler {
         operations.put("MoveVehicle", updatePlayerPosition);
 
         operations.put("UseItem", provider -> {
-            // newer versions first include a VarInt with the hand
-            if (Config.versionReporter().isAtLeast(Version.V1_14)) {
-                provider.readVarInt();
-            }
+            // a VarInt with the hand is included first (1.14+; the only layout used by 26.x)
+            provider.readVarInt();
 
             // Block right-click in air while in selection mode or fly mode so the
             // server doesn't see interactions (e.g. eating, throwing items).

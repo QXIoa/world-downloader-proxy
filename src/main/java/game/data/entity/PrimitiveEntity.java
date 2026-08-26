@@ -1,8 +1,5 @@
 package game.data.entity;
 
-import config.Config;
-import config.Version;
-import config.VersionReporter;
 import java.util.function.Supplier;
 
 import game.data.WorldManager;
@@ -42,10 +39,7 @@ public class PrimitiveEntity {
             return null;
         }
 
-        if (!Config.versionReporter().isAtLeast(Version.V1_13)) {
-            return null;
-        }
-
+        // 1.13+ uses string type names; that's the only format used by the supported versions (26.x).
         return moveTo(switch(typeName) {
             case "minecraft:armor_stand" -> new ArmorStand();
             case "minecraft:axolotl" -> new Axolotl();

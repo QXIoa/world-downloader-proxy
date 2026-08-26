@@ -3,7 +3,6 @@ package proxy;
 import static util.PrintUtils.devPrintFormat;
 
 import config.Config;
-import config.Version;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -143,9 +142,8 @@ public class EncryptionManager {
         builder.writeVarInt(nonce.length); // verify token len
         builder.writeByteArray(nonce);  // verify token
 
-        if (Config.versionReporter().isAtLeast(Version.V1_20_6)) {
-            builder.writeBoolean(shouldAuthenticate);
-        }
+        // 1.20.6+ includes an explicit "should authenticate" boolean in the Hello packet.
+        builder.writeBoolean(shouldAuthenticate);
 
         attempt(() -> streamToClient(builder.build()));
     }

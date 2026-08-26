@@ -1,6 +1,5 @@
 package game.data.registries;
 
-import config.Version;
 import gui.GuiManager;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -22,7 +21,6 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 
 import config.Config;
-import game.UnsupportedMinecraftVersionException;
 import game.data.chunk.BlockEntityRegistry;
 import game.data.chunk.palette.BlockRegistry;
 import game.data.container.ItemRegistry;
@@ -80,11 +78,10 @@ public class RegistryLoader {
     }
 
     /**
-     * Checks if json files already exist containing the reports for this version. 1.12.2 has separate handling as the
-     * server jar couldn't yet generate reports at this point.
+     * Checks if json files already exist containing the reports for this version.
      */
     private boolean hasExistingReports() {
-        return version.equals("1.12.2") || blocksPath.toFile().exists();
+        return blocksPath.toFile().exists();
     }
 
     /**
@@ -167,16 +164,10 @@ public class RegistryLoader {
      *         with a newer one.
      */
     private boolean runServerDataGenerator(String javaExecutable) throws IOException, InterruptedException {
-        ProcessBuilder pb;
-        if (Config.versionReporter().isAtLeast(Version.V1_18)) {
-            pb = new ProcessBuilder(
-                javaExecutable, "-DbundlerMainClass=net.minecraft.data.Main", "-jar", "server.jar", "--reports"
-            );
-        } else {
-            pb = new ProcessBuilder(
-                javaExecutable, "-cp", "server.jar", "net.minecraft.data.Main", "--reports"
-            );
-        }
+        // 1.18+ uses the bundler main class; that's the only form used by the supported versions (26.x).
+        ProcessBuilder pb = new ProcessBuilder(
+            javaExecutable, "-DbundlerMainClass=net.minecraft.data.Main", "-jar", "server.jar", "--reports"
+        );
 
         pb.directory(PathUtils.toPath(CACHE).toFile());
         Process p = pb.start();
@@ -269,10 +260,10 @@ public class RegistryLoader {
     private void moveReports() throws IOException {
         Files.createDirectories(destinationPath);
 
-        if (versionSupportsGenerators() && Files.exists(registriesGeneratedPath)) {
+        if (Files.exists(registriesGeneratedPath)) {
             Files.move(registriesGeneratedPath, registryPath, StandardCopyOption.REPLACE_EXISTING);
         }
-        if (versionSupportsBlockGenerator() && Files.exists(blocksGeneratedPath)) {
+        if (Files.exists(blocksGeneratedPath)) {
             Files.move(blocksGeneratedPath, blocksPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
@@ -288,72 +279,30 @@ public class RegistryLoader {
     }
 
     public EntityNames generateEntityNames() throws IOException {
-        if (versionSupportsGenerators()) {
-            return EntityNames.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else if (version.equals("1.12.2")) {
-            return EntityNames.fromJson("1.12.2");
-        } else if (version.equals("1.13.2")) {
-            return EntityNames.fromJson("1.13.2");
-        } else {
-            throw new UnsupportedMinecraftVersionException(version);
-        }
+        return EntityNames.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 
     public BlockRegistry generateGlobalPalette() throws IOException {
-        if (versionSupportsBlockGenerator()) {
-            return new BlockRegistry(new FileInputStream(blocksPath.toFile()));
-        } else {
-            return new BlockRegistry("1.12.2");
-        }
+        return new BlockRegistry(new FileInputStream(blocksPath.toFile()));
     }
 
     public MenuRegistry generateMenuRegistry() throws IOException {
-        if (versionSupportsGenerators()) {
-            return MenuRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else {
-            return new MenuRegistry();
-        }
+        return MenuRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 
     public ItemRegistry generateItemRegistry() throws IOException {
-        if (versionSupportsGenerators()) {
-            return ItemRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else if (version.equals("1.12.2")) {
-            return ItemRegistry.fromJson(version);
-        } else {
-            return new ItemRegistry();
-        }
+        return ItemRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 
     public BlockEntityRegistry generateBlockEntityRegistry() throws IOException {
-        if (versionSupportsGenerators()) {
-            return BlockEntityRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else {
-            return new BlockEntityRegistry();
-        }
+        return BlockEntityRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 
     public VillagerProfessionRegistry generateVillagerProfessionRegistry() throws FileNotFoundException {
-        if (versionSupportsGenerators()) {
-            return VillagerProfessionRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else {
-            return new VillagerProfessionRegistry();
-        }
+        return VillagerProfessionRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 
     public VillagerTypeRegistry generateVillagerTypeRegistry() throws FileNotFoundException {
-        if (versionSupportsGenerators()) {
-            return VillagerTypeRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
-        } else {
-            return new VillagerTypeRegistry();
-        }
-    }
-
-    public boolean versionSupportsBlockGenerator() {
-        return !version.startsWith("1.12");
-    }
-
-    public boolean versionSupportsGenerators() {
-        return versionSupportsBlockGenerator() && !version.startsWith("1.13");
+        return VillagerTypeRegistry.fromRegistry(new FileInputStream(registryPath.toFile()));
     }
 }
