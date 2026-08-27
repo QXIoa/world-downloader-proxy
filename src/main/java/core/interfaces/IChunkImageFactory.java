@@ -1,8 +1,8 @@
 package core.interfaces;
 
 import core.coordinates.CoordinateDim2D;
+import java.awt.image.BufferedImage;
 import java.util.Map;
-import javafx.scene.image.Image;
 import java.util.function.BiConsumer;
 
 /**
@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
  * depending on a concrete per-version class.
  */
 public interface IChunkImageFactory {
-    void onComplete(BiConsumer<Map<core.gui.images.ImageMode, Image>, Boolean> onComplete);
+    void onComplete(BiConsumer<Map<core.gui.images.ImageMode, BufferedImage>, Boolean> onComplete);
     void onSaved(Runnable onSaved);
     void requestImage();
     void markSaved();

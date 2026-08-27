@@ -10,14 +10,11 @@ import core.chunk.palette.SimpleColor;
 import version.v26_2.chunk.palette.blending.IBlendEquation;
 import core.coordinates.CoordinateDim2D;
 import core.gui.images.ImageMode;
-import java.nio.IntBuffer;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import javafx.scene.image.Image;
-import javafx.scene.image.WritableImage;
-import javafx.scene.image.WritablePixelFormat;
 
 /**
  * Handles creating images from a Chunk.
@@ -26,7 +23,7 @@ public class ChunkImageFactory implements IChunkImageFactory {
     private final List<CoordinateDim2D> registeredCallbacks = new ArrayList<>(2);
     private final Runnable requestImage = this::requestImage;
     ;
-    private BiConsumer<Map<ImageMode, Image>, Boolean> onImageDone;
+    private BiConsumer<Map<ImageMode, BufferedImage>, Boolean> onImageDone;
     private Runnable onSaved;
 
     private final Chunk c;
@@ -53,7 +50,7 @@ public class ChunkImageFactory implements IChunkImageFactory {
     /**
      * Set handler for when the image has been created.
      */
-    public void onComplete(BiConsumer<Map<ImageMode, Image>, Boolean> onComplete) {
+    public void onComplete(BiConsumer<Map<ImageMode, BufferedImage>, Boolean> onComplete) {
         this.onImageDone = onComplete;
     }
 
@@ -166,13 +163,12 @@ public class ChunkImageFactory implements IChunkImageFactory {
     }
 
 
-    private Image createImage(boolean isSurface) {
+    private BufferedImage createImage(boolean isSurface) {
         // Section is square (16x16), so SECTION_WIDTH is both width and height.
         int width = Chunk.SECTION_WIDTH;
         int height = Chunk.SECTION_WIDTH;
-        WritableImage i = new WritableImage(width, height);
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int[] output = new int[Chunk.SECTION_WIDTH * Chunk.SECTION_WIDTH];
-        WritablePixelFormat<IntBuffer> format = WritablePixelFormat.getIntArgbInstance();
 
         // setup north/south chunks
         setupAdjacentChunks();
@@ -188,17 +184,13 @@ public class ChunkImageFactory implements IChunkImageFactory {
                     output[x + Chunk.SECTION_WIDTH * z] = color.toARGB();
                 }
             }
-            i.getPixelWriter().setPixels(
-                0, 0,
-                Chunk.SECTION_WIDTH, Chunk.SECTION_WIDTH,
-                format, output, 0, Chunk.SECTION_WIDTH
-            );
+            img.setRGB(0, 0, Chunk.SECTION_WIDTH, Chunk.SECTION_WIDTH, output, 0, Chunk.SECTION_WIDTH);
         } catch (Exception ex) {
             System.out.println(Messages.console("console.chunk.unable_draw", c.location));
             ex.printStackTrace();
             clearAdjacentChunks();
         }
-        return i;
+        return img;
     }
 
 
@@ -209,7 +201,7 @@ public class ChunkImageFactory implements IChunkImageFactory {
      */
     void generateImages() {
         if (this.onImageDone != null) {
-            Map<ImageMode, Image> map = Map.of(
+            Map<ImageMode, BufferedImage> map = Map.of(
                 ImageMode.NORMAL, createImage(true),
                 ImageMode.CAVES, createImage(false)
             );

@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Objects;
-import javafx.application.Platform;
 import org.apache.commons.lang3.SystemUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -281,7 +280,7 @@ public class Config {
         if (!devMode && !forceConsoleOutput) {
             System.out.println(Messages.console("console.app.no_console"));
 
-            Platform.runLater(GuiManager::redirectErrorOutput);
+            GuiManager.redirectErrorOutput();
         }
     }
 

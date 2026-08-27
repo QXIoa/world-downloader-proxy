@@ -1,7 +1,5 @@
 package core.chunk.palette;
 
-import javafx.scene.paint.Color;
-
 /**
  * Class to handle colours of blocks when building the overview image.
  */
@@ -67,10 +65,6 @@ public class SimpleColor {
         res |= toInt(b);
 
         return res;
-    }
-
-    public Color toJavaFxColor() {
-        return Color.color(toDouble(r), toDouble(g), toDouble(b));
     }
 
     /**

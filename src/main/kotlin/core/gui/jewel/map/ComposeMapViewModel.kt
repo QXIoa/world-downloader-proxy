@@ -1,0 +1,272 @@
+package core.gui.jewel.map
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import core.coordinates.Coordinate2D
+import core.coordinates.CoordinateDim2D
+import core.coordinates.CoordinateDouble2D
+import core.coordinates.CoordinateDouble3D
+import core.config.Config
+import core.gui.ChunkImageState
+import core.gui.GuiBridge
+import core.gui.images.ImageMode
+import core.interfaces.IChunk
+import core.interfaces.IChunkImageFactory
+import core.interfaces.IDimension
+import core.interfaces.IPlayerEntity
+import java.awt.image.BufferedImage
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
+class ComposeMapViewModel : GuiBridge {
+
+    var playerX by mutableStateOf(0.0)
+    var playerZ by mutableStateOf(0.0)
+    var playerRotation by mutableStateOf(0.0)
+    var statusMsg by mutableStateOf("")
+    var errorVisible by mutableStateOf(false)
+
+    var centerX by mutableStateOf(0.0)
+    var centerZ by mutableStateOf(0.0)
+    var lockedToPlayer by mutableStateOf(true)
+
+    var blocksPerPixel by mutableStateOf(0.5)
+
+    private val executor = Executors.newSingleThreadScheduledExecutor { r ->
+        Thread(r, "Compose Map Handler")
+    }
+
+    private val saveExecutor = Executors.newSingleThreadScheduledExecutor { r ->
+        Thread(r, "Compose Map Image Saver")
+    }
+
+    init {
+        // Persist region images to disk every 20s, mirroring the JavaFX
+        // RegionImageHandler scheduled save (world/image-cache/<mode>/<dim>/r.X.Z.png).
+        saveExecutor.scheduleWithFixedDelay({
+            regions.values.forEach { it.save() }
+        }, 20, 20, TimeUnit.SECONDS)
+    }
+
+    private val regions = ConcurrentHashMap<Coordinate2D, ComposeRegionImages>()
+    private var activeDimension: IDimension? = null
+
+    /**
+     * Chunks that have been persisted to disk during this session. Once a chunk
+     * is saved, we never let it flip back to UNSAVED via the onComplete callback
+     * (which can fire again when a neighbouring chunk loads and triggers
+     * requestImage). This prevents the red overlay from flickering back on
+     * chunks that were already saved. A chunk only becomes UNSAVED again if it
+     * is explicitly re-sent by the server as a brand-new chunk (which creates a
+     * fresh Chunk object with saved=false).
+     */
+    private val savedChunks = ConcurrentHashMap<CoordinateDim2D, Boolean>()
+
+    private val otherPlayers: Collection<IPlayerEntity>?
+        get() = try {
+            Config.getVersionModule().worldManager.entityRegistry.playerSet
+        } catch (e: Exception) { null }
+
+    init {
+        try {
+            val mgr = Config.getVersionModule().worldManager
+            activeDimension = mgr.dimension
+            val pos = mgr.playerPosition.toDouble()
+            playerX = pos.x
+            playerZ = pos.z
+            centerX = pos.x
+            centerZ = pos.z
+            mgr.setPlayerPosListener { pos, rot ->
+                val dx = kotlin.math.abs(pos.x - playerX)
+                val dz = kotlin.math.abs(pos.z - playerZ)
+                playerX = pos.x
+                playerZ = pos.z
+                playerRotation = rot
+                // If the player teleported a large distance (e.g. bungeecord
+                // server switch), re-lock the camera to the player so the map
+                // follows them to the new location instead of snapping back
+                // to the old center (or 0,0 if the position was never set).
+                if (dx > 64 || dz > 64) {
+                    lockedToPlayer = true
+                    centerX = pos.x
+                    centerZ = pos.z
+                }
+            }
+            // Pre-load cached region images from disk so the map isn't blank
+            // on reconnect. Mirrors RegionImageHandler.loadFromFile().
+            loadCachedRegions()
+        } catch (e: Exception) {
+        }
+    }
+
+    /**
+     * Scan the image-cache directory for previously saved region PNGs and load
+     * them into the regions map. The overlay starts fully OUTDATED (grey) when
+     * markOldChunks is enabled; individual chunks will be recoloured to SAVED
+     * or UNSAVED as the server re-sends them and setChunkLoaded fires.
+     */
+    private fun loadCachedRegions() {
+        val dim = activeDimension ?: return
+        val normalDir = java.nio.file.Paths.get(
+            Config.getWorldOutputDir(), "image-cache", ImageMode.NORMAL.path(), dim.path
+        )
+        if (!java.nio.file.Files.isDirectory(normalDir)) return
+        try {
+            java.nio.file.Files.list(normalDir).use { stream ->
+                stream.forEach { file ->
+                    val name = file.fileName.toString()
+                    if (!name.endsWith(".png") || name.startsWith("small.")) return@forEach
+                    val parts = name.split(".")
+                    if (parts.size < 4) return@forEach
+                    try {
+                        val x = parts[1].toInt()
+                        val z = parts[2].toInt()
+                        val coord = Coordinate2D(x, z)
+                        regions.computeIfAbsent(coord) {
+                            ComposeRegionImages.loadRegion(dim, coord)
+                        }
+                    } catch (_: Exception) { }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun setChunkLoaded(coord: CoordinateDim2D, chunk: IChunk) {
+        val dim = activeDimension ?: return
+        if (coord.dimension != dim) return
+
+        val factory: IChunkImageFactory = chunk.chunkImageFactory
+        factory.onComplete { imageMap, isSaved ->
+            executor.schedule({
+                drawChunk(coord, imageMap, isSaved)
+            }, 0, TimeUnit.MILLISECONDS)
+        }
+        factory.onSaved {
+            executor.schedule({
+                markChunkSaved(coord)
+            }, 0, TimeUnit.MILLISECONDS)
+        }
+        factory.requestImage()
+    }
+
+    private fun drawChunk(coord: CoordinateDim2D, imageMap: Map<ImageMode, BufferedImage>, isSaved: Boolean) {
+        val region = coord.chunkToRegion()
+        val images = regions.computeIfAbsent(region) {
+            ComposeRegionImages.loadRegion(activeDimension!!, region)
+        }
+        val local = coord.toRegionLocal()
+        imageMap.forEach { (mode, buf) ->
+            val img = images.getImage(mode)
+            img.drawChunk(local, buf)
+        }
+        // If this chunk was already saved earlier in this session, keep it
+        // saved — don't let a stale isSaved=false from a re-render (triggered
+        // by a neighbouring chunk loading) flip the overlay back to red.
+        val effectiveSaved = isSaved || savedChunks.containsKey(coord)
+        images.colourChunk(local, ChunkImageState.isSaved(effectiveSaved))
+    }
+
+    private fun markChunkSaved(coord: CoordinateDim2D) {
+        savedChunks[coord] = true
+        val region = coord.chunkToRegion()
+        val images = regions[region] ?: return
+        val local = coord.toRegionLocal()
+        images.colourChunk(local, ChunkImageState.SAVED)
+    }
+
+    override fun setDimension(dimension: IDimension) {
+        if (activeDimension == dimension || activeDimension?.equals(dimension) == true) return
+        // Flush images for the old dimension before switching
+        regions.values.forEach { it.save() }
+        activeDimension = dimension
+        regions.clear()
+        savedChunks.clear()
+        loadCachedRegions()
+    }
+
+    override fun clearChunks() {
+        regions.clear()
+        savedChunks.clear()
+    }
+
+    override fun resetRegion(regionLocation: Coordinate2D) {
+        regions.remove(regionLocation)
+    }
+
+    override fun setChunkState(coords: Coordinate2D, state: ChunkImageState) {
+        val region = coords.chunkToRegion()
+        val images = regions[region] ?: return
+        images.colourChunk(coords.toRegionLocal(), state)
+    }
+
+    override fun setStatusMessage(str: String) {
+        statusMsg = str
+    }
+
+    override fun showErrorMessage() {
+        errorVisible = true
+    }
+
+    override fun hideErrorMessage() {
+        errorVisible = false
+    }
+
+    fun getCenter(): CoordinateDouble2D {
+        return if (lockedToPlayer) {
+            CoordinateDouble2D(playerX, playerZ)
+        } else {
+            CoordinateDouble2D(centerX, centerZ)
+        }
+    }
+
+    fun getVisibleRegions(viewportWidth: Float, viewportHeight: Float): List<RegionRenderData> {
+        val center = getCenter()
+        val blockW = viewportWidth * blocksPerPixel.toFloat()
+        val blockH = viewportHeight * blocksPerPixel.toFloat()
+        val minX = center.x - blockW / 2
+        val maxX = center.x + blockW / 2
+        val minZ = center.z - blockH / 2
+        val maxZ = center.z + blockH / 2
+
+        val result = mutableListOf<RegionRenderData>()
+        val isNether = try {
+            Config.getVersionModule().worldManager.dimension.isNether
+        } catch (e: Exception) { false }
+
+        val mode = if (isNether) ImageMode.CAVES else ImageMode.NORMAL
+
+        regions.forEach { (coord, images) ->
+            val rx = coord.x shl 9
+            val rz = coord.z shl 9
+            val visible = maxX > rx && minX < rx + 512 && maxZ > rz && minZ < rz + 512
+            if (visible) {
+                val img = images.getImage(mode).image
+                if (img != null) {
+                    result.add(RegionRenderData(coord, img, images.getOverlayImage()))
+                }
+            }
+        }
+        return result
+    }
+
+    fun getOtherPlayers(): List<IPlayerEntity> {
+        return otherPlayers?.toList() ?: emptyList()
+    }
+
+    fun shutdown() {
+        // Flush pending images to disk before shutting down
+        regions.values.forEach { it.save() }
+        saveExecutor.shutdown()
+        executor.shutdown()
+    }
+}
+
+data class RegionRenderData(
+    val regionCoord: Coordinate2D,
+    val image: BufferedImage,
+    val overlay: BufferedImage?,
+)

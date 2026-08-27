@@ -78,7 +78,6 @@ public class WorldManager implements IWorldManager {
     private boolean writeChunks;
     private boolean schematicMode;
     private boolean isStarted;
-    private boolean isPaused;
     private final Set<Dimension> savingDimension;
 
     private ContainerManager containerManager;
@@ -544,16 +543,6 @@ public class WorldManager implements IWorldManager {
         return villagerManager;
     }
 
-    public void pauseSaving() {
-        isPaused = true;
-        System.out.println(Messages.console("console.world.pausing"));
-    }
-
-    public void resumeSaving() {
-        isPaused = false;
-        System.out.println(Messages.console("console.world.resuming"));
-    }
-
     public void deleteAllExisting() {
         regions = new HashMap<>();
         chunkFactory.clear();
@@ -569,10 +558,6 @@ public class WorldManager implements IWorldManager {
         }
 
         GuiManager.clearChunks();
-    }
-
-    public boolean isPaused() {
-        return isPaused;
     }
 
     public void setPlayerPosListener(BiConsumer<CoordinateDouble3D, Double> playerPosListener) {

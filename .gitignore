@@ -1,5 +1,10 @@
 target/
+build/
+.gradle/
+.kotlin/
+abc/
 .idea/
+AGENTS.md
 .classpath
 .project
 .settings/

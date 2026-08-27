@@ -69,11 +69,6 @@ public class ChunkFactory {
      * Need a non-static method to do this as we cannot otherwise call notify
      */
     public void addChunk(DataTypeProvider provider) {
-        // if the world manager is currently paused, discard this chunk
-        if (WorldManager.getInstance().isPaused()) {
-            return;
-        }
-
         Runnable r = () -> {
             CoordinateDim2D chunkPos = new CoordinateDim2D(provider.readInt(), provider.readInt(), WorldManager.getInstance().getDimension());
             getUnparsed(chunkPos).setProvider(provider);

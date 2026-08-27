@@ -20,7 +20,7 @@ import version.v26_2.registries.RegistryManager;
 import version.v26_2.chunk.palette.BlockRegistry;
 import version.v26_2.protocol.Protocol;
 import java.util.function.BiConsumer;
-import javafx.util.Pair;
+import core.util.Pair;
 import java.util.BitSet;
 import java.util.InputMismatchException;
 import java.util.function.Function;

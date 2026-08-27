@@ -13,9 +13,6 @@ import java.util.function.BiConsumer;
 public interface IWorldManager {
     void shutdown();
     void save();
-    boolean isPaused();
-    void resumeSaving();
-    void pauseSaving();
     void deleteAllExisting();
     void drawExistingChunks(core.coordinates.Coordinate2D region);
     void drawExistingRegion(core.coordinates.Coordinate2D region);

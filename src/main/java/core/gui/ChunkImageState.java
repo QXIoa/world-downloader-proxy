@@ -1,15 +1,15 @@
 package core.gui;
 
 import core.config.Config;
+import java.awt.Color;
 import java.util.function.BooleanSupplier;
-import javafx.scene.paint.Color;
 
 public enum ChunkImageState {
-    SAVED(Color.TRANSPARENT),
-    DEBUG(Color.color(0, 0, 1, .3)),
-    UNSAVED(Color.color(1, 0, 0, .35), Config::markUnsavedChunks),
-    EXTENDED(Color.color(0, 1, 0, .3), Config::drawExtendedChunks),
-    OUTDATED(Color.color(.16, .16, .16, .45), Config::markOldChunks);
+    SAVED(new Color(0, 0, 0, 0)),
+    DEBUG(new Color(0, 0, 255, 77)),
+    UNSAVED(new Color(255, 0, 0, 89), Config::markUnsavedChunks),
+    EXTENDED(new Color(0, 255, 0, 77), Config::drawExtendedChunks),
+    OUTDATED(new Color(41, 41, 41, 115), Config::markOldChunks);
 
     private final Color color;
     private final BooleanSupplier condition;
@@ -25,7 +25,7 @@ public enum ChunkImageState {
 
     public Color getColor() {
         if (!condition.getAsBoolean()) {
-            return Color.TRANSPARENT;
+            return new Color(0, 0, 0, 0);
         }
         return color;
     }
