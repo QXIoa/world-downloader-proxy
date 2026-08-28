@@ -1,9 +1,9 @@
 package core.sniffer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import core.interfaces.VersionModule;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link VersionRegistry}, which maps protocol version numbers to

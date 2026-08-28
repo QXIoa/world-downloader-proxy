@@ -1,26 +1,15 @@
 package version.v26_1.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.config.Version;
 import core.NetworkMode;
+import core.coordinates.Coordinate3D;
+import core.schematic.SelectionState;
+import core.schematic.export.SchematicExportService;
+import version.v26_1.proxy.ConnectionManager;
+import version.v26_1.schematic.*;
+import version.v26_1.world.WorldManager;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import core.config.Config;
-import version.v26_1.world.WorldManager;
-import core.coordinates.Coordinate3D;
-import core.coordinates.CoordinateDouble3D;
-import version.v26_1.proxy.ConnectionManager;
-import version.v26_1.schematic.SelectionCommandRouter;
-import version.v26_1.schematic.SelectionFeedback;
-import version.v26_1.schematic.SelectionInputInterceptor;
-import version.v26_1.schematic.SelectionParticleRenderer;
-import core.schematic.SelectionState;
-import version.v26_1.schematic.SelectionTabCompleter;
-import version.v26_1.schematic.CreativeMode;
-import version.v26_1.schematic.CreativeModeRegistry;
-import core.schematic.export.SchematicExportService;
 
 public class ServerBoundGamePacketHandler extends PacketHandler {
     private HashMap<String, PacketOperator> operations = new HashMap<>();

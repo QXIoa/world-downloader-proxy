@@ -1,20 +1,17 @@
 package version.v26_2.proxy;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IConnectionManager;
-import core.interfaces.IEncryptionManager;
-import version.v26_2.module.VersionAccessors;
-import core.config.Config;
-import core.proxy.ProxyServer;
 import core.NetworkMode;
-import version.v26_2.world.WorldManager;
+import core.config.Config;
+import core.interfaces.IConnectionManager;
+import core.proxy.ProxyServer;
+import version.v26_2.module.VersionAccessors;
+import version.v26_2.packets.DataReader;
+import version.v26_2.packets.handler.*;
 import version.v26_2.protocol.ConfigurationProtocol;
 import version.v26_2.protocol.HandshakeProtocol;
 import version.v26_2.protocol.LoginProtocol;
 import version.v26_2.protocol.StatusProtocol;
-import version.v26_2.packets.DataReader;
-import version.v26_2.packets.handler.*;
+import version.v26_2.world.WorldManager;
 
 /**
  * Class to manage the connection status.

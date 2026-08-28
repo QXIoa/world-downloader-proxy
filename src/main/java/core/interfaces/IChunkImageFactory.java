@@ -1,6 +1,5 @@
 package core.interfaces;
 
-import core.coordinates.CoordinateDim2D;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.function.BiConsumer;

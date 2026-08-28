@@ -1,7 +1,8 @@
 package core.gui;
 
 import core.config.Config;
-import java.awt.Color;
+
+import java.awt.*;
 import java.util.function.BooleanSupplier;
 
 public enum ChunkImageState {

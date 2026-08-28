@@ -1,12 +1,12 @@
 package version.v26_2.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-import core.messages.Messages;
 
-import version.v26_2.world.WorldManager;
 import core.coordinates.Coordinate3D;
-import version.v26_2.dimension.Dimension;
+import core.messages.Messages;
+import core.schematic.SelectionCommand;
+import core.schematic.SelectionState;
 import core.schematic.export.SchematicExportService;
+import version.v26_2.dimension.Dimension;
+import version.v26_2.world.WorldManager;
 
 /**
  * Parses {@code /world-downloader-proxy <subcommand>} chat messages and routes them to the

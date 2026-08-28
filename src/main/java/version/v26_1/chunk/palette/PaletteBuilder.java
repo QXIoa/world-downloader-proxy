@@ -1,10 +1,10 @@
 package version.v26_1.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_1.chunk.Chunk;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 public class PaletteBuilder {
     private final int[] blockIndices;

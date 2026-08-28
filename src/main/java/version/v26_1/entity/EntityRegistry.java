@@ -1,10 +1,13 @@
 package version.v26_1.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
+import core.coordinates.CoordinateDim2D;
 import core.interfaces.IEntityRegistry;
-import core.interfaces.IPlayerEntity;
-import static core.util.ExceptionHandling.attempt;
+import se.llbit.nbt.SpecificTag;
+import version.v26_1.chunk.Chunk;
+import version.v26_1.entity.specific.Villager;
+import version.v26_1.packets.DataTypeProvider;
+import version.v26_1.packets.UUID;
+import version.v26_1.world.WorldManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,13 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.Chunk;
-import core.coordinates.CoordinateDim2D;
-import version.v26_1.entity.specific.Villager;
-import version.v26_1.packets.DataTypeProvider;
-import version.v26_1.packets.UUID;
-import se.llbit.nbt.SpecificTag;
+import static core.util.ExceptionHandling.attempt;
 
 public class EntityRegistry implements IEntityRegistry {
 

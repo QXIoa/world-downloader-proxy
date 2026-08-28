@@ -1,21 +1,17 @@
 package version.v26_1.dimension;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.dimension.Dimension;
-import core.interfaces.IDimensionRegistry;
 import com.google.gson.*;
-import core.config.Config;
+import core.interfaces.IDimensionRegistry;
 import core.messages.Messages;
-import version.v26_1.chunk.palette.Registry;
-import java.util.List;
-import version.v26_1.packets.DataTypeProvider;
 import se.llbit.nbt.*;
+import version.v26_1.chunk.palette.Registry;
+import version.v26_1.packets.DataTypeProvider;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**

@@ -1,6 +1,4 @@
 package version.v26_2.container;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.coordinates.Coordinate2D;
 

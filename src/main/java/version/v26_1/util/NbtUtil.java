@@ -1,11 +1,9 @@
 package version.v26_1.util;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import org.apache.commons.io.IOUtils;
-import version.v26_1.proxy.CompressionManager;
 import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.Tag;
+import version.v26_1.proxy.CompressionManager;
 
 import java.io.*;
 import java.nio.file.Files;

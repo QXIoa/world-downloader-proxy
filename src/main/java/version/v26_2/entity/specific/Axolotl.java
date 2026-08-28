@@ -1,15 +1,13 @@
 package version.v26_2.entity.specific;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import java.util.function.Consumer;
-
-import version.v26_2.entity.MobEntity;
-import version.v26_2.entity.metadata.MetaData;
-import version.v26_2.packets.DataTypeProvider;
 import se.llbit.nbt.ByteTag;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.IntTag;
+import version.v26_2.entity.MobEntity;
+import version.v26_2.entity.metadata.MetaData;
+import version.v26_2.packets.DataTypeProvider;
+
+import java.util.function.Consumer;
 
 /**
  * Handle axolotls as they have axolotl type metadata.

@@ -1,10 +1,8 @@
 package version.v26_1.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IPlayerEntity;
 import com.google.gson.Gson;
 import core.coordinates.CoordinateDouble3D;
+import core.interfaces.IPlayerEntity;
 import core.messages.Messages;
 import kong.unirest.Unirest;
 import version.v26_1.packets.DataTypeProvider;

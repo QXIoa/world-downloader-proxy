@@ -1,6 +1,4 @@
 package version.v26_2.protocol;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import java.util.HashMap;
 import java.util.Map;

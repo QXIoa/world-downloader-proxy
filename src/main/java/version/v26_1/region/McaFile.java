@@ -1,19 +1,14 @@
 package version.v26_1.region;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IMcaFile;
-import core.interfaces.IChunkBinary;
 import core.config.Config;
 import core.coordinates.Coordinate2D;
-import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
-import core.coordinates.CoordinateDouble3D;
-import version.v26_1.dimension.Dimension;
+import core.interfaces.IMcaFile;
+import core.util.PathUtils;
+import org.apache.commons.io.IOUtils;
 import version.v26_1.chunk.Chunk;
 import version.v26_1.chunk.ChunkBinary;
-import org.apache.commons.io.IOUtils;
-import core.util.PathUtils;
+import version.v26_1.dimension.Dimension;
 
 import java.io.File;
 import java.io.FileInputStream;

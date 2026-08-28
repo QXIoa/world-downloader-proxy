@@ -1,6 +1,4 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
 import core.coordinates.CoordinateDim2D;

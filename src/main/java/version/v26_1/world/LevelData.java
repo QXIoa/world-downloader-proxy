@@ -1,25 +1,26 @@
 package version.v26_1.world;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import static core.util.ExceptionHandling.attempt;
 
 import core.config.Config;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
 import core.messages.Messages;
-import version.v26_1.dimension.Dimension;
-import se.llbit.nbt.*;
-import version.v26_1.util.NbtUtil;
 import core.util.PathUtils;
+import se.llbit.nbt.*;
+import version.v26_1.dimension.Dimension;
+import version.v26_1.util.NbtUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Collectors;
+
+import static core.util.ExceptionHandling.attempt;
 
 public class LevelData {
     private final WorldManager worldManager;

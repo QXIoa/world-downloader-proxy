@@ -1,6 +1,4 @@
 package version.v26_2.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 /**
  * Builds {@code GameEvent} packets. Knows the packet layout (event id byte + value float)

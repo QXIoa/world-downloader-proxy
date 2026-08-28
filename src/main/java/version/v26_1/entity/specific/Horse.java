@@ -1,19 +1,16 @@
 package version.v26_1.entity.specific;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import java.util.function.Consumer;
-
+import se.llbit.nbt.ByteTag;
+import se.llbit.nbt.CompoundTag;
+import se.llbit.nbt.IntArrayTag;
+import se.llbit.nbt.IntTag;
 import version.v26_1.container.Slot;
 import version.v26_1.entity.MobEntity;
 import version.v26_1.entity.metadata.MetaData;
 import version.v26_1.packets.DataTypeProvider;
 import version.v26_1.packets.UUID;
-import se.llbit.nbt.ByteTag;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntArrayTag;
-import se.llbit.nbt.IntTag;
-import se.llbit.nbt.StringTag;
+
+import java.util.function.Consumer;
 
 /**
  * Handle sheep as they have sheep type metadata.

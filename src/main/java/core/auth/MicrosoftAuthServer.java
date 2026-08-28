@@ -1,12 +1,13 @@
 package core.auth;
 
-import static core.util.ExceptionHandling.attempt;
-
 import fi.iki.elonen.NanoHTTPD;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static core.util.ExceptionHandling.attempt;
 
 /**
  * Runs a webserver that handles the OAuth callback.

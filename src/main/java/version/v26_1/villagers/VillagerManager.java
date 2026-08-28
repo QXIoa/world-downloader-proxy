@@ -1,23 +1,21 @@
 package version.v26_1.villagers;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.module.VersionAccessors;
 import core.config.Config;
+import core.coordinates.CoordinateDim3D;
 import version.v26_1.entity.EntityRegistry;
 import version.v26_1.entity.IMovableEntity;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import version.v26_1.world.WorldManager;
-import core.coordinates.CoordinateDim3D;
 import version.v26_1.entity.specific.Villager;
+import version.v26_1.module.VersionAccessors;
 import version.v26_1.packets.DataTypeProvider;
 import version.v26_1.packets.UUID;
 import version.v26_1.packets.builder.Chat;
 import version.v26_1.packets.builder.MessageTarget;
 import version.v26_1.packets.builder.PacketBuilder;
+import version.v26_1.world.WorldManager;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("MismatchedCollectionQueryUpdate")
 public class VillagerManager {

@@ -1,15 +1,13 @@
 package version.v26_1.chunk.palette;
-import core.chunk.palette.SimpleColor;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
+import core.chunk.palette.SimpleColor;
 import core.interfaces.IBlockState;
-import version.v26_1.world.WorldManager;
+import se.llbit.nbt.CompoundTag;
+import se.llbit.nbt.StringTag;
 import version.v26_1.chunk.palette.blending.DiscreteBlendEquation;
 import version.v26_1.chunk.palette.blending.IBlendEquation;
 import version.v26_1.chunk.palette.blending.SquareRootBlendEquation;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.StringTag;
+import version.v26_1.world.WorldManager;
 
 import java.util.HashMap;
 import java.util.Map;

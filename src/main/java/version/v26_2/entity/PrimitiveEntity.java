@@ -1,20 +1,11 @@
 package version.v26_2.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import java.util.function.Supplier;
-
-import version.v26_2.world.WorldManager;
-import version.v26_2.entity.specific.ArmorStand;
-import version.v26_2.entity.specific.Axolotl;
-import version.v26_2.entity.specific.Cat;
-import version.v26_2.entity.specific.Horse;
-import version.v26_2.entity.specific.DroppedItem;
-import version.v26_2.entity.specific.ItemFrame;
-import version.v26_2.entity.specific.Sheep;
-import version.v26_2.entity.specific.Villager;
+import version.v26_2.entity.specific.*;
 import version.v26_2.packets.DataTypeProvider;
 import version.v26_2.packets.UUID;
+import version.v26_2.world.WorldManager;
+
+import java.util.function.Supplier;
 
 /**
  * Handle the initial entity fields, we need to know the type before we can instantiate the correct object.

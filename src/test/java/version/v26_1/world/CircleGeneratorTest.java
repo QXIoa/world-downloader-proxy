@@ -1,10 +1,11 @@
 package version.v26_1.world;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import core.coordinates.Coordinate2D;
-import java.util.List;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CircleGeneratorTest {
     @Test

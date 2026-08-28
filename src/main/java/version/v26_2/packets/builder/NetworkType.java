@@ -1,6 +1,4 @@
 package version.v26_2.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import org.apache.commons.lang3.NotImplementedException;
 import version.v26_2.packets.DataTypeProvider;

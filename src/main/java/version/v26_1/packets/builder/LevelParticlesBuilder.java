@@ -1,6 +1,4 @@
 package version.v26_1.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 /**
  * Builds {@code LevelParticles} packets for a single particle at an exact position.

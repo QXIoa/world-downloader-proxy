@@ -1,7 +1,6 @@
 package core.interfaces;
 
 import core.coordinates.Coordinate2D;
-import core.coordinates.CoordinateDim2D;
 
 /**
  * Core seam interface for the per-version MCA file (region file on disk).

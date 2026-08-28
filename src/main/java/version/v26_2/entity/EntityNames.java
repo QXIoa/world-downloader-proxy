@@ -1,9 +1,6 @@
 package version.v26_2.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import com.google.gson.Gson;
-
 import version.v26_2.registries.RegistriesJson;
 
 import java.io.InputStream;

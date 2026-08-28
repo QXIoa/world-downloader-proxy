@@ -1,12 +1,10 @@
 package version.v26_1.container;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.registries.RegistryManager;
 import se.llbit.nbt.ByteTag;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.SpecificTag;
 import se.llbit.nbt.StringTag;
+import version.v26_1.registries.RegistryManager;
 
 public class Slot {
     private int itemId;

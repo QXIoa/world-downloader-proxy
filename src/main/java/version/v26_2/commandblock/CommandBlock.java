@@ -1,14 +1,12 @@
 package version.v26_2.commandblock;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.world.WorldManager;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim3D;
 import se.llbit.nbt.ByteTag;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.IntTag;
 import se.llbit.nbt.StringTag;
+import version.v26_2.world.WorldManager;
 
 public class CommandBlock {
 

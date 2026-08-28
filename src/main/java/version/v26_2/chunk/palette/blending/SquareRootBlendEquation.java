@@ -1,6 +1,4 @@
 package version.v26_2.chunk.palette.blending;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 public class SquareRootBlendEquation implements IBlendEquation {
     double alpha;

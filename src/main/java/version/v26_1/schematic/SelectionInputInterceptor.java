@@ -1,12 +1,11 @@
 package version.v26_1.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-import core.messages.Messages;
 
-import version.v26_1.world.WorldManager;
 import core.coordinates.Coordinate3D;
+import core.messages.Messages;
+import core.schematic.SelectionState;
 import version.v26_1.dimension.Dimension;
 import version.v26_1.packets.DataTypeProvider;
+import version.v26_1.world.WorldManager;
 
 /**
  * Translates the player's left/right clicks into pos1/pos2 updates on the {@link SelectionState}

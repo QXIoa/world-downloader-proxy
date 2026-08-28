@@ -1,11 +1,8 @@
 package version.v26_2.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
+import se.llbit.nbt.CompoundTag;
 import version.v26_2.entity.metadata.MetaData;
 import version.v26_2.packets.DataTypeProvider;
-import core.config.Config;
-import se.llbit.nbt.CompoundTag;
 
 public class MobEntity extends Entity {
     private float headPitch;

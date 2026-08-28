@@ -1,14 +1,9 @@
 package version.v26_1.dimension;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import static core.util.ExceptionHandling.attempt;
 
 import com.google.gson.Gson;
 import core.config.Config;
 import core.interfaces.IDimension;
 import core.interfaces.IDimensionRegistry;
-
 import core.util.PathUtils;
 
 import java.io.IOException;
@@ -16,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static core.util.ExceptionHandling.attempt;
 
 /**
  * Class to hold both custom and default dimensions. For custom dimensions, it can write a partial definition file.

@@ -1,6 +1,4 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 public class IncompleteChunkException extends RuntimeException {
     public IncompleteChunkException() {

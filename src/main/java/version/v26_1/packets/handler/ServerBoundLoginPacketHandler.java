@@ -1,13 +1,12 @@
 package version.v26_1.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import static core.util.PrintUtils.devPrint;
 
 import core.NetworkMode;
+import version.v26_1.proxy.ConnectionManager;
+
 import java.util.HashMap;
 import java.util.Map;
-import version.v26_1.proxy.ConnectionManager;
+
+import static core.util.PrintUtils.devPrint;
 
 public class ServerBoundLoginPacketHandler extends PacketHandler {
     private HashMap<String, PacketOperator> operations = new HashMap<>();

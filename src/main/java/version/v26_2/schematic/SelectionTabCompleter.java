@@ -1,13 +1,11 @@
 package version.v26_2.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_2.module.VersionAccessors;
-import core.config.Config;
-import java.util.ArrayList;
-import java.util.List;
 import version.v26_2.packets.builder.PacketBuilder;
 import version.v26_2.proxy.PacketInjector;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles tab-completion for the proxy's schematic commands. When the client sends a

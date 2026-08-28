@@ -1,6 +1,5 @@
 package core.sniffer;
 
-import core.config.Version;
 import core.interfaces.VersionModule;
 
 import java.util.HashMap;

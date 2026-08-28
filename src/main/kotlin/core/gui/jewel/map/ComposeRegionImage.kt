@@ -1,7 +1,7 @@
 package core.gui.jewel.map
 
-import core.coordinates.Coordinate2D
 import core.config.Config
+import core.coordinates.Coordinate2D
 import core.dimension.WorldGeometry
 import core.gui.ChunkImageState
 import core.gui.images.ImageMode

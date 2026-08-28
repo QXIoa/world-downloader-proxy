@@ -1,11 +1,10 @@
 package version.v26_2.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.NetworkMode;
+import version.v26_2.proxy.ConnectionManager;
+
 import java.util.HashMap;
 import java.util.Map;
-import version.v26_2.proxy.ConnectionManager;
 
 public class ServerBoundConfigurationPacketHandler extends PacketHandler {
     private HashMap<String, PacketOperator> operations = new HashMap<>();

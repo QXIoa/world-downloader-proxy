@@ -1,6 +1,4 @@
 package version.v26_1.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 /**
  * Simple holder for the active {@link CreativeMode} instance so that the clientbound

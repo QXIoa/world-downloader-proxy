@@ -1,20 +1,20 @@
 package version.v26_1.schematic;
-import core.schematic.SelectionState;
 
+import core.config.Config;
+import core.coordinates.Coordinate3D;
+import core.queue.ByteQueue;
+import core.schematic.SelectionState;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import version.v26_1.dimension.Dimension;
 import version.v26_1.module.VersionModuleImpl;
+import version.v26_1.packets.DataTypeProvider;
+import version.v26_1.packets.builder.PacketBuilder;
+import version.v26_1.world.WorldManager;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import core.config.Config;
-import version.v26_1.world.WorldManager;
-import core.coordinates.Coordinate3D;
-import version.v26_1.dimension.Dimension;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import version.v26_1.packets.DataTypeProvider;
-import version.v26_1.packets.builder.PacketBuilder;
-import core.queue.ByteQueue;
 
 class SelectionInputInterceptorTest {
     private SelectionState state;

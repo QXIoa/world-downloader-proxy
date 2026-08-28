@@ -1,15 +1,12 @@
 package version.v26_2.villagers;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
+
+import com.google.gson.Gson;
+import version.v26_2.registries.RegistriesJson;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.google.gson.Gson;
-
-import version.v26_2.registries.RegistriesJson;
 
 public class VillagerTypeRegistry {
 

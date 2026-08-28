@@ -1,13 +1,13 @@
 package version.v26_1.schematic;
+
+import core.schematic.SelectionState;
 import core.schematic.export.SchematicExportService;
 import core.schematic.export.SchematicFileNamer;
-import core.schematic.SelectionCommand;
-import core.schematic.SelectionState;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SelectionCommandRouterTest {
     private SelectionCommandRouter newRouter(SelectionState state) {

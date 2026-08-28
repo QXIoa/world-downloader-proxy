@@ -1,6 +1,4 @@
 package version.v26_1.registries;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_1.chunk.BlockEntityRegistry;
 import version.v26_1.chunk.palette.BlockRegistry;
@@ -9,6 +7,7 @@ import version.v26_1.container.MenuRegistry;
 import version.v26_1.entity.EntityNames;
 import version.v26_1.villagers.VillagerProfessionRegistry;
 import version.v26_1.villagers.VillagerTypeRegistry;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;

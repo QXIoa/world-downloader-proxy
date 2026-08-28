@@ -1,16 +1,13 @@
 package version.v26_1.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
-import version.v26_1.protocol.Protocol;
-import java.util.Arrays;
-import version.v26_1.packets.DataTypeProvider;
-import version.v26_1.packets.UUID;
 import core.queue.ByteQueue;
-import version.v26_1.proxy.CompressionManager;
 import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.SpecificTag;
+import version.v26_1.packets.DataTypeProvider;
+import version.v26_1.packets.UUID;
+import version.v26_1.protocol.Protocol;
+import version.v26_1.proxy.CompressionManager;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

@@ -1,23 +1,23 @@
 package version.v26_1.schematic;
-import core.schematic.BoundingBox;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.module.VersionAccessors;
 import core.config.Config;
-import core.messages.Messages;
-import version.v26_1.world.WorldManager;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
+import core.messages.Messages;
+import core.schematic.BoundingBox;
+import core.schematic.SelectionState;
+import version.v26_1.module.VersionAccessors;
+import version.v26_1.packets.builder.LevelParticlesBuilder;
+import version.v26_1.packets.builder.PacketBuilder;
+import version.v26_1.proxy.PacketInjector;
+import version.v26_1.world.WorldManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import version.v26_1.packets.builder.LevelParticlesBuilder;
-import version.v26_1.packets.builder.PacketBuilder;
-import version.v26_1.proxy.PacketInjector;
 
 /**
  * Renders the current selection as a particle outline on the client, similar to the Iris wand

@@ -1,28 +1,18 @@
 package version.v26_1.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.BiConsumer;
 
 import core.config.Config;
-import version.v26_1.world.WorldManager;
-import version.v26_1.container.Slot;
 import core.coordinates.CoordinateDim2D;
+import se.llbit.nbt.*;
+import version.v26_1.container.Slot;
 import version.v26_1.dimension.Dimension;
 import version.v26_1.entity.version.EquipmentReader;
 import version.v26_1.packets.DataTypeProvider;
 import version.v26_1.packets.LpVec3;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.DoubleTag;
-import se.llbit.nbt.FloatTag;
-import se.llbit.nbt.IntArrayTag;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.LongTag;
-import se.llbit.nbt.SpecificTag;
-import se.llbit.nbt.StringTag;
-import se.llbit.nbt.Tag;
+import version.v26_1.world.WorldManager;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 public abstract class Entity extends PrimitiveEntity implements IMovableEntity {
     private static EquipmentReader equipmentReader;

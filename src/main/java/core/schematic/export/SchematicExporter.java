@@ -1,9 +1,10 @@
 package core.schematic.export;
 
 import core.interfaces.IDimension;
+import core.schematic.BoundingBox;
+
 import java.io.IOException;
 import java.nio.file.Path;
-import core.schematic.BoundingBox;
 
 /**
  * Encodes a selected region of the world to a schematic file on disk. Implementations own the

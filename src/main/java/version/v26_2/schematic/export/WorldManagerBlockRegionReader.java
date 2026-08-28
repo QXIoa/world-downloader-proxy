@@ -1,12 +1,9 @@
 package version.v26_2.schematic.export;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.world.WorldManager;
-import core.schematic.export.BlockRegionReader;
-import core.interfaces.IBlockState;
-import version.v26_2.chunk.palette.BlockState;
 import core.coordinates.Coordinate3D;
+import core.interfaces.IBlockState;
+import core.schematic.export.BlockRegionReader;
+import version.v26_2.world.WorldManager;
 
 /**
  * The production {@link BlockRegionReader}: reads block data out of the in-memory world held by

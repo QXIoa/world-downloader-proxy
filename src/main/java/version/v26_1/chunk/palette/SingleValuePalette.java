@@ -1,12 +1,10 @@
 package version.v26_1.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import java.util.List;
-
+import se.llbit.nbt.SpecificTag;
 import version.v26_1.chunk.ChunkSection;
 import version.v26_1.packets.builder.PacketBuilder;
-import se.llbit.nbt.SpecificTag;
+
+import java.util.List;
 
 public class SingleValuePalette extends Palette {
     int val;

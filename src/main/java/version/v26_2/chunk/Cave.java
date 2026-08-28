@@ -1,9 +1,8 @@
 package version.v26_2.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.chunk.palette.BlockState;
 import core.chunk.palette.SimpleColor;
+import version.v26_2.chunk.palette.BlockState;
+
 import java.util.Objects;
 
 /**

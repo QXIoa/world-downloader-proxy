@@ -1,9 +1,7 @@
 package version.v26_1.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.packets.builder.PacketBuilder;
 import se.llbit.nbt.SpecificTag;
+import version.v26_1.packets.builder.PacketBuilder;
 
 import java.util.List;
 

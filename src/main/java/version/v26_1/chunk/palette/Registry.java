@@ -1,6 +1,4 @@
 package version.v26_1.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import se.llbit.nbt.SpecificTag;
 

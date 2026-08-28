@@ -1,14 +1,11 @@
 package version.v26_2.schematic;
-import core.interfaces.ISelectionFeedback;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
+import core.interfaces.ISelectionFeedback;
 import version.v26_2.module.VersionAccessors;
-import core.config.Config;
+import version.v26_2.packets.UUID;
 import version.v26_2.packets.builder.BossBarBuilder;
 import version.v26_2.packets.builder.MessageTarget;
 import version.v26_2.packets.builder.PacketBuilder;
-import version.v26_2.packets.UUID;
 import version.v26_2.proxy.EncryptionManager;
 import version.v26_2.proxy.PacketInjector;
 

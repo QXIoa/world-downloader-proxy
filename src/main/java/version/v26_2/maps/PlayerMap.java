@@ -1,14 +1,15 @@
 package version.v26_2.maps;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
-import version.v26_2.world.WorldManager;
+import se.llbit.nbt.*;
 import version.v26_2.dimension.Dimension;
 import version.v26_2.packets.DataTypeProvider;
-import se.llbit.nbt.*;
+import version.v26_2.world.WorldManager;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 

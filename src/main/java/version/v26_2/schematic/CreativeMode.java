@@ -1,12 +1,10 @@
 package version.v26_2.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.protocol.Protocol;
-import version.v26_2.module.VersionAccessors;
 import core.config.Config;
+import version.v26_2.module.VersionAccessors;
 import version.v26_2.packets.builder.GameEventBuilder;
 import version.v26_2.packets.builder.PacketBuilder;
+import version.v26_2.protocol.Protocol;
 import version.v26_2.proxy.EncryptionManager;
 import version.v26_2.proxy.PacketInjector;
 

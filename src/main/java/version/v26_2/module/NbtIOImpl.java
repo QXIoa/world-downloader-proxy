@@ -1,11 +1,9 @@
 package version.v26_2.module;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.interfaces.INbtIO;
-import version.v26_2.util.NbtUtil;
 import se.llbit.nbt.NamedTag;
-import se.llbit.nbt.Tag;
+import version.v26_2.util.NbtUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;

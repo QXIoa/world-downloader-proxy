@@ -1,17 +1,16 @@
 package version.v26_2.packets.builder;
 
 import core.coordinates.Coordinate3D;
+import core.queue.ByteQueue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import se.llbit.nbt.*;
 import version.v26_2.packets.DataTypeProvider;
 import version.v26_2.packets.UUID;
-import core.queue.ByteQueue;
-import se.llbit.nbt.*;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

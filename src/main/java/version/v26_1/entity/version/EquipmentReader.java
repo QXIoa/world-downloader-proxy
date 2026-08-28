@@ -1,6 +1,4 @@
 package version.v26_1.entity.version;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_1.container.Slot;
 import version.v26_1.packets.DataTypeProvider;

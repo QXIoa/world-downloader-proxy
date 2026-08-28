@@ -1,34 +1,25 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import version.v26_1.module.VersionAccessors;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import core.config.Config;
-import core.messages.Messages;
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.palette.BlockState;
-import version.v26_1.commandblock.CommandBlock;
-import version.v26_1.container.InventoryWindow;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
 import core.coordinates.CoordinateDim3D;
+import core.messages.Messages;
+import se.llbit.nbt.*;
+import version.v26_1.chunk.palette.BlockState;
+import version.v26_1.commandblock.CommandBlock;
+import version.v26_1.container.InventoryWindow;
 import version.v26_1.dimension.Dimension;
-import version.v26_1.registries.RegistryManager;
+import version.v26_1.module.VersionAccessors;
 import version.v26_1.packets.builder.Chat;
 import version.v26_1.packets.builder.MessageTarget;
 import version.v26_1.packets.builder.PacketBuilder;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntArrayTag;
-import se.llbit.nbt.IntTag;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.NamedTag;
-import se.llbit.nbt.SpecificTag;
-import se.llbit.nbt.StringTag;
-import se.llbit.nbt.Tag;
+import version.v26_1.registries.RegistryManager;
+import version.v26_1.world.WorldManager;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manage entities and block entities for chunks.

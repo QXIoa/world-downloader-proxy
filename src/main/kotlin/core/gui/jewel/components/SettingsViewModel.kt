@@ -1,6 +1,8 @@
 package core.gui.jewel.components
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import core.auth.AuthDetailsManager
 import core.auth.AuthenticationMethod
 import core.auth.MicrosoftAuthHandler

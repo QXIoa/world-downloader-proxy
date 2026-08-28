@@ -1,14 +1,13 @@
 package core.gui.jewel
 
+import com.google.gson.GsonBuilder
+import com.google.gson.stream.JsonReader
 import core.config.Config
 import core.messages.Messages
 import core.sniffer.VersionRegistry
 import core.util.LocalDateTimeAdapter
 import core.util.PathUtils
-import com.google.gson.GsonBuilder
-import com.google.gson.stream.JsonReader
 import java.io.FileReader
-import java.nio.file.Files
 
 // ── i18n helper ──────────────────────────────────────────────────────────
 

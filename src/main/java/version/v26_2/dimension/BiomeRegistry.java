@@ -1,14 +1,13 @@
 package version.v26_2.dimension;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.chunk.palette.State;
+import se.llbit.nbt.SpecificTag;
+import se.llbit.nbt.StringTag;
 import version.v26_2.chunk.palette.Registry;
+import version.v26_2.chunk.palette.State;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import se.llbit.nbt.SpecificTag;
-import se.llbit.nbt.StringTag;
 
 public class BiomeRegistry implements Registry {
     private final Map<Integer, BiomeIdentifier> biomesFromId;

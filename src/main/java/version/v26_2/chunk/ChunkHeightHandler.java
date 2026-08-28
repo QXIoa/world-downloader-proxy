@@ -1,15 +1,14 @@
 package version.v26_2.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.chunk.palette.BlockState;
 import core.chunk.palette.SimpleColor;
 import core.coordinates.Coordinate3D;
+import org.apache.commons.lang3.mutable.MutableBoolean;
+import version.v26_2.chunk.palette.BlockState;
 import version.v26_2.dimension.Dimension;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 
 public class ChunkHeightHandler {
     private int[] heightMap;

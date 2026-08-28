@@ -1,12 +1,10 @@
 package version.v26_1.world;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
-
-import version.v26_1.module.VersionAccessors;
-import static core.util.ExceptionHandling.attemptQuiet;
 
 import core.config.Config;
 import core.coordinates.Coordinate2D;
+import version.v26_1.module.VersionAccessors;
+import version.v26_1.packets.builder.PacketBuilder;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +12,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import version.v26_1.packets.builder.PacketBuilder;
+
+import static core.util.ExceptionHandling.attemptQuiet;
 
 public class RenderDistanceExtender {
     private static final Coordinate2D POS_INIT = new Coordinate2D(0, 0) {

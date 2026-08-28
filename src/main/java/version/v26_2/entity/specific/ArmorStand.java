@@ -1,11 +1,9 @@
 package version.v26_2.entity.specific;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
+import se.llbit.nbt.*;
 import version.v26_2.entity.MobEntity;
 import version.v26_2.entity.metadata.MetaData;
 import version.v26_2.packets.DataTypeProvider;
-import se.llbit.nbt.*;
 
 import java.util.Arrays;
 import java.util.HashMap;

@@ -1,12 +1,11 @@
 package version.v26_1.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
 import core.config.Version;
+import version.v26_1.packets.DataTypeProvider;
+
 import java.util.HashMap;
 import java.util.Map;
-import version.v26_1.packets.DataTypeProvider;
 
 /**
  * Stores the particle type registry received from the server during the configuration phase.

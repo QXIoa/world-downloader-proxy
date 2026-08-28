@@ -1,28 +1,28 @@
 package version.v26_2.chunk;
 
-import version.v26_2.module.VersionModuleImpl;
+import core.chunk.palette.BlockColors;
 import core.config.Config;
 import core.config.Version;
-import version.v26_2.chunk.Chunk;
 import core.coordinates.CoordinateDim2D;
-import version.v26_2.world.WorldManager;
-import core.chunk.palette.BlockColors;
+import org.junit.jupiter.api.Test;
 import version.v26_2.dimension.Biome;
 import version.v26_2.dimension.BiomeRegistry;
 import version.v26_2.dimension.Dimension;
 import version.v26_2.dimension.DimensionRegistry;
-import version.v26_2.registries.RegistryManager;
-import java.util.HashMap;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
+import version.v26_2.module.VersionModuleImpl;
 import version.v26_2.packets.DataTypeProvider;
 import version.v26_2.packets.builder.PacketBuilderAndParserTest;
+import version.v26_2.registries.RegistryManager;
+import version.v26_2.world.WorldManager;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ChunkTest extends PacketBuilderAndParserTest {
     @Override

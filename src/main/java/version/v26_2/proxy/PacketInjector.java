@@ -1,11 +1,9 @@
 package version.v26_2.proxy;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
+
+import core.queue.ByteQueue;
+import version.v26_2.packets.builder.PacketBuilder;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-import version.v26_2.packets.builder.PacketBuilder;
-import core.queue.ByteQueue;
 
 public class PacketInjector {
     private final ConcurrentLinkedQueue<ByteQueue> insertedPackets;

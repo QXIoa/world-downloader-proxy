@@ -1,16 +1,9 @@
 package version.v26_1.module;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.INbtIO;
-import core.interfaces.IWorldManager;
-import core.interfaces.IMcaFile;
-import core.coordinates.CoordinateDim2D;
-import core.interfaces.IDimensionRegistry;
-import core.interfaces.IDimension;
-import version.v26_1.dimension.Dimension;
 import core.config.Version;
-import core.interfaces.VersionModule;
+import core.coordinates.CoordinateDim2D;
+import core.interfaces.*;
+import version.v26_1.dimension.Dimension;
 import version.v26_1.protocol.Protocol;
 import version.v26_1.protocol.ProtocolVersionHandler;
 import version.v26_1.proxy.ConnectionManager;

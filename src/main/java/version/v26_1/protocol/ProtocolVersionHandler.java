@@ -1,6 +1,4 @@
 package version.v26_1.protocol;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -10,7 +8,6 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;

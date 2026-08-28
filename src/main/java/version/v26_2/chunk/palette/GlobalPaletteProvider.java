@@ -1,16 +1,15 @@
 package version.v26_2.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
-import version.v26_2.registries.RegistryLoader;
+import se.llbit.nbt.CompoundTag;
 import version.v26_2.protocol.Protocol;
 import version.v26_2.protocol.ProtocolVersionHandler;
+import version.v26_2.registries.RegistryLoader;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import se.llbit.nbt.CompoundTag;
 
 /**
  * This class manages the block registries. It can hold not only a palette for the current game version, but also for

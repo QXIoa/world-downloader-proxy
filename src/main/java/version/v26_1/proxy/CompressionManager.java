@@ -1,9 +1,7 @@
 package version.v26_1.proxy;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import org.apache.commons.io.IOUtils;
 import core.messages.Messages;
+import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

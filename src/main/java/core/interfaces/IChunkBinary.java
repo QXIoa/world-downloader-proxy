@@ -1,8 +1,8 @@
 package core.interfaces;
 
-import java.io.Serializable;
-
 import core.coordinates.CoordinateDim2D;
+
+import java.io.Serializable;
 
 /**
  * Core seam interface for the per-version chunk binary (serialized chunk data

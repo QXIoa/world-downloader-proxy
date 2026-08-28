@@ -1,6 +1,4 @@
 package version.v26_1.chunk.palette.blending;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 public class DiscreteBlendEquation implements IBlendEquation {
     double[] steps;

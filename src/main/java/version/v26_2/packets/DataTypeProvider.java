@@ -1,23 +1,17 @@
 package version.v26_2.packets;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.coordinates.Coordinate3D;
-import version.v26_2.container.Slot;
 import core.coordinates.CoordinateDouble3D;
-import java.util.Optional;
-import java.util.function.Supplier;
 import se.llbit.nbt.SpecificTag;
+import se.llbit.nbt.Tag;
+import version.v26_2.container.Slot;
 
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
-import se.llbit.nbt.Tag;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Class to provide an interface between the raw byte data and the various data types. Most methods are

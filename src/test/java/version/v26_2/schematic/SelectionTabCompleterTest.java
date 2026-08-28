@@ -1,9 +1,9 @@
 package version.v26_2.schematic;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SelectionTabCompleterTest {
     private SelectionTabCompleter tabCompleter;

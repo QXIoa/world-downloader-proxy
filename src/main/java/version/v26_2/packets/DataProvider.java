@@ -1,6 +1,4 @@
 package version.v26_2.packets;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_2.proxy.CompressionManager;
 

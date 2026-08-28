@@ -1,17 +1,17 @@
 package core.gui;
 
 
-import core.interfaces.IChunk;
 import core.config.Config;
 import core.coordinates.Coordinate2D;
 import core.coordinates.CoordinateDim2D;
+import core.interfaces.IChunk;
 import core.interfaces.IDimension;
-import java.awt.Desktop;
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 
-import static core.util.ExceptionHandling.attempt;
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.URI;
 
 /**
  * Dispatcher that routes chunk/map callbacks to the active GUI bridge

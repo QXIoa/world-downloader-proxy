@@ -1,16 +1,14 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IChunkBinary;
 import core.config.Config;
-import core.messages.Messages;
-import version.v26_1.world.WorldManager;
 import core.coordinates.CoordinateDim2D;
-import version.v26_1.region.McaFile;
-import version.v26_1.proxy.CompressionManager;
-import se.llbit.nbt.NamedTag;
+import core.interfaces.IChunkBinary;
+import core.messages.Messages;
 import core.util.PathUtils;
+import se.llbit.nbt.NamedTag;
+import version.v26_1.proxy.CompressionManager;
+import version.v26_1.region.McaFile;
+import version.v26_1.world.WorldManager;
 
 import java.io.*;
 import java.nio.file.Files;

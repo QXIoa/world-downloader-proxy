@@ -1,13 +1,11 @@
 package version.v26_2.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import com.google.gson.Gson;
+import se.llbit.nbt.SpecificTag;
+import se.llbit.nbt.StringTag;
 
 import java.util.ArrayList;
 import java.util.List;
-import se.llbit.nbt.SpecificTag;
-import se.llbit.nbt.StringTag;
 
 /**
  * Chat object, can be sent to the client to display messages.

@@ -3,15 +3,20 @@ package core.config;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import core.UnsupportedMinecraftVersionException;
+import core.auth.AuthDetails;
+import core.auth.AuthenticationMethod;
+import core.auth.MicrosoftAuthHandler;
 import core.gui.GuiManager;
 import core.interfaces.VersionModule;
 import core.messages.Messages;
 import core.proxy.ConnectionDetails;
-import core.auth.AuthDetails;
-import core.auth.AuthenticationMethod;
-import core.auth.MicrosoftAuthHandler;
 import core.util.LocalDateTimeAdapter;
 import core.util.PathUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Files;
@@ -20,10 +25,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Objects;
-import org.apache.commons.lang3.SystemUtils;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
 
 public class Config {
     private static final int DEFAULT_VERSION = Version.V26_2.protocolVersion;

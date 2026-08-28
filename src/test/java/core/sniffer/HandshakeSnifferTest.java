@@ -1,9 +1,10 @@
 package core.sniffer;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link HandshakeSniffer}, which parses the handshake packet layout

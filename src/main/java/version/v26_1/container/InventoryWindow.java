@@ -1,11 +1,9 @@
 package version.v26_1.container;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.registries.RegistryManager;
 import core.coordinates.Coordinate2D;
 import core.coordinates.Coordinate3D;
 import se.llbit.nbt.CompoundTag;
+import version.v26_1.registries.RegistryManager;
 
 import java.util.ArrayList;
 import java.util.List;

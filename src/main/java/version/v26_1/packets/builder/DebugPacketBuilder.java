@@ -1,12 +1,10 @@
 package version.v26_1.packets.builder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.packets.UUID;
-import core.queue.ByteQueue;
 import core.messages.Messages;
-import version.v26_1.proxy.CompressionManager;
+import core.queue.ByteQueue;
 import se.llbit.nbt.SpecificTag;
+import version.v26_1.packets.UUID;
+import version.v26_1.proxy.CompressionManager;
 
 import java.util.ArrayList;
 import java.util.List;

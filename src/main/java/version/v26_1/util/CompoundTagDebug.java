@@ -1,6 +1,4 @@
 package version.v26_1.util;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.SpecificTag;

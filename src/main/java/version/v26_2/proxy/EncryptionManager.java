@@ -1,43 +1,33 @@
 package version.v26_2.proxy;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IEncryptionManager;
-import static core.util.PrintUtils.devPrintFormat;
-
+import core.auth.ClientAuthenticator;
+import core.auth.ServerAuthenticator;
 import core.config.Config;
+import core.interfaces.IEncryptionManager;
 import core.messages.Messages;
-import core.proxy.IExceptionHandler;
 import core.proxy.ConnectionDetails;
+import core.proxy.IExceptionHandler;
+import core.queue.ByteQueue;
+import version.v26_2.packets.builder.PacketBuilder;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Signature;
+import java.security.*;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import version.v26_2.packets.builder.PacketBuilder;
 import java.util.List;
-import core.queue.ByteQueue;
-import core.auth.ClientAuthenticator;
-import core.auth.ServerAuthenticator;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
+
+import static core.util.PrintUtils.devPrintFormat;
 
 /**
  * Class to handle encryption, decryption and related masking of the proxy server.

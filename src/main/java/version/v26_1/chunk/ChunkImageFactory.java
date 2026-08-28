@@ -1,15 +1,14 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IChunkImageFactory;
-import core.messages.Messages;
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.palette.BlockState;
 import core.chunk.palette.SimpleColor;
-import version.v26_1.chunk.palette.blending.IBlendEquation;
 import core.coordinates.CoordinateDim2D;
 import core.gui.images.ImageMode;
+import core.interfaces.IChunkImageFactory;
+import core.messages.Messages;
+import version.v26_1.chunk.palette.BlockState;
+import version.v26_1.chunk.palette.blending.IBlendEquation;
+import version.v26_1.world.WorldManager;
+
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;

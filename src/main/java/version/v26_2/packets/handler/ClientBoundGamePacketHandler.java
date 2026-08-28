@@ -1,34 +1,30 @@
 package version.v26_2.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.protocol.Protocol;
-import static version.v26_2.packets.builder.NetworkType.BOOL;
-import static version.v26_2.packets.builder.NetworkType.INT;
-import static version.v26_2.packets.builder.NetworkType.LONG;
-import static version.v26_2.packets.builder.NetworkType.VARINT;
-
-import core.config.Config;
 import core.NetworkMode;
-import version.v26_2.world.WorldManager;
+import core.config.Config;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
-import version.v26_2.entity.EntityRegistry;
-import version.v26_2.entity.MobEntity;
-import version.v26_2.entity.ObjectEntity;
-import version.v26_2.registries.RegistryManager;
-import java.util.HashMap;
-import java.util.Map;
-import version.v26_2.packets.DataTypeProvider;
-import version.v26_2.packets.builder.PacketBuilder;
-import version.v26_2.packets.handler.plugins.PluginChannelHandler;
-import version.v26_2.proxy.ConnectionManager;
-import version.v26_2.schematic.CommandTreeInjector;
-import version.v26_2.schematic.CreativeMode;
-import version.v26_2.schematic.CreativeModeRegistry;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.SpecificTag;
 import se.llbit.nbt.StringTag;
+import version.v26_2.entity.EntityRegistry;
+import version.v26_2.entity.MobEntity;
+import version.v26_2.entity.ObjectEntity;
+import version.v26_2.packets.DataTypeProvider;
+import version.v26_2.packets.builder.PacketBuilder;
+import version.v26_2.packets.handler.plugins.PluginChannelHandler;
+import version.v26_2.protocol.Protocol;
+import version.v26_2.proxy.ConnectionManager;
+import version.v26_2.registries.RegistryManager;
+import version.v26_2.schematic.CommandTreeInjector;
+import version.v26_2.schematic.CreativeMode;
+import version.v26_2.schematic.CreativeModeRegistry;
+import version.v26_2.world.WorldManager;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static version.v26_2.packets.builder.NetworkType.*;
 
 /**
  * Handles client-bound game packets for the supported Minecraft versions (26.x).

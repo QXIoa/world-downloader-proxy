@@ -1,13 +1,11 @@
 package version.v26_1.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.world.WorldManager;
-import java.util.HashMap;
-import java.util.Map;
-import version.v26_1.packets.handler.PacketOperator;
 import version.v26_1.proxy.ConnectionManager;
 import version.v26_1.schematic.ParticleRegistry;
+import version.v26_1.world.WorldManager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Handles client-bound configuration packets for the supported Minecraft versions (26.x).

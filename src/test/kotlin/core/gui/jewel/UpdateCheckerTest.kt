@@ -1,12 +1,9 @@
 package core.gui.jewel
 
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import java.net.URI
 import java.lang.reflect.Method
+import java.net.URI
 
 class UpdateCheckerTest {
 

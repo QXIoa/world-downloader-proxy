@@ -1,6 +1,4 @@
 package version.v26_1.schematic;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 /**
  * Small color utility for the particle renderer — converts HSB to packed RGB24 integers

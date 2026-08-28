@@ -1,8 +1,7 @@
 package version.v26_1.world;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.coordinates.Coordinate2D;
+
 import java.util.ArrayList;
 import java.util.List;
 

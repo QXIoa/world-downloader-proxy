@@ -1,15 +1,15 @@
 package version.v26_1.chunk.palette;
 
-import version.v26_1.module.VersionModuleImpl;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
 import core.config.Config;
 import core.config.Version;
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
+import version.v26_1.module.VersionModuleImpl;
+import version.v26_1.world.WorldManager;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class PaletteTransformerTest {
 

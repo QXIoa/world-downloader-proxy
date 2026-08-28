@@ -1,15 +1,13 @@
 package version.v26_2.maps;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
-import version.v26_2.packets.DataTypeProvider;
+import core.util.PathUtils;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.IntTag;
 import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.Tag;
+import version.v26_2.packets.DataTypeProvider;
 import version.v26_2.util.NbtUtil;
-import core.util.PathUtils;
 
 import java.io.File;
 import java.io.IOException;

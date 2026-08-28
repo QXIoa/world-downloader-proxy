@@ -1,12 +1,7 @@
 package version.v26_2.entity;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.config.Config;
-import version.v26_2.packets.DataTypeProvider;
 import se.llbit.nbt.CompoundTag;
-
-import static core.util.PrintUtils.devPrint;
+import version.v26_2.packets.DataTypeProvider;
 
 public class ObjectEntity extends Entity {
     protected ObjectEntity() { }

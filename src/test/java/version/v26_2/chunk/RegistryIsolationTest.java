@@ -1,14 +1,14 @@
 package version.v26_2.chunk;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import core.config.Config;
 import core.config.Version;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import version.v26_2.module.VersionModuleImpl;
 import version.v26_2.registries.RegistryLoader;
 import version.v26_2.world.WorldManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**

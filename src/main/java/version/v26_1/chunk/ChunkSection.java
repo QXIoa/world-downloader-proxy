@@ -1,33 +1,15 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.palette.BlockRegistry;
-import version.v26_1.chunk.palette.BlockState;
-import version.v26_1.chunk.palette.DirectPalette;
-import version.v26_1.chunk.palette.GlobalPaletteProvider;
-import version.v26_1.chunk.palette.Palette;
-import version.v26_1.chunk.palette.PaletteTransformer;
-import version.v26_1.chunk.palette.PaletteType;
-import version.v26_1.chunk.palette.SingleValuePalette;
-import version.v26_1.chunk.palette.State;
-import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
 import core.coordinates.Coordinate3D;
 import core.messages.Messages;
+import org.apache.commons.lang3.mutable.MutableBoolean;
+import se.llbit.nbt.*;
+import version.v26_1.chunk.palette.*;
+import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
+import version.v26_1.packets.builder.PacketBuilder;
+
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import org.apache.commons.lang3.mutable.MutableBoolean;
-import version.v26_1.packets.builder.PacketBuilder;
-import se.llbit.nbt.ByteArrayTag;
-import se.llbit.nbt.ByteTag;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntTag;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.LongArrayTag;
-import se.llbit.nbt.SpecificTag;
-import se.llbit.nbt.Tag;
 
 /**
  * Class to hold a 16 block tall chunk section.

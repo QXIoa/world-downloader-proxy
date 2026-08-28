@@ -1,11 +1,9 @@
 package version.v26_1.packets;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.interfaces.IDataReader;
-import version.v26_1.packets.handler.PacketHandler;
-import core.queue.ByteQueue;
 import core.proxy.ByteConsumer;
+import core.queue.ByteQueue;
+import version.v26_1.packets.handler.PacketHandler;
 import version.v26_1.proxy.EncryptionManager;
 
 import java.io.IOException;

@@ -1,5 +1,6 @@
 package core.proxy;
 
+import core.messages.Messages;
 import org.xbill.DNS.Lookup;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.SRVRecord;
@@ -8,8 +9,6 @@ import org.xbill.DNS.Type;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import core.messages.Messages;
 
 import static core.util.ExceptionHandling.attempt;
 

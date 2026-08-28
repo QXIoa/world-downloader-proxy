@@ -1,7 +1,7 @@
 package core.schematic.export;
 
-import core.interfaces.IBlockState;
 import core.coordinates.Coordinate3D;
+import core.interfaces.IBlockState;
 
 /**
  * Reads block state data for a single coordinate. Kept as a small interface (rather than a

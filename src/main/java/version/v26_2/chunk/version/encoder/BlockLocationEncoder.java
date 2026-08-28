@@ -1,9 +1,7 @@
 package version.v26_2.chunk.version.encoder;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.chunk.Chunk;
 import core.messages.Messages;
+import version.v26_2.chunk.Chunk;
 
 /**
  * Encodes/decodes a single block's palette index within a chunk section's packed {@code long[]} data

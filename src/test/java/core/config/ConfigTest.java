@@ -1,15 +1,14 @@
 package core.config;
 
+import core.UnsupportedMinecraftVersionException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import version.v26_1.module.VersionModuleImpl;
+import version.v26_1.world.WorldManager;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-
-import core.UnsupportedMinecraftVersionException;
-import core.interfaces.VersionModule;
-import version.v26_1.module.VersionModuleImpl;
-import version.v26_1.world.WorldManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 /**
  * Covers the minimum-supported-version guard in {@link Config#setProtocolVersion}, which rejects clients

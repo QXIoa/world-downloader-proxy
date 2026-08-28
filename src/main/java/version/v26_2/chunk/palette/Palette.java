@@ -1,19 +1,17 @@
 package version.v26_2.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_2.world.WorldManager;
 import core.messages.Messages;
+import se.llbit.nbt.ListTag;
+import se.llbit.nbt.SpecificTag;
+import version.v26_2.chunk.ChunkSection;
+import version.v26_2.packets.DataTypeProvider;
+import version.v26_2.packets.builder.PacketBuilder;
+import version.v26_2.world.WorldManager;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import version.v26_2.chunk.ChunkSection;
 import java.util.stream.Stream;
-import version.v26_2.packets.DataTypeProvider;
-import version.v26_2.packets.builder.PacketBuilder;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.SpecificTag;
 
 /**
  * Class to hold a palette of a chunk.

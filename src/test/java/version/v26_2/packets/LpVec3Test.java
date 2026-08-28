@@ -1,11 +1,11 @@
 package version.v26_2.packets;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-
+import core.queue.ByteQueue;
 import org.junit.jupiter.api.Test;
 import version.v26_2.packets.builder.PacketBuilder;
-import core.queue.ByteQueue;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class LpVec3Test {
 

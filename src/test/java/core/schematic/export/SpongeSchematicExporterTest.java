@@ -1,26 +1,22 @@
 package core.schematic.export;
 
-import version.v26_1.module.VersionModuleImpl;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import core.config.Config;
+import core.coordinates.Coordinate3D;
 import core.interfaces.IBlockState;
 import core.interfaces.INbtIO;
-import core.coordinates.Coordinate3D;
 import core.interfaces.TestDimension;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import core.schematic.BoundingBox;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import core.schematic.BoundingBox;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntArrayTag;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.StringTag;
-import se.llbit.nbt.Tag;
+import se.llbit.nbt.*;
+import version.v26_1.module.VersionModuleImpl;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SpongeSchematicExporterTest {
     @TempDir

@@ -4,7 +4,6 @@ import core.util.AppVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URI
-import java.util.Scanner
 
 /**
  * Checks GitHub releases for a newer version than the current [AppVersion].

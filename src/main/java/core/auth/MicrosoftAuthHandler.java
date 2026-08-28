@@ -1,12 +1,13 @@
 package core.auth;
 
 import com.google.gson.Gson;
-import java.time.LocalDateTime;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.MultipartBody;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
+
+import java.time.LocalDateTime;
 
 /**
  * Handles logging in using Microsoft authentication.

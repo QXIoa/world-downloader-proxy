@@ -1,6 +1,4 @@
 package version.v26_1.packets;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 /**
  * Reader for the Low-Precision Vec3 wire format introduced in Minecraft 1.21.11 / 26.1

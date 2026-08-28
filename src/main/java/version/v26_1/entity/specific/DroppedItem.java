@@ -1,15 +1,13 @@
 package version.v26_1.entity.specific;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import java.util.function.Consumer;
-
+import se.llbit.nbt.CompoundTag;
+import se.llbit.nbt.ShortTag;
 import version.v26_1.container.Slot;
 import version.v26_1.entity.ObjectEntity;
 import version.v26_1.entity.metadata.MetaData;
 import version.v26_1.packets.DataTypeProvider;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.ShortTag;
+
+import java.util.function.Consumer;
 
 /**
  * Handle dropped items

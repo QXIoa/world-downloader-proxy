@@ -1,34 +1,25 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import core.interfaces.IChunk;
-import core.interfaces.IChunkImageFactory;
 import core.config.Config;
-import version.v26_1.world.WorldManager;
-import version.v26_1.chunk.palette.BlockState;
-import version.v26_1.chunk.palette.GlobalPaletteProvider;
-import version.v26_1.chunk.palette.Palette;
-import version.v26_1.chunk.palette.PaletteType;
 import core.coordinates.Coordinate2D;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
+import core.interfaces.IChunk;
+import core.interfaces.IChunkImageFactory;
 import core.messages.Messages;
-import version.v26_1.dimension.Dimension;
-import version.v26_1.chunk.BlockEntityRegistry;
-import version.v26_1.registries.RegistryManager;
-import version.v26_1.chunk.palette.BlockRegistry;
-import version.v26_1.protocol.Protocol;
-import java.util.function.BiConsumer;
 import core.util.Pair;
-import java.util.BitSet;
-import java.util.InputMismatchException;
-import java.util.function.Function;
+import se.llbit.nbt.*;
+import version.v26_1.chunk.palette.*;
+import version.v26_1.dimension.Dimension;
 import version.v26_1.packets.DataTypeProvider;
 import version.v26_1.packets.builder.PacketBuilder;
-import se.llbit.nbt.*;
+import version.v26_1.protocol.Protocol;
+import version.v26_1.registries.RegistryManager;
+import version.v26_1.world.WorldManager;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**

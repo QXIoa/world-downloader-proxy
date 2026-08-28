@@ -2,9 +2,10 @@ package core.auth;
 
 import com.google.gson.Gson;
 import core.messages.Messages;
-import java.io.IOException;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
+
+import java.io.IOException;
 
 /**
  * Deserialization class for the launcher config file.

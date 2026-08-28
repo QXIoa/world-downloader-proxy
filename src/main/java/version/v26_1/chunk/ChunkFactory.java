@@ -1,17 +1,16 @@
 package version.v26_1.chunk;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDim2D;
 import core.messages.Messages;
-import version.v26_1.world.WorldManager;
-import version.v26_1.packets.DataTypeProvider;
 import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.SpecificTag;
+import version.v26_1.packets.DataTypeProvider;
+import version.v26_1.world.WorldManager;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.*;
 
 /**

@@ -1,11 +1,11 @@
 package core.schematic;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import core.coordinates.Coordinate3D;
 import core.interfaces.TestDimension;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SelectionStateTest {
     @Test

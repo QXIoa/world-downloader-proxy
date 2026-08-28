@@ -1,10 +1,7 @@
 package version.v26_1.chunk.palette;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import version.v26_1.chunk.ChunkSection;
 import version.v26_1.chunk.version.encoder.BlockLocationEncoder;
-import java.util.Arrays;
 
 /**
  * Transforms a direct palette to a real palette.

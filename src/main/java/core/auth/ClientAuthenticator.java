@@ -2,18 +2,18 @@ package core.auth;
 
 import com.google.gson.Gson;
 import core.gui.GuiManager;
+import core.interfaces.IEncryptionManager;
 import core.messages.Messages;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestException;
+import kong.unirest.json.JSONObject;
 
 import javax.security.sasl.AuthenticationException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import kong.unirest.json.JSONObject;
-import core.interfaces.IEncryptionManager;
 
 import static core.util.PrintUtils.devPrint;
 

@@ -1,9 +1,7 @@
 package version.v26_1.packets.handler;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
-import version.v26_1.proxy.ConnectionManager;
 import core.messages.Messages;
+import version.v26_1.proxy.ConnectionManager;
 
 import java.util.HashMap;
 import java.util.Map;

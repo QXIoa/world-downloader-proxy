@@ -1,29 +1,17 @@
 package core.schematic.export;
 
 import core.config.Config;
-import core.interfaces.IBlockState;
-import core.interfaces.INbtIO;
 import core.coordinates.Coordinate3D;
+import core.interfaces.IBlockState;
 import core.interfaces.IDimension;
+import core.interfaces.INbtIO;
+import core.schematic.BoundingBox;
+import se.llbit.nbt.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import core.schematic.BoundingBox;
-import se.llbit.nbt.ByteArrayTag;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntArrayTag;
-import se.llbit.nbt.IntTag;
-import se.llbit.nbt.ListTag;
-import se.llbit.nbt.LongTag;
-import se.llbit.nbt.NamedTag;
-import se.llbit.nbt.ShortTag;
-import se.llbit.nbt.StringTag;
-import se.llbit.nbt.Tag;
+import java.util.*;
 
 /**
  * Encodes a {@link BoundingBox} to the Sponge Schematic Format, version 3

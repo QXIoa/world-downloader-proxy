@@ -1,6 +1,4 @@
 package version.v26_1.packets;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 public class VarIntResult {
 

@@ -1,6 +1,4 @@
 package version.v26_1.module;
-import core.schematic.SelectionState;
-import core.schematic.SelectionCommand;
 
 import core.config.Config;
 import version.v26_1.protocol.Protocol;

@@ -3,11 +3,10 @@ package core.gui.jewel.map
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import core.config.Config
 import core.coordinates.Coordinate2D
 import core.coordinates.CoordinateDim2D
 import core.coordinates.CoordinateDouble2D
-import core.coordinates.CoordinateDouble3D
-import core.config.Config
 import core.gui.ChunkImageState
 import core.gui.GuiBridge
 import core.gui.images.ImageMode
