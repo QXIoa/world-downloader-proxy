@@ -38,6 +38,16 @@ public class UUID {
         return String.format("%016X", lower).toLowerCase() + String.format("%016X", upper).toLowerCase();
     }
 
+    /**
+     * Returns the UUID in standard dashed format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx),
+     * as required by the Mojang sessionserver API.
+     */
+    public String toDashedString() {
+        String hex = toString();
+        return hex.substring(0, 8) + "-" + hex.substring(8, 12) + "-" + hex.substring(12, 16)
+            + "-" + hex.substring(16, 20) + "-" + hex.substring(20, 32);
+    }
+
     public long getUpper() {
         return upper;
     }

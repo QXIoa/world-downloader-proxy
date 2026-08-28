@@ -23,6 +23,12 @@ public class PlayerEntity implements IMovableEntity, IPlayerEntity {
         this.uuid = uuid;
     }
 
+    PlayerEntity(UUID uuid, String name) {
+        this.uuid = uuid;
+        this.name = name;
+        knownNames.put(uuid, name);
+    }
+
     public static PlayerEntity parse(DataTypeProvider provider) {
         PlayerEntity ent = new PlayerEntity(provider.readUUID());
         ent.readPosition(provider);
@@ -45,25 +51,26 @@ public class PlayerEntity implements IMovableEntity, IPlayerEntity {
             return;
         }
 
-        Unirest.get(API_GET_NAME + uuid.toString()).asStringAsync((str) -> {
+        Unirest.get(API_GET_NAME + uuid.toDashedString()).asStringAsync((str) -> {
             if (!str.isSuccess()) {
                 return;
             }
 
-            PlayerNameResponse res = new Gson().fromJson(str.getBody(), PlayerNameResponse.class);
-            knownNames.put(uuid, res.name);
-            this.name = res.name;
+            ProfileResponse res = new Gson().fromJson(str.getBody(), ProfileResponse.class);
+            if (res.name != null) {
+                knownNames.put(uuid, res.name);
+                this.name = res.name;
+            }
         });
     }
 
-    static class PlayerNameResponse {
+    static class ProfileResponse {
+        String id;
         String name;
     }
 
     @Override
     public void incrementPosition(int dx, int dy, int dz) {
-        // PlayerEntity may be created via PlayerInfoUpdate (which has no position) before
-        // SpawnPlayer arrives. Ignore movement until we have a real position to move from.
         if (pos == null) {
             return;
         }
@@ -97,7 +104,26 @@ public class PlayerEntity implements IMovableEntity, IPlayerEntity {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+        knownNames.put(uuid, name);
+    }
+
+    /**
+     * Sets the initial position from a SpawnEntity packet. In protocol 776+
+     * there is no separate AddPlayer packet, so players are spawned via
+     * AddEntity and the position must be copied to the PlayerEntity.
+     */
+    public void setInitialPosition(double x, double y, double z) {
+        this.pos = new CoordinateDouble3D(x, y, z);
+    }
+
     public UUID getUUID() {
         return uuid;
+    }
+
+    @Override
+    public String getUUIDString() {
+        return uuid.toDashedString();
     }
 }

@@ -11,4 +11,11 @@ import core.coordinates.CoordinateDouble3D;
 public interface IPlayerEntity {
     CoordinateDouble3D getPosition();
     String getName();
+
+    /**
+     * Returns the player's UUID in dashed format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+     * Used for head skin lookups — more reliable than name, which may contain
+     * formatting codes or be changed by the server.
+     */
+    String getUUIDString();
 }

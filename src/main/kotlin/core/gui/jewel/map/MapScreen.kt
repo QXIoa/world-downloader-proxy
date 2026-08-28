@@ -44,6 +44,34 @@ private fun loadNavIcon(): ImageBitmap? {
     return null
 }
 
+/**
+ * Loads the default Steve skin from resources and extracts the head (8×8 at
+ * offset 8,8), scaled to 16×16. Used as fallback when a player's head skin
+ * can't be fetched (non-premium account, API failure, still loading).
+ */
+private fun loadSteveHead(): ImageBitmap? {
+    val url = Thread.currentThread().contextClassLoader.getResource("ui/icon/steve.png")
+    if (url != null) {
+        try {
+            val skin = javax.imageio.ImageIO.read(url)
+            if (skin == null) return null
+            val headSize = 8
+            val head = java.awt.image.BufferedImage(headSize, headSize, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+            val g = head.createGraphics()
+            g.drawImage(skin, 0, 0, headSize, headSize, 8, 8, 8 + headSize, 8 + headSize, null)
+            g.dispose()
+            val scaled = java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+            val g2 = scaled.createGraphics()
+            g2.drawImage(head, 0, 0, 16, 16, null)
+            g2.dispose()
+            return scaled.toImageBitmap()
+        } catch (e: Exception) {
+            return null
+        }
+    }
+    return null
+}
+
 @Composable
 fun MapScreen(
     vm: ComposeMapViewModel,
@@ -66,6 +94,7 @@ fun MapScreen(
 
     val bgColor = Color(0.16f, 0.16f, 0.16f)
     val navIcon = remember { loadNavIcon() }
+    val steveHead = remember { loadSteveHead() }
 
     Box(modifier = modifier.fillMaxSize().background(bgColor)) {
         Canvas(
@@ -131,6 +160,12 @@ fun MapScreen(
                     }
                 },
         ) {
+            // Read tick to subscribe to periodic redraws (every 100ms).
+            // Without this, other players' positions wouldn't update when
+            // the local player stands still.
+            @Suppress("UNUSED_EXPRESSION")
+            tick
+
             val width = size.width
             val height = size.height
 
@@ -199,17 +234,36 @@ fun MapScreen(
                 }
             }
 
-            // Draw other players
+            // Draw other players — head skin from minotar.net (via PlayerHeadCache), fallback to Steve head
             if (core.config.Config.renderOtherPlayers()) {
                 for (player in vm.getOtherPlayers()) {
                     val pos = player.position ?: continue
                     val opx = ((pos.x - minX) / bpp).toFloat()
                     val opz = ((pos.z - minZ) / bpp).toFloat()
-                    drawCircle(
-                        color = Color(0.6f, 0.95f, 1f, 0.7f),
-                        radius = 3f,
-                        center = Offset(opx, opz),
-                    )
+
+                    val headSize = 16f
+                    val uuid = player.uuidString
+                    val headBmp = if (uuid != null) {
+                        core.gui.PlayerHeadCache.getHead(uuid)?.toImageBitmap() ?: steveHead
+                    } else {
+                        steveHead
+                    }
+                    if (headBmp != null) {
+                        drawImage(
+                            image = headBmp,
+                            dstOffset = androidx.compose.ui.unit.IntOffset(
+                                (opx - headSize / 2).toInt(),
+                                (opz - headSize / 2).toInt(),
+                            ),
+                            dstSize = androidx.compose.ui.unit.IntSize(headSize.toInt(), headSize.toInt()),
+                        )
+                    } else {
+                        drawCircle(
+                            color = Color(0.6f, 0.95f, 1f, 0.7f),
+                            radius = 3f,
+                            center = Offset(opx, opz),
+                        )
+                    }
                 }
             }
         }

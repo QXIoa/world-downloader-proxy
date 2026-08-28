@@ -44,6 +44,16 @@ public class EntityRegistry implements IEntityRegistry {
             if (ent == null) { return; }
             entities.put(ent.getId(), ent);
 
+            // If this is a player entity spawned via AddEntity (protocol 776+ has no
+            // separate AddPlayer packet), copy the initial position to the PlayerEntity
+            // in the players map so that MoveEntityPos updates work correctly.
+            if ("minecraft:player".equals(ent.typeName)) {
+                PlayerEntity player = players.get(ent.uuid);
+                if (player != null && player.getPosition() == null) {
+                    player.setInitialPosition(ent.x, ent.y, ent.z);
+                }
+            }
+
             ent.registerOnLocationChange((oldPos, newPos) -> {
                 CoordinateDim2D oldChunk = oldPos == null ? null : oldPos.globalToDimChunk();
                 CoordinateDim2D newChunk = newPos.globalToDimChunk();
@@ -96,9 +106,14 @@ public class EntityRegistry implements IEntityRegistry {
                     // (AddPlayer packet) sets the initial position; PlayerInfoUpdate just registers
                     // the UUID/name and has no position, so overwriting an existing player here
                     // would discard their position and cause NPEs on later MoveEntityPos packets.
-                    players.computeIfAbsent(uuid, PlayerEntity::new);
-
                     String name = provider.readString();
+                    PlayerEntity existing = players.get(uuid);
+                    if (existing != null) {
+                        existing.setName(name);
+                    } else {
+                        players.computeIfAbsent(uuid, u -> new PlayerEntity(u, name));
+                    }
+
                     int properties = provider.readVarInt();
                     for (int j = 0; j < properties; j++) {
                         provider.readString();
