@@ -5,6 +5,7 @@ build/
 abc/
 .idea/
 AGENTS.md
+docs/
 .classpath
 .project
 .settings/

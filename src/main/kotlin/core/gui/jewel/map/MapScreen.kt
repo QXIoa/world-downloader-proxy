@@ -97,12 +97,18 @@ fun MapScreen(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            vm.lockedToPlayer = false
+                            // Capture the current center BEFORE unlocking, so
+                            // getCenter() still returns the player position
+                            // (or the last manual center) instead of a stale
+                            // centerX/centerZ from before follow-player.
+                            val c = vm.getCenter()
                             dragStartX = offset.x
                             dragStartY = offset.y
-                            val c = vm.getCenter()
                             dragStartCenterX = c.x
                             dragStartCenterZ = c.z
+                            vm.centerX = c.x
+                            vm.centerZ = c.z
+                            vm.lockedToPlayer = false
                         },
                         onDrag = { change, _ ->
                             val dx = (dragStartX - change.position.x) * vm.blocksPerPixel.toFloat()
@@ -226,7 +232,7 @@ fun MapScreen(
                 onClick = {
                     vm.blocksPerPixel = (vm.blocksPerPixel * 0.8).coerceIn(1.0 / 16.0, 256.0)
                 },
-                modifier = Modifier.size(32.dp),
+                square = true,
                 contentPadding = PaddingValues(0.dp),
             )
             MinecraftButton(
@@ -234,7 +240,7 @@ fun MapScreen(
                 onClick = {
                     vm.blocksPerPixel = (vm.blocksPerPixel * 1.25).coerceIn(1.0 / 16.0, 256.0)
                 },
-                modifier = Modifier.size(32.dp),
+                square = true,
                 contentPadding = PaddingValues(0.dp),
             )
         }

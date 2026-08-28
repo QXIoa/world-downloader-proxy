@@ -1,27 +1,37 @@
 package core.gui.jewel
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -52,6 +62,22 @@ private val McAccentHover = Color(0xFF00A050)
 private val McAccentLight = Color(0xFF27CE40)
 private val McAccentDark  = Color(0xFF064D2A)
 
+// ── Fonts ────────────────────────────────────────────────────────────────
+
+val Font1 = FontFamily(
+    androidx.compose.ui.text.platform.ResourceFont(
+        name = "ui/fonts/font1.ttf",
+        weight = FontWeight.Bold,
+    ),
+)
+
+val Font2 = FontFamily(
+    androidx.compose.ui.text.platform.ResourceFont(
+        name = "ui/fonts/font2.otf",
+        weight = FontWeight.Normal,
+    ),
+)
+
 // ── Minecraft-style button ───────────────────────────────────────────────
 
 @Composable
@@ -61,59 +87,126 @@ fun MinecraftButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     accent: Boolean = false,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
+    square: Boolean = false,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isPressed by interactionSource.collectIsPressedAsState()
+    val button2Img = remember { getButton2Tex() }
 
-    val bgColor = when {
-        !enabled   -> McBgDisabled
-        isPressed  -> if (accent) McAccentDark else McBgPressed
-        isHovered  -> if (accent) McAccentHover else McBgHover
-        accent     -> McAccent
-        else       -> McBg
+    // Overlay tint to distinguish states on top of the texture
+    val overlayColor = when {
+        !enabled   -> Color.Black.copy(alpha = 0.45f)
+        isPressed  -> Color.Black.copy(alpha = 0.25f)
+        accent     -> McAccent.copy(alpha = 0.25f)
+        else       -> Color.Transparent
+    }
+
+    // Animate blur on hover
+    val blurAlpha by animateFloatAsState(
+        targetValue = if (isHovered && enabled) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+        label = "btnBlur",
+    )
+
+    // Size modifier: square buttons keep fixed size, text buttons wrap content
+    val sizeModifier = if (square) {
+        Modifier.size(36.dp)
+    } else {
+        Modifier.height(36.dp).wrapContentWidth()
+    }
+
+    // Corner rounding: rounded for text buttons, sharp for square (+/-)
+    val cornerModifier = if (square) {
+        Modifier
+    } else {
+        Modifier.clip(RoundedCornerShape(4.dp))
     }
 
     Box(
         modifier = modifier
-            .height(32.dp)
+            .then(sizeModifier)
+            .then(cornerModifier)
             .shadow(
                 elevation = if (isPressed) 1.dp else 3.dp,
                 ambientColor = Color.Black.copy(alpha = 0.4f),
                 spotColor = Color.Black.copy(alpha = 0.3f),
             )
-            .background(bgColor)
             .drawWithContent {
-                drawContent()
-                val w = size.width
-                val h = size.height
-                val b = 2f
-                val (topLeftColor, bottomRightColor) = if (isPressed) {
-                    McDark to McLight
+                // Draw button2.png texture tiled horizontally to fill button.
+                if (button2Img != null) {
+                    val srcW = button2Img.width.toFloat()
+                    val srcH = button2Img.height.toFloat()
+                    val dstH = size.height
+                    val scale = dstH / srcH
+                    val tileW = srcW * scale
+                    val count = (size.width / tileW).toInt() + 1
+                    for (i in 0 until count) {
+                        val x = i * tileW
+                        drawImage(
+                            image = button2Img,
+                            srcOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                            srcSize = androidx.compose.ui.unit.IntSize(srcW.toInt(), srcH.toInt()),
+                            dstOffset = androidx.compose.ui.unit.IntOffset(x.toInt(), 0),
+                            dstSize = androidx.compose.ui.unit.IntSize((tileW + 1f).toInt(), dstH.toInt()),
+                        )
+                    }
                 } else {
-                    McLight to McDark
+                    drawRect(McBg)
                 }
-                drawLine(topLeftColor, Offset(0f, 0f), Offset(w, 0f), strokeWidth = b)
-                drawLine(topLeftColor, Offset(0f, 0f), Offset(0f, h), strokeWidth = b)
-                drawLine(bottomRightColor, Offset(0f, h), Offset(w, h), strokeWidth = b)
-                drawLine(bottomRightColor, Offset(w, 0f), Offset(w, h), strokeWidth = b)
+                // State overlay
+                if (overlayColor != Color.Transparent) {
+                    drawRect(overlayColor)
+                }
+                drawContent()
             }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
                 onClick = onClick,
-            )
-            .padding(contentPadding),
+            ),
         contentAlignment = Alignment.Center,
     ) {
+        // Blurred texture layer — matchParentSize covers the FULL button
+        if (blurAlpha > 0.01f && button2Img != null) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .blur(14.dp)
+                    .graphicsLayer { this.alpha = blurAlpha * 0.9f }
+                    .drawWithContent {
+                        val srcW = button2Img.width.toFloat()
+                        val srcH = button2Img.height.toFloat()
+                        val dstH = size.height
+                        val scale = dstH / srcH
+                        val tileW = srcW * scale
+                        val count = (size.width / tileW).toInt() + 1
+                        for (i in 0 until count) {
+                            val x = i * tileW
+                            drawImage(
+                                image = button2Img,
+                                srcOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                                srcSize = androidx.compose.ui.unit.IntSize(srcW.toInt(), srcH.toInt()),
+                                dstOffset = androidx.compose.ui.unit.IntOffset(x.toInt(), 0),
+                                dstSize = androidx.compose.ui.unit.IntSize((tileW + 1f).toInt(), dstH.toInt()),
+                            )
+                        }
+                    },
+            )
+        }
+        // Text — softWrap=false prevents line breaks, padding adds breathing room
         Text(
-            text = text,
+            text = text.uppercase(),
             color = if (enabled) McText else Color(0xFF888888),
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = Font2,
+            softWrap = false,
+            maxLines = 1,
             style = TextStyle(shadow = Shadow(color = McTextShadow, offset = Offset(1f, 1f), blurRadius = 0f)),
+            modifier = Modifier.padding(contentPadding),
         )
     }
 }
@@ -125,45 +218,119 @@ fun HelpIcon(
     helpText: String,
     modifier: Modifier = Modifier,
 ) {
-    var showPopup by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val button2Img = remember { getButton2Tex() }
 
+    // Animate blur on hover
+    val blurAlpha by animateFloatAsState(
+        targetValue = if (isHovered) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+        label = "helpBlur",
+    )
+
+    // Simple hover state with short debounce to prevent edge flicker
+    var hoverState by remember { mutableStateOf(false) }
+    LaunchedEffect(isHovered) {
+        if (isHovered) {
+            hoverState = true
+        } else {
+            kotlinx.coroutines.delay(150)
+            hoverState = false
+        }
+    }
+    val showPopup = hoverState
+
+    // Outer hover area — slightly larger than the circle to make hover
+    // detection more stable near edges.
     Box(
         modifier = modifier
-            .size(18.dp)
-            .background(
-                color = if (isHovered) Color(0xFF555555) else Color(0xFF3D3D3D),
-                shape = RoundedCornerShape(50),
-            )
-            .border(
-                width = 1.dp,
-                color = if (isHovered) Color(0xFF777777) else Color(0xFF555555),
-                shape = RoundedCornerShape(50),
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-            ) { showPopup = !showPopup },
+            .size(22.dp)
+            .hoverable(interactionSource),
         contentAlignment = Alignment.Center,
     ) {
-        Text("?", color = Color(0xFFCCCCCC), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        // Inner circle — clips texture to a circle
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+        // Texture background — crop center square from button2.png, scale to fill circle
+        if (button2Img != null) {
+            val srcSize = minOf(button2Img.width, button2Img.height)
+            val srcX = (button2Img.width - srcSize) / 2
+            val srcY = (button2Img.height - srcSize) / 2
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawImage(
+                    image = button2Img,
+                    srcOffset = androidx.compose.ui.unit.IntOffset(srcX, srcY),
+                    srcSize = androidx.compose.ui.unit.IntSize(srcSize, srcSize),
+                    dstOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                    dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()),
+                )
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF3D3D3D)))
+        }
+
+        // Blurred texture layer on hover
+        if (blurAlpha > 0.01f && button2Img != null) {
+            val srcSize = minOf(button2Img.width, button2Img.height)
+            val srcX = (button2Img.width - srcSize) / 2
+            val srcY = (button2Img.height - srcSize) / 2
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(4.dp)
+                    .graphicsLayer { this.alpha = blurAlpha * 0.85f },
+            ) {
+                drawImage(
+                    image = button2Img,
+                    srcOffset = androidx.compose.ui.unit.IntOffset(srcX, srcY),
+                    srcSize = androidx.compose.ui.unit.IntSize(srcSize, srcSize),
+                    dstOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                    dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()),
+                )
+            }
+        }
+
+        Text("?", color = Color(0xFFCCCCCC), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
     }
 
+    // Popup on hover — positioned to the right, non-interactive (useSimpleRendering
+    // + focusable=false so it doesn't capture pointer events and cause flicker)
     if (showPopup) {
         Popup(
-            alignment = Alignment.TopEnd,
-            onDismissRequest = { showPopup = false },
-            properties = PopupProperties(focusable = true),
+            alignment = Alignment.TopStart,
+            offset = androidx.compose.ui.unit.IntOffset(48, -2),
+            properties = PopupProperties(
+                focusable = false,
+                clippingEnabled = false,
+            ),
         ) {
             Box(
                 modifier = Modifier
                     .widthIn(max = 320.dp)
-                    .background(Color(0xFF2B2B2B), RoundedCornerShape(6.dp))
-                    .border(1.dp, Color(0xFF555555), RoundedCornerShape(6.dp))
-                    .padding(12.dp)
+                    .wrapContentHeight()
             ) {
-                Text(helpText, color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                // Blurred frosted glass background
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFF2B2B2B).copy(alpha = 0.85f))
+                        .blur(12.dp)
+                        .border(1.dp, Color(0xFF555555), RoundedCornerShape(6.dp))
+                )
+                Text(
+                    helpText,
+                    color = Color(0xFFCCCCCC),
+                    fontSize = 12.sp,
+                    fontFamily = Font2,
+                    modifier = Modifier.padding(12.dp)
+                )
             }
         }
     }
@@ -176,17 +343,142 @@ fun LabeledRow(
     label: String,
     helpText: String? = null,
     modifier: Modifier = Modifier,
+    fillWidth: Boolean = true,
     trailing: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier).padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = Color(0xFFBBBBBB), fontSize = 13.sp, modifier = Modifier.width(180.dp))
-        if (helpText != null) {
-            HelpIcon(helpText, modifier = Modifier.padding(end = 8.dp))
+        if (label.isNotEmpty()) {
+            if (helpText != null) {
+                HelpIcon(helpText, modifier = Modifier.padding(end = 8.dp))
+            }
+            Text(label, color = Color(0xFFBBBBBB), fontSize = 13.sp, fontFamily = Font2, modifier = if (fillWidth) Modifier.width(180.dp) else Modifier.padding(end = 6.dp))
         }
         trailing()
+    }
+}
+
+// ── Custom checkbox with green indicator ─────────────────────────────────
+
+@Composable
+fun CustomCheckbox(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp)
+            .hoverable(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+            ) { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Green checkbox indicator
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(
+                    if (!enabled) Color(0xFF333333)
+                    else if (checked) Color(0xFF7FD440)
+                    else Color(0xFF3D3D3D)
+                )
+                .border(
+                    1.dp,
+                    if (!enabled) Color(0xFF555555)
+                    else if (checked) Color(0xFF9FE560)
+                    else if (isHovered) Color(0xFF777777)
+                    else Color(0xFF666666),
+                    RoundedCornerShape(3.dp),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Text("✓", color = Color(0xFF1A2E0A), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            label,
+            color = if (enabled) Color(0xFFBBBBBB) else Color(0xFF888888),
+            fontSize = 12.sp,
+            fontFamily = Font2,
+        )
+    }
+}
+
+// ── Custom radio button with green indicator ─────────────────────────────
+
+@Composable
+fun CustomRadioButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp)
+            .hoverable(interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Green radio button indicator (circle)
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(
+                    if (!enabled) Color(0xFF333333)
+                    else if (selected) Color(0xFF7FD440)
+                    else Color(0xFF3D3D3D)
+                )
+                .border(
+                    1.dp,
+                    if (!enabled) Color(0xFF555555)
+                    else if (selected) Color(0xFF9FE560)
+                    else if (isHovered) Color(0xFF777777)
+                    else Color(0xFF666666),
+                    CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF1A2E0A))
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            label,
+            color = if (enabled) Color(0xFFBBBBBB) else Color(0xFF888888),
+            fontSize = 12.sp,
+            fontFamily = Font2,
+        )
     }
 }
 
@@ -204,15 +496,15 @@ fun SettingCheckbox(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CheckboxRow(
-            text = label,
+        if (helpText != null) {
+            HelpIcon(helpText, modifier = Modifier.padding(end = 8.dp))
+        }
+        CustomCheckbox(
+            label = label,
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = enabled,
         )
-        if (helpText != null) {
-            HelpIcon(helpText, modifier = Modifier.padding(start = 6.dp))
-        }
     }
 }
 
@@ -272,6 +564,7 @@ fun IntField(
     helpText: String? = null,
     enabled: Boolean = true,
     width: Int = 120,
+    fillWidth: Boolean = true,
 ) {
     val strValue = value.toString()
     val tfvState = remember { mutableStateOf(TextFieldValue(strValue)) }
@@ -279,7 +572,7 @@ fun IntField(
         tfvState.value = TextFieldValue(strValue)
     }
 
-    LabeledRow(label = label, helpText = helpText) {
+    LabeledRow(label = label, helpText = helpText, fillWidth = fillWidth) {
         TextField(
             value = tfvState.value,
             onValueChange = { tfv ->
@@ -307,6 +600,7 @@ fun LongField(
     helpText: String? = null,
     enabled: Boolean = true,
     width: Int = 200,
+    fillWidth: Boolean = true,
 ) {
     val strValue = value.toString()
     val tfvState = remember { mutableStateOf(TextFieldValue(strValue)) }
@@ -314,7 +608,7 @@ fun LongField(
         tfvState.value = TextFieldValue(strValue)
     }
 
-    LabeledRow(label = label, helpText = helpText) {
+    LabeledRow(label = label, helpText = helpText, fillWidth = fillWidth) {
         TextField(
             value = tfvState.value,
             onValueChange = { tfv ->
@@ -363,6 +657,7 @@ fun SectionCard(
 // ── Nav-bar textures (loaded once) ───────────────────────────────────────
 
 private var buttonTex: ImageBitmap? = null
+private var button2Tex: ImageBitmap? = null
 
 private fun loadTex(path: String): ImageBitmap? {
     val url = Thread.currentThread().contextClassLoader.getResource(path)
@@ -386,6 +681,12 @@ private fun getButtonTex(): ImageBitmap? {
     buttonTex?.let { return it }
     buttonTex = loadTex("ui/icon/button.png")
     return buttonTex
+}
+
+private fun getButton2Tex(): ImageBitmap? {
+    button2Tex?.let { return it }
+    button2Tex = loadTex("ui/icon/button2.png")
+    return button2Tex
 }
 
 // ── Custom tab bar with Minecraft textures ───────────────────────────────
@@ -439,7 +740,8 @@ fun TabBar(
     Column(modifier = Modifier.fillMaxWidth()) {
         // ── Tab buttons row ──
         // button.png is tiled across the whole bar as a single background.
-        // Active tab is brightened, inactive tabs are dimmed with bevels.
+        // Active/hovered tab gets a blurred copy of the texture behind the text
+        // (frosted glass effect). Text: bold gray inactive, bold white active.
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth().height(barHeight),
         ) {
@@ -458,50 +760,68 @@ fun TabBar(
             Row(modifier = Modifier.fillMaxSize()) {
                 tabs.forEachIndexed { index, title ->
                     val isSelected = index == selected
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isHovered by interactionSource.collectIsHoveredAsState()
+                    val showBlur = isSelected || isHovered
+
+                    // Animate blur alpha so it fades in/out smoothly on hover
+                    val blurAlpha by animateFloatAsState(
+                        targetValue = if (showBlur) 1f else 0f,
+                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                        label = "tabBlur",
+                    )
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .drawWithContent {
-                                val w = size.width
-                                val h = size.height
-                                // Dim inactive tabs
-                                if (!isSelected) {
-                                    drawRect(Color.Black.copy(alpha = 0.35f))
-                                }
-                                // Brighten active tab
-                                if (isSelected) {
-                                    drawRect(Color.White.copy(alpha = 0.08f))
-                                }
-                                drawContent()
-                                // Bevel shading on top of the button texture
-                                val b = 2f
-                                val (tl, br) = if (isSelected) {
-                                    Color(0xFFA0A0A0) to Color(0xFF404040)
-                                } else {
-                                    Color(0xFF555555) to Color(0xFF222222)
-                                }
-                                drawLine(tl, Offset(0f, 0f), Offset(w, 0f), strokeWidth = b)
-                                drawLine(br, Offset(0f, h), Offset(w, h), strokeWidth = b)
-                                if (index == 0) {
-                                    drawLine(tl, Offset(0f, 0f), Offset(0f, h), strokeWidth = b)
-                                }
-                                if (index == tabs.lastIndex) {
-                                    drawLine(br, Offset(w, 0f), Offset(w, h), strokeWidth = b)
-                                }
-                                if (index < tabs.lastIndex) {
-                                    drawLine(Color(0xFF333333), Offset(w, 0f), Offset(w, h), strokeWidth = 1f)
-                                }
-                            }
-                            .clickable { onSelect(index) }
-                            .padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center,
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                            ) { onSelect(index) },
                     ) {
+                        // Blurred texture layer — fades in on active/hover
+                        if (blurAlpha > 0.01f && buttonImg != null) {
+                            androidx.compose.foundation.Canvas(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .blur(2.dp)
+                                    .graphicsLayer { this.alpha = blurAlpha },
+                            ) {
+                                tileHorizontally(buttonImg, size.width, size.height)
+                            }
+                        }
+                        // Thin bottom bar + left separator
+                        // Active: light gray bar; inactive: dark
+                        androidx.compose.foundation.Canvas(
+                            modifier = Modifier.matchParentSize(),
+                        ) {
+                            val barColor = if (isSelected) Color(0xFFCCCCCC) else Color(0xFF333333)
+                            // Bottom bar
+                            drawLine(
+                                barColor,
+                                Offset(0f, size.height - 3f),
+                                Offset(size.width, size.height - 3f),
+                                strokeWidth = 6f,
+                            )
+                            // Right separator (between tabs) — skip on last tab
+                            if (index < tabs.lastIndex) {
+                                drawLine(
+                                    barColor,
+                                    Offset(size.width - 3f, 0f),
+                                    Offset(size.width - 3f, size.height),
+                                    strokeWidth = 6f,
+                                )
+                            }
+                        }
+                        // Text on top (always sharp)
                         Text(
                             text = title,
-                            color = if (isSelected) McAccentLight else Color(0xFF999999),
+                            color = if (isSelected) Color.White else Color(0xFFBBBBBB),
                             fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = Font1,
+                            modifier = Modifier.align(Alignment.Center),
                         )
                     }
                 }

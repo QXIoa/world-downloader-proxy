@@ -1,12 +1,13 @@
 package core.gui.jewel
 
-import AboutDialog
+import core.gui.jewel.AboutDialog
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -119,6 +120,14 @@ fun main() {
         var showAbout by remember { mutableStateOf(false) }
         val mapVm = remember { ComposeMapViewModel() }
 
+        // Update check — runs once on startup. If a newer GitHub release
+        // is found, an "Update" tab is shown that the user must dismiss.
+        var updateInfo by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
+        var updateDismissed by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            updateInfo = UpdateChecker.checkForUpdate()
+        }
+
         val windowState = rememberWindowState(width = 800.dp, height = 620.dp)
 
         val iconPainter: Painter? = remember {
@@ -191,11 +200,33 @@ fun main() {
                             selected = 0,
                             onSelect = { },
                         )
-                        // Map fills the rest of the window
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        // Map fills the rest of the window (clipped so it
+                        // cannot overflow into the tab bar above)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .clipToBounds(),
+                        ) {
                             MapScreen(vm = mapVm)
                         }
                         // Grass strip at the bottom
+                        GrassBar()
+                    }
+                } else if (updateInfo != null && !updateDismissed) {
+                    // Update available — show update screen as a forced tab
+                    Column(modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
+                        TabBar(
+                            tabs = listOf(t("gui.update.tab")),
+                            selected = 0,
+                            onSelect = { },
+                        )
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            UpdateScreen(
+                                info = updateInfo!!,
+                                onDismiss = { updateDismissed = true },
+                            )
+                        }
                         GrassBar()
                     }
                 } else {

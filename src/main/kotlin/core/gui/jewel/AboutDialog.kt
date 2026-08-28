@@ -1,3 +1,5 @@
+package core.gui.jewel
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -73,6 +76,7 @@ fun AboutDialog(
                 color = Color(0xFF27CE40),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                fontFamily = Font1,
             )
 
             Spacer(Modifier.height(12.dp))
@@ -81,6 +85,7 @@ fun AboutDialog(
                 text = "Version: ${AppVersion.get()}",
                 color = Color(0xFFBBBBBB),
                 fontSize = 13.sp,
+                fontFamily = Font2,
             )
 
             Spacer(Modifier.height(4.dp))
@@ -89,6 +94,7 @@ fun AboutDialog(
                 text = "Java: $javaVer",
                 color = Color(0xFF888888),
                 fontSize = 12.sp,
+                fontFamily = Font2,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -114,6 +120,7 @@ fun AboutDialog(
                     text = "See this project on GitHub",
                     color = Color(0xFF6B9BFF),
                     fontSize = 13.sp,
+                    fontFamily = Font2,
                     textDecoration = TextDecoration.Underline,
                 )
             }

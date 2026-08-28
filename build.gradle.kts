@@ -11,8 +11,11 @@ val skipTests = (property("skipTests") as String).toBoolean()
 
 val arch = project.findProperty("arch") as String? ?: "arm64"
 
-version = "snapshot"
+version = "2026.1"
 group = "mircokroon.minecraft-world-downloader"
+
+// GitHub repo for update checks
+val repoUrl = "https://github.com/XInfiniterX/world-downloader-proxy"
 
 repositories {
     mavenCentral()
@@ -78,10 +81,13 @@ kotlin {
     jvmToolchain(javaVersion.toInt())
 }
 
-// Resources filtering — version.txt (contains ${project.version})
+// Resources filtering — version.txt and repo.txt
 tasks.processResources {
-    filesMatching("version.txt") {
-        expand(mapOf("project" to mapOf("version" to project.version)))
+    filesMatching(listOf("version.txt", "repo.txt")) {
+        expand(mapOf(
+            "project" to mapOf("version" to project.version),
+            "repoUrl" to repoUrl,
+        ))
     }
 }
 
