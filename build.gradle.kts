@@ -53,16 +53,14 @@ dependencies {
     // Jewel — 0.39.1 built against Compose 1.11
     implementation("org.jetbrains.jewel:jewel-int-ui-standalone:0.39.1-262.9437.29")
 
-    // Skiko native libs — compose.desktop.currentOs only bundles build-host libs.
-    // Fat jar must include libs for all target platforms.
-    if (arch == "x86_64") {
-        implementation("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.144.6")
-        implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.144.6")
-        implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-x64:0.144.6")
-    } else {
-        implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.144.6")
-        implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.144.6")
-    }
+    // Skiko native libs — include ALL platforms/arches in a single universal jar.
+    // Skiko selects the correct native lib at runtime based on the host OS/arch.
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.144.6")
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-windows-arm64:0.144.6")
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.144.6")
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.144.6")
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-x64:0.144.6")
+    implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.144.6")
 
     // Tests
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
@@ -97,10 +95,9 @@ tasks.test {
     enabled = !skipTests
 }
 
-// Fat jar (Shadow) — Maven-style name: world-downloader-proxy-snapshot-linux-mac-arm64.jar
-val jarSuffix = if (arch == "x86_64") "win-linux-mac-x86_64" else "linux-mac-arm64"
+// Fat jar (Shadow) — single universal jar for all platforms (mac/linux/win × arm/x86)
 tasks.shadowJar {
-    archiveClassifier.set(jarSuffix)
+    archiveClassifier.set("mac-linux-win-arm-x86")
     archiveBaseName.set("world-downloader-proxy")
     mergeServiceFiles()
     duplicatesStrategy = DuplicatesStrategy.WARN
