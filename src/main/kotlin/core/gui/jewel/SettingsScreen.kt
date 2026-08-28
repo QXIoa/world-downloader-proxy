@@ -151,12 +151,11 @@ private fun GeneralTab(vm: SettingsViewModel, isStarted: Boolean) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${vm.extendedRenderDistance}", color = Color(0xFFDDDDDD), fontSize = 13.sp,
                          modifier = Modifier.width(30.dp))
-                    Slider(
+                    McSlider(
                         value = vm.extendedRenderDistance.toFloat(),
                         onValueChange = { v -> vm.extendedRenderDistance = v.toInt() },
-                        modifier = Modifier.width(200.dp),
                         valueRange = 0f..32f,
-                        steps = 31,
+                        modifier = Modifier.width(200.dp),
                     )
                 }
             }
@@ -397,13 +396,16 @@ private fun RealmItemRow(realm: RealmInfo, onSelect: (String) -> Unit) {
 
 @Composable
 private fun ErrorLogTab(vm: SettingsViewModel) {
-    if (vm.errorMessages.isEmpty()) {
+    val allErrors = remember(vm.errorMessages, vm.backendErrors) {
+        vm.errorMessages + (vm.backendErrors?.toList() ?: emptyList())
+    }
+    if (allErrors.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No errors", color = Color(0xFF666666), fontSize = 14.sp)
         }
     } else {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            vm.errorMessages.forEach { msg ->
+            allErrors.forEach { msg ->
                 Text(msg, color = Color(0xFFE07070), fontSize = 12.sp, modifier = Modifier.padding(vertical = 2.dp))
             }
         }

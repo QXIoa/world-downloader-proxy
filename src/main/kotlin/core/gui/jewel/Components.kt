@@ -3,6 +3,10 @@ package core.gui.jewel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -14,6 +18,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
@@ -577,6 +583,84 @@ fun IntField(
 }
 
 // ── Long text field ──────────────────────────────────────────────────────
+
+// ── Minecraft-style slider ───────────────────────────────────────────────
+
+/**
+ * A Minecraft-styled slider: vertical bars (one per chunk) side by side.
+ * Active bars (0..value) are green and taller; inactive bars are dark and shorter.
+ * Click or drag anywhere to set the value.
+ */
+@Composable
+fun McSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val min = valueRange.start
+    val max = valueRange.endInclusive
+    val tickCount = (max - min + 1).toInt()
+    val currentTick = value.toInt()
+
+    val activeColor = if (enabled) Color(0xFF6B9F4A) else Color(0xFF444444)
+    val pastColor = if (enabled) Color(0xFF3A6B2A) else Color(0xFF333333)
+    val inactiveColor = Color(0xFF555555)
+
+    var trackWidthPx by remember { mutableStateOf(0f) }
+
+    Box(
+        modifier = modifier
+            .height(24.dp)
+            .fillMaxWidth()
+            .onSizeChanged { trackWidthPx = it.width.toFloat() }
+            .pointerInput(enabled, trackWidthPx) {
+                if (!enabled || trackWidthPx == 0f) return@pointerInput
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        val f = (offset.x / trackWidthPx).coerceIn(0f, 1f)
+                        onValueChange(min + f * (max - min))
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        val f = (change.position.x / trackWidthPx).coerceIn(0f, 1f)
+                        onValueChange(min + f * (max - min))
+                    },
+                )
+            }
+            .pointerInput(enabled, trackWidthPx) {
+                if (!enabled || trackWidthPx == 0f) return@pointerInput
+                detectTapGestures { offset ->
+                    val f = (offset.x / trackWidthPx).coerceIn(0f, 1f)
+                    onValueChange(min + f * (max - min))
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        // Vertical bars — one per chunk, evenly spaced side by side
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            for (i in 0 until tickCount) {
+                val color = when {
+                    i == currentTick -> activeColor
+                    i < currentTick -> pastColor
+                    else -> inactiveColor
+                }
+                val isActive = i <= currentTick
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(if (isActive) 20.dp else 12.dp)
+                        .background(color),
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun LongField(

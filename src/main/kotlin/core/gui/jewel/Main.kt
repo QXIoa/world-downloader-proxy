@@ -235,6 +235,7 @@ fun main() {
                                         }
                                         // Register the Compose map bridge before starting
                                         GuiManager.setGuiBridge(mapVm)
+                                        vm.backendErrors = mapVm.errors
                                         startProxyFromCompose()
                                         proxyStarted = true
                                         vm.loadFromConfig()

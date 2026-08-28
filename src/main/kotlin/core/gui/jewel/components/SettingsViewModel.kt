@@ -56,6 +56,9 @@ class SettingsViewModel {
     // ── Error log ──────────────────────────────────────────────
     var errorMessages by mutableStateOf<List<String>>(emptyList())
 
+    /** Backend errors collected by ComposeMapViewModel via GuiBridge.addError(). */
+    var backendErrors: java.util.concurrent.CopyOnWriteArrayList<String>? = null
+
     private var authServer: MicrosoftAuthServer? = null
 
     /**

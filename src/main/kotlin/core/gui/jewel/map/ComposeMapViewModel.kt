@@ -27,6 +27,9 @@ class ComposeMapViewModel : GuiBridge {
     var statusMsg by mutableStateOf("")
     var errorVisible by mutableStateOf(false)
 
+    /** Errors collected from the backend, displayed in the Error log tab. */
+    val errors = java.util.concurrent.CopyOnWriteArrayList<String>()
+
     var centerX by mutableStateOf(0.0)
     var centerZ by mutableStateOf(0.0)
     var lockedToPlayer by mutableStateOf(true)
@@ -242,6 +245,10 @@ class ComposeMapViewModel : GuiBridge {
 
     override fun hideErrorMessage() {
         errorVisible = false
+    }
+
+    override fun addError(message: String) {
+        errors.add(message)
     }
 
     fun getCenter(): CoordinateDouble2D {

@@ -78,6 +78,10 @@ public class GuiManager {
         if (!GuiManager.hasErrors) {
             GuiManager.hasErrors = true;
         }
+        // Pass the last error message to the GUI bridge
+        if (guiBridge != null && !messages.isEmpty()) {
+            guiBridge.addError(messages.get(messages.size() - 1));
+        }
         if (guiBridge != null) {
             guiBridge.showErrorMessage();
         }

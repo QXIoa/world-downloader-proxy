@@ -21,4 +21,5 @@ public interface GuiBridge {
     void setStatusMessage(String str);
     void showErrorMessage();
     void hideErrorMessage();
+    void addError(String message);
 }
