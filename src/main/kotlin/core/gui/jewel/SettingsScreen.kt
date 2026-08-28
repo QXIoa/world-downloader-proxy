@@ -166,7 +166,6 @@ private fun GeneralTab(vm: SettingsViewModel, isStarted: Boolean) {
             SettingCheckbox(t("gui.settings.mark_unsaved"), vm.markUnsaved, { vm.markUnsaved = it }, t("gui.settings.mark_unsaved_tooltip"))
             SettingCheckbox(t("gui.settings.grey_out_old"), vm.markOld, { vm.markOld = it }, t("gui.settings.grey_out_old_tooltip"))
             SettingCheckbox(t("gui.settings.show_players"), vm.renderOtherPlayers, { vm.renderOtherPlayers = it }, t("gui.settings.show_players_tooltip"))
-            SettingCheckbox(t("gui.settings.enable_cave_mode"), vm.enableCaveRenderMode, { vm.enableCaveRenderMode = it }, t("gui.settings.enable_cave_mode_tooltip"))
             SettingCheckbox(t("gui.settings.schematic_mode"), vm.schematicMode, { vm.schematicMode = it }, t("gui.settings.schematic_mode_tooltip"))
         }
 

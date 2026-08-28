@@ -304,20 +304,16 @@ fun MapScreen(
             )
         }
 
-        // Status bar at bottom
-        if (vm.statusMsg.isNotEmpty() || vm.errorVisible) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(8.dp),
-            ) {
-                Text(
-                    text = if (vm.errorVisible) "Error — check error log tab" else vm.statusMsg,
-                    color = if (vm.errorVisible) Color(0xFFE07070) else Color.White,
-                    fontSize = 12.sp,
-                )
-            }
-        }
+        // Cave mode toggle top-left (below follow player) — locked to Caves in Nether
+        val caveEnabled = vm.isCaveButtonEnabled()
+        MinecraftButton(
+            text = if (vm.caveMode) "Cave" else "Normal",
+            onClick = { vm.caveMode = !vm.caveMode },
+            enabled = caveEnabled,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 8.dp, top = 48.dp),
+        )
 
         // Zoom level indicator
         Box(

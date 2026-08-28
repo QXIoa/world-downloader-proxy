@@ -33,6 +33,36 @@ class ComposeMapViewModel : GuiBridge {
 
     var blocksPerPixel by mutableStateOf(0.5)
 
+    /**
+     * Manual cave mode toggle for Overworld (false = Normal, true = Caves).
+     * In Nether, caves are always rendered and this flag is ignored.
+     */
+    var caveMode by mutableStateOf(false)
+
+    /**
+     * Computes the current image mode:
+     * - Nether → always CAVES (button is locked)
+     * - Overworld + caveMode → CAVES
+     * - Overworld + !caveMode → NORMAL
+     */
+    fun currentImageMode(): ImageMode {
+        val isNether = try {
+            Config.getVersionModule().worldManager.dimension.isNether
+        } catch (e: Exception) { false }
+
+        if (isNether) return ImageMode.CAVES
+        return if (caveMode) ImageMode.CAVES else ImageMode.NORMAL
+    }
+
+    /**
+     * Whether the cave toggle button should be enabled (disabled in Nether).
+     */
+    fun isCaveButtonEnabled(): Boolean {
+        return try {
+            !Config.getVersionModule().worldManager.dimension.isNether
+        } catch (e: Exception) { true }
+    }
+
     private val executor = Executors.newSingleThreadScheduledExecutor { r ->
         Thread(r, "Compose Map Handler")
     }
@@ -232,11 +262,7 @@ class ComposeMapViewModel : GuiBridge {
         val maxZ = center.z + blockH / 2
 
         val result = mutableListOf<RegionRenderData>()
-        val isNether = try {
-            Config.getVersionModule().worldManager.dimension.isNether
-        } catch (e: Exception) { false }
-
-        val mode = if (isNether) ImageMode.CAVES else ImageMode.NORMAL
+        val mode = currentImageMode()
 
         regions.forEach { (coord, images) ->
             val rx = coord.x shl 9

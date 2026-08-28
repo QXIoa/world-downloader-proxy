@@ -37,7 +37,6 @@ class SettingsViewModel {
     var markUnsaved by mutableStateOf(true)
     var markOld by mutableStateOf(true)
     var renderOtherPlayers by mutableStateOf(false)
-    var enableCaveRenderMode by mutableStateOf(false)
     var schematicMode by mutableStateOf(false)
     var enableInfoMessages by mutableStateOf(true)
     var drawExtendedChunks by mutableStateOf(false)
@@ -76,7 +75,6 @@ class SettingsViewModel {
         markUnsaved = !c.disableMarkUnsavedChunks
         markOld = c.markOldChunks
         renderOtherPlayers = c.renderOtherPlayers
-        enableCaveRenderMode = c.enableCaveRenderMode
         schematicMode = c.schematicMode
         enableInfoMessages = !c.disableInfoMessages
         drawExtendedChunks = c.drawExtendedChunks
@@ -109,7 +107,6 @@ class SettingsViewModel {
         c.markOldChunks = markOld
         c.renderOtherPlayers = renderOtherPlayers
         c.disableInfoMessages = !enableInfoMessages
-        c.enableCaveRenderMode = enableCaveRenderMode
         c.drawExtendedChunks = drawExtendedChunks
         c.schematicMode = schematicMode
 

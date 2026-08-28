@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -182,15 +183,15 @@ fun main() {
                 if (proxyStarted) {
                     // Proxy is active — show only the map with a single
                     // "World Preview" tab that fills the whole window.
-                    Column(modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
+                    Column(modifier = Modifier.fillMaxSize()) {
                         // Nav bar — single non-interactive tab
                         TabBar(
                             tabs = listOf("World Preview"),
                             selected = 0,
                             onSelect = { },
                         )
-                        // Map fills the rest of the window (clipped so it
-                        // cannot overflow into the tab bar above)
+                        // Map fills the rest of the window including the area
+                        // behind the grass bar (which overlays on top of it).
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -198,9 +199,11 @@ fun main() {
                                 .clipToBounds(),
                         ) {
                             MapScreen(vm = mapVm)
+                            // Grass strip overlays the bottom of the map
+                            GrassBar(
+                                modifier = Modifier.align(Alignment.BottomStart),
+                            )
                         }
-                        // Grass strip at the bottom
-                        GrassBar()
                     }
                 } else if (updateInfo != null && !updateDismissed) {
                     // Update available — show update screen as a forced tab
