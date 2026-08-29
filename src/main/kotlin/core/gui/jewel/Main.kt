@@ -34,21 +34,17 @@ private fun loadGrassBitmap(): ImageBitmap? {
     return loadIconBitmap("ui/icon/grass.png")
 }
 
+// NOTE: Use ImageIO.read() instead of Toolkit.getDefaultToolkit().getImage().
+// Toolkit.getImage() loads asynchronously on Windows, causing getWidth(null)/getHeight(null)
+// to return -1 before the image is ready, which crashes with
+// "Width (-1) and height (-1) cannot be <= 0". On macOS the AWT loader is synchronous
+// so the bug only manifests on Windows. ImageIO.read() is synchronous on all platforms.
 private fun loadIconBitmap(path: String): ImageBitmap? {
     val url = Thread.currentThread().contextClassLoader.getResource(path)
     if (url != null) {
-        val img = Toolkit.getDefaultToolkit().getImage(url)
-        val tracker = java.awt.MediaTracker(java.awt.Canvas())
-        tracker.addImage(img, 0)
-        try { tracker.waitForID(0) } catch (e: InterruptedException) {}
-        val buffered = java.awt.image.BufferedImage(
-            img.getWidth(null), img.getHeight(null),
-            java.awt.image.BufferedImage.TYPE_INT_ARGB,
-        )
-        val g = buffered.createGraphics()
-        g.drawImage(img, 0, 0, null)
-        g.dispose()
-        return buffered.toComposeImageBitmap()
+        return try {
+            javax.imageio.ImageIO.read(url).toComposeImageBitmap()
+        } catch (e: Exception) { null }
     }
     return null
 }
@@ -93,7 +89,8 @@ fun main() {
         if (Taskbar.isTaskbarSupported()) {
             val iconUrl = Thread.currentThread().contextClassLoader.getResource("ui/icon/icon.png")
             if (iconUrl != null) {
-                val image = Toolkit.getDefaultToolkit().getImage(iconUrl)
+                // ImageIO.read() — synchronous on all platforms (see loadIconBitmap note)
+                val image = javax.imageio.ImageIO.read(iconUrl)
                 Taskbar.getTaskbar().setIconImage(image)
             }
         }
@@ -123,15 +120,12 @@ fun main() {
         val iconPainter: Painter? = remember {
             val iconUrl = Thread.currentThread().contextClassLoader.getResource("ui/icon/icon.png")
             if (iconUrl != null) {
-                val awtImage = Toolkit.getDefaultToolkit().getImage(iconUrl)
-                val buffered = java.awt.image.BufferedImage(
-                    awtImage.getWidth(null), awtImage.getHeight(null),
-                    java.awt.image.BufferedImage.TYPE_INT_ARGB
-                )
-                val g = buffered.createGraphics()
-                g.drawImage(awtImage, 0, 0, null)
-                g.dispose()
-                BitmapPainter(buffered.toComposeImageBitmap())
+                try {
+                    val buffered = javax.imageio.ImageIO.read(iconUrl)
+                    BitmapPainter(buffered.toComposeImageBitmap())
+                } catch (e: Exception) {
+                    null
+                }
             } else null
         }
 

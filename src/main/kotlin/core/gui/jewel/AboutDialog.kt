@@ -30,20 +30,13 @@ fun AboutDialog(
     val javaVer = System.getProperty("java.version")
 
     val githubPainter: Painter? = remember {
+        // NOTE: ImageIO.read() — synchronous on all platforms. Toolkit.getImage() is
+        // asynchronous on Windows and crashes with Width/Height -1 (see Main.kt note).
         val url = Thread.currentThread().contextClassLoader.getResource("ui/icon/github.png")
         if (url != null) {
-            val img = Toolkit.getDefaultToolkit().getImage(url)
-            val tracker = java.awt.MediaTracker(java.awt.Canvas())
-            tracker.addImage(img, 0)
-            try { tracker.waitForID(0) } catch (e: InterruptedException) {}
-            val buffered = java.awt.image.BufferedImage(
-                img.getWidth(null), img.getHeight(null),
-                java.awt.image.BufferedImage.TYPE_INT_ARGB,
-            )
-            val g = buffered.createGraphics()
-            g.drawImage(img, 0, 0, null)
-            g.dispose()
-            BitmapPainter(buffered.toComposeImageBitmap())
+            try {
+                BitmapPainter(javax.imageio.ImageIO.read(url).toComposeImageBitmap())
+            } catch (e: Exception) { null }
         } else null
     }
 

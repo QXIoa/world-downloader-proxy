@@ -729,20 +729,17 @@ fun SectionCard(
 private var buttonTex: ImageBitmap? = null
 private var button2Tex: ImageBitmap? = null
 
+// NOTE: Use ImageIO.read() instead of Toolkit.getDefaultToolkit().getImage().
+// Toolkit.getImage() loads asynchronously on Windows, causing getWidth(null)/getHeight(null)
+// to return -1 before the image is ready, which crashes with
+// "Width (-1) and height (-1) cannot be <= 0". On macOS the AWT loader is synchronous
+// so the bug only manifests on Windows. ImageIO.read() is synchronous on all platforms.
 private fun loadTex(path: String): ImageBitmap? {
     val url = Thread.currentThread().contextClassLoader.getResource(path)
     if (url != null) {
-        val img = Toolkit.getDefaultToolkit().getImage(url)
-        val tracker = java.awt.MediaTracker(java.awt.Canvas())
-        tracker.addImage(img, 0)
-        try { tracker.waitForID(0) } catch (e: InterruptedException) {}
-        val w = img.getWidth(null); val h = img.getHeight(null)
-        if (w <= 0 || h <= 0) return null
-        val buffered = java.awt.image.BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_ARGB)
-        val g = buffered.createGraphics()
-        g.drawImage(img, 0, 0, null)
-        g.dispose()
-        return buffered.toComposeImageBitmap()
+        return try {
+            javax.imageio.ImageIO.read(url).toComposeImageBitmap()
+        } catch (e: Exception) { null }
     }
     return null
 }
