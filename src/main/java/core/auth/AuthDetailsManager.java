@@ -50,6 +50,12 @@ public abstract class AuthDetailsManager {
         try {
             AuthDetails details = loadAuthDetails();
 
+            if (details == null) {
+                AuthenticationMethod method = Config.getAuthMethod();
+                onError.accept(method.getErrorMessage());
+                return;
+            }
+
             boolean isValid = details.isValid();
             if (isValid) {
                 onSuccess.accept(details.getUsername());
