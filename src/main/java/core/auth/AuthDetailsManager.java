@@ -35,15 +35,32 @@ public abstract class AuthDetailsManager {
     /**
      * Get the auth details from the profiles file. If launcher_accounts.json exists, we use that accessToken instead
      * because the other one won't be valid in this case.
+     *
+     * <p>When the auth method is {@code AUTOMATIC} and no session can be found in the running
+     * Minecraft process (e.g. the game is not running, or the launcher files are not accessible),
+     * this falls back to a previously stored Microsoft login if one is available. This lets users
+     * log in once via the Microsoft button and then keep using "Automatic" without having to
+     * explicitly switch the auth method.
      */
     public static AuthDetails loadAuthDetails() throws IOException {
         GuiManager.setStatusMessage(Messages.gui("gui.auth.getting_details"));
 
-        return switch (Config.getAuthMethod()) {
+        AuthDetails details = switch (Config.getAuthMethod()) {
             case AUTOMATIC -> retrieveDetailsFromProcess();
             case MICROSOFT -> retrieveDetailsFromMicrosoft();
             case MANUAL -> Config.getManualAuthDetails();
         };
+
+        // Fallback: if Automatic found nothing usable, try a stored Microsoft session.
+        if (Config.getAuthMethod() == AuthenticationMethod.AUTOMATIC
+                && (details == null || details == AuthDetails.INVALID)) {
+            AuthDetails msDetails = retrieveDetailsFromMicrosoft();
+            if (msDetails != null && msDetails != AuthDetails.INVALID) {
+                return msDetails;
+            }
+        }
+
+        return details;
     }
 
     public static void validateAuthStatus(Consumer<String> onSuccess, Consumer<String> onError) {

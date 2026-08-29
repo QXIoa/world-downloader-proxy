@@ -11,7 +11,7 @@ val skipTests = (property("skipTests") as String).toBoolean()
 
 val arch = project.findProperty("arch") as String? ?: "arm64"
 
-version = "2026.2"
+version = "2026.3"
 group = "mircokroon.minecraft-world-downloader"
 
 // GitHub repo for update checks

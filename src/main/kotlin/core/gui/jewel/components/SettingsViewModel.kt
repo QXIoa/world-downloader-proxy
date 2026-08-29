@@ -159,10 +159,19 @@ class SettingsViewModel {
                     Thread {
                         try {
                             Config.setMicrosoftAuth(MicrosoftAuthHandler.fromCode(authCode, usedPort))
+                            // Persist auth method + tokens so validation uses the MS handler
+                            // and the refresh token survives restarts.
+                            Config.setAuthMethod(AuthenticationMethod.MICROSOFT)
+                            Config.save()
                         } catch (e: Exception) {
                             e.printStackTrace()
+                            javax.swing.SwingUtilities.invokeLater {
+                                authResult = "Microsoft login failed: ${e.message}"
+                                authFailed = true
+                            }
                         }
                         javax.swing.SwingUtilities.invokeLater {
+                            authMethod = AuthenticationMethod.MICROSOFT
                             authServer = null
                             msAuthLink = ""
                             validateAuth()
