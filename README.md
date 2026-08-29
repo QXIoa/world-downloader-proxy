@@ -6,20 +6,19 @@ A Minecraft world downloader that works as a proxy server between the Minecraft 
 
 ### Downloads
 
-Grab the latest jar for your platform from the [Releases](../../releases/latest) page.
+Grab the latest jar from the [Releases](../../releases/latest) page.
 
 | Jar | Platforms |
 |-----|-----------|
-| `world-downloader-proxy-<version>-win-linux-mac-x86_64.jar` | Windows, Linux, macOS (x86_64) |
-| `world-downloader-proxy-<version>-linux-mac-arm64.jar` | Linux, macOS (ARM64/Apple Silicon) |
+| `world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar` | Windows, Linux, macOS (x86_64 **and** ARM64/Apple Silicon) |
 
-> Windows ARM users: use the x86_64 jar under Windows x86 emulation. OpenJFX does not publish Windows ARM64 native libraries.
+A single universal jar covers all platforms. Skiko selects the correct native libraries at runtime based on the host OS and CPU architecture, so there is no need to pick a jar per platform.
 
 ### Basic usage
 
-Run the jar, enter the server address in the address field, and press start.
+Start Minecraft first, then run the jar, enter the server address in the address field, and press start.
 
-<img src="https://i.imgur.com/yH8SH5C.png">
+<img src="https://i.imgur.com/5mybgtj.png">
 
 Instead of connecting to the server directly, connect to `localhost` in Minecraft to start downloading the world.
 
@@ -32,9 +31,14 @@ Instead of connecting to the server directly, connect to `localhost` in Minecraf
 - Save chests and other inventories by opening them
 - Extend the client's render distance by sending previously downloaded chunks back to the client
 - Supports Minecraft 26.1+'s reorganised world storage (dimensions under `dimensions/<namespace>/<name>`, world gen settings in their own file) — saved worlds open normally without manual fixing
+- In-game `/world-downloader-proxy` command with subcommands:
+  - `area-selection` — toggle selection mode. Left-click sets pos1, right-click sets pos2.
+  - `pos1` / `pos2` — set selection corners from chat.
+  - `schematic-export` — export the current selection as a **Sponge Schematic v3** (`.schem`) file into the schematics output directory. The selection is cleared after each export so it can't be accidentally duplicated.
+  - `fly` — undetectable flight. Your game mode is switched to creative locally and your server-side position is frozen, so the server never sees you move while you fly around freely. Useful for inspecting the world without tripping anti-cheat.
 - Overview map of saved chunks:
 
-<img src="https://i.imgur.com/7FIJ6fZ.png" width="80%" title="Example of the GUI showing all the downloaded chunks as white squares, which ones from a previous download greyed out.">
+<img src="https://i.imgur.com/qLVz99m.png" width="80%" title="Example of the GUI showing all the downloaded chunks as white squares, which ones from a previous download greyed out.">
 
 ### Requirements
 
@@ -45,38 +49,38 @@ Instead of connecting to the server directly, connect to `localhost` in Minecraf
 ### Command-line
 
 ```
-java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar
 ```
 
 Run with `--help` to see all available options:
 
 ```
-java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar --help
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar --help
 ```
 
 Disable the GUI and specify the server address directly:
 
 ```
-java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar --no-gui -s address.to.server.com
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar --no-gui -s address.to.server.com
 ```
 
 ### Running on Linux
 
 ```bash
 wget <release-url-from-Releases-page>
-java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar -s address.to.server.com
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar -s address.to.server.com
 ```
 
 Headless mode (no GUI):
 
 ```bash
-java -jar world-downloader-proxy-<version>-linux-mac-arm64.jar -s address.to.server.com --no-gui
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar -s address.to.server.com --no-gui
 ```
 
 Some Linux distributions require `-Djdk.gtk.version=2` for the GUI to work:
 
 ```bash
-java -Djdk.gtk.version=2 -jar world-downloader-proxy-<version>-linux-mac-arm64.jar
+java -Djdk.gtk.version=2 -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar
 ```
 
 ### Building from source
@@ -86,42 +90,29 @@ java -Djdk.gtk.version=2 -jar world-downloader-proxy-<version>-linux-mac-arm64.j
 
   **Debian/Ubuntu:**
   ```
-  sudo apt-get install default-jdk maven
+  sudo apt-get install default-jdk
   ```
 
   **Arch/Manjaro:**
   ```
-  sudo pacman -S --needed jdk-openjdk maven
+  sudo pacman -S --needed jdk-openjdk
   ```
 </details>
 
 <details>
   <summary>Build executable jar</summary>
 
-  The project uses two Maven profiles, one per CPU architecture, to bundle the correct JavaFX native libraries:
+  The project uses Gradle (the wrapper is committed, no local Gradle install required). A single `shadowJar` task produces one universal fat jar containing all six Skiko native runtime variants; Skiko picks the correct one at runtime based on the host OS and CPU arch.
 
   ```bash
   git clone https://github.com/XInfiniterX/world-downloader-proxy
   cd world-downloader-proxy
-
-  # ARM64 (default profile): Linux + macOS ARM64
-  mvn clean package
-
-  # x86_64: Windows + Linux + macOS x86_64
-  mvn clean package -Px86_64
+  ./gradlew shadowJar
   ```
 
-  To produce both jars without wiping the first one, build sequentially without `clean` on the second run:
-
-  ```bash
-  mvn clean package -Px86_64
-  mvn package
+  Output jar lands in `build/libs/`:
   ```
-
-  Output jars land in `target/`:
-  ```
-  world-downloader-proxy-<version>-win-linux-mac-x86_64.jar
-  world-downloader-proxy-<version>-linux-mac-arm64.jar
+  world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar
   ```
 
 </details>
