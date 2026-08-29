@@ -4,6 +4,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -319,6 +322,69 @@ fun MapScreen(
                 color = Color(0xFF888888),
                 fontSize = 11.sp,
             )
+        }
+    }
+}
+
+@Composable
+fun ErrorLogScreen(
+    errors: java.util.concurrent.CopyOnWriteArrayList<String>,
+    modifier: Modifier = Modifier,
+) {
+    var tick by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            tick++
+            kotlinx.coroutines.delay(500)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF1E1E1E))
+            .padding(12.dp),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header
+            Text(
+                text = "Error Log",
+                color = Color(0xFFDDDDDD),
+                fontSize = 14.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+
+            if (errors.isEmpty()) {
+                Text(
+                    text = "No errors recorded.",
+                    color = Color(0xFF888888),
+                    fontSize = 12.sp,
+                )
+            } else {
+                // Error list — scrollable, selectable (copyable)
+                val scrollState = rememberScrollState()
+                SelectionContainer {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        // Read tick to trigger recomposition when new errors arrive
+                        @Suppress("UNUSED_EXPRESSION")
+                        tick
+
+                        errors.forEach { line ->
+                            Text(
+                                text = line,
+                                color = Color(0xFFFF6B6B),
+                                fontSize = 12.sp,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

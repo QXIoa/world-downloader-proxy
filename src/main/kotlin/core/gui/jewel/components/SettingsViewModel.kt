@@ -38,6 +38,7 @@ class SettingsViewModel {
     var markOld by mutableStateOf(true)
     var renderOtherPlayers by mutableStateOf(false)
     var schematicMode by mutableStateOf(false)
+    var schematicRadius by mutableStateOf(0)
     var enableInfoMessages by mutableStateOf(true)
     var drawExtendedChunks by mutableStateOf(false)
 
@@ -79,6 +80,7 @@ class SettingsViewModel {
         markOld = c.markOldChunks
         renderOtherPlayers = c.renderOtherPlayers
         schematicMode = c.schematicMode
+        schematicRadius = c.schematicRadius
         enableInfoMessages = !c.disableInfoMessages
         drawExtendedChunks = c.drawExtendedChunks
 
@@ -112,6 +114,7 @@ class SettingsViewModel {
         c.disableInfoMessages = !enableInfoMessages
         c.drawExtendedChunks = drawExtendedChunks
         c.schematicMode = schematicMode
+        c.schematicRadius = schematicRadius
 
         c.username = realmsUsername
 

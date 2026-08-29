@@ -376,7 +376,7 @@ public class ChunkSection {
         if (bitsPerEntry == 0) {
             paletteIndex = 0;
         } else {
-            paletteIndex = getLocationEncoder().setTo(biomeX, biomeY, biomeZ, bitsPerEntry).fetch(biomes);
+            paletteIndex = getLocationEncoder().setTo(biomeX, biomeY, biomeZ, bitsPerEntry, 4, 4).fetch(biomes);
         }
 
         int biomeId = biomePalette.stateFromId(paletteIndex);

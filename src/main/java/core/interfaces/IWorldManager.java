@@ -1,5 +1,6 @@
 package core.interfaces;
 
+import core.coordinates.Coordinate2D;
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
 import java.util.function.BiConsumer;
@@ -30,4 +31,24 @@ public interface IWorldManager {
     int countActiveEntities();
     int countActivePlayers();
     int countActiveMaps();
+
+    /**
+     * Unload all chunks that are farther than {@code radius} chunks from the given
+     * center. Used by the schematic-mode radius guard to limit memory usage.
+     *
+     * @param center the player's current chunk coordinates
+     * @param radius the maximum distance in chunks (Chebyshev distance)
+     */
+    void unloadChunksOutsideRadius(Coordinate2D center, int radius);
+
+    /**
+     * Check whether the chunk at the given coordinates is currently loaded in memory.
+     * Used by the schematic export diagnostic to distinguish "chunk not loaded" from
+     * "chunk loaded but block is air".
+     *
+     * @param chunkX chunk X coordinate (world X >> 4)
+     * @param chunkZ chunk Z coordinate (world Z >> 4)
+     * @return true if the chunk is in memory
+     */
+    boolean isChunkLoaded(int chunkX, int chunkZ);
 }

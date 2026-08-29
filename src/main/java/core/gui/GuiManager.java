@@ -115,6 +115,23 @@ public class GuiManager {
         }
     }
 
+    public static void clearChunk(Coordinate2D coords) {
+        if (guiBridge != null) {
+            guiBridge.clearChunk(coords);
+        }
+    }
+
+    /**
+     * Add a custom message to the GUI error log (e.g. schematic diagnostics).
+     * Unlike {@link #notifyNewError()}, this does not set the global error flag
+     * or show the error popup — it only appends to the error list.
+     */
+    public static void addError(String message) {
+        if (guiBridge != null) {
+            guiBridge.addError(message);
+        }
+    }
+
     public static boolean openWebLink(String text) {
         try {
             if (Desktop.isDesktopSupported()) {

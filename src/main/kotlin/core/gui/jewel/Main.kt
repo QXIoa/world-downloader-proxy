@@ -23,6 +23,7 @@ import core.gui.GuiManager
 import core.gui.jewel.components.SettingsViewModel
 import core.gui.jewel.map.ComposeMapViewModel
 import core.gui.jewel.map.MapScreen
+import core.gui.jewel.map.ErrorLogScreen
 import core.util.AppVersion
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.*
@@ -175,24 +176,26 @@ fun main() {
 
                 Box(modifier = Modifier.fillMaxSize()) {
                 if (proxyStarted) {
-                    // Proxy is active — show only the map with a single
-                    // "World Preview" tab that fills the whole window.
+                    // Proxy is active — show the map and an error log tab.
+                    var mapTabIndex by remember { mutableStateOf(0) }
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // Nav bar — single non-interactive tab
+                        // Nav bar — World Preview + Error Log
                         TabBar(
-                            tabs = listOf("World Preview"),
-                            selected = 0,
-                            onSelect = { },
+                            tabs = listOf("World Preview", "Error Log"),
+                            selected = mapTabIndex,
+                            onSelect = { mapTabIndex = it },
                         )
-                        // Map fills the rest of the window including the area
-                        // behind the grass bar (which overlays on top of it).
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
                                 .clipToBounds(),
                         ) {
-                            MapScreen(vm = mapVm)
+                            if (mapTabIndex == 0) {
+                                MapScreen(vm = mapVm)
+                            } else {
+                                ErrorLogScreen(errors = mapVm.errors)
+                            }
                             // Grass strip overlays the bottom of the map
                             GrassBar(
                                 modifier = Modifier.align(Alignment.BottomStart),

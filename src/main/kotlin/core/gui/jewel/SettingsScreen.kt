@@ -166,6 +166,31 @@ private fun GeneralTab(vm: SettingsViewModel, isStarted: Boolean) {
             SettingCheckbox(t("gui.settings.grey_out_old"), vm.markOld, { vm.markOld = it }, t("gui.settings.grey_out_old_tooltip"))
             SettingCheckbox(t("gui.settings.show_players"), vm.renderOtherPlayers, { vm.renderOtherPlayers = it }, t("gui.settings.show_players_tooltip"))
             SettingCheckbox(t("gui.settings.schematic_mode"), vm.schematicMode, { vm.schematicMode = it }, t("gui.settings.schematic_mode_tooltip"))
+
+            if (vm.schematicMode) {
+                LabeledRow(
+                    label = t("gui.settings.schematic_radius"),
+                    helpText = t("gui.settings.schematic_radius_tooltip"),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (vm.schematicRadius == 0) "∞" else "${vm.schematicRadius}",
+                            color = Color(0xFFDDDDDD), fontSize = 13.sp,
+                             modifier = Modifier.width(30.dp)
+                        )
+                        McSlider(
+                            // Slider positions 0..16: 0-15 map to radius 50..200 (step 10),
+                            // position 16 maps to 0 (unlimited).
+                            value = if (vm.schematicRadius == 0) 16f else ((vm.schematicRadius - 50) / 10).toFloat(),
+                            onValueChange = { v ->
+                                vm.schematicRadius = if (v.toInt() == 16) 0 else 50 + v.toInt() * 10
+                            },
+                            valueRange = 0f..16f,
+                            modifier = Modifier.width(200.dp),
+                        )
+                    }
+                }
+            }
         }
 
         SectionCard(title = t("gui.settings.advanced")) {

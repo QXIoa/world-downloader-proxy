@@ -330,6 +330,16 @@ public class WorldManager implements IWorldManager {
     }
 
     public void unloadChunk(CoordinateDim2D coordinate) {
+        // In schematic mode, chunks must be retained in memory regardless of
+        // what the server says. The server sends ForgetLevelChunk packets when
+        // the player walks away, but schematic mode needs those chunks for
+        // later export. Without this guard, removeChunk() adds unsaved chunks
+        // to the toDelete set, which makes getChunk() return null even though
+        // the chunk data is still in the chunks map — causing truncated exports.
+        if (schematicMode) {
+            return;
+        }
+
         chunkFactory.unloadChunk(coordinate);
 
         CoordinateDim2D regionCoordinate = coordinate.chunkToDimRegion();
@@ -665,6 +675,47 @@ public class WorldManager implements IWorldManager {
 
     @Override
     public int countActiveMaps() { return mapRegistry.countActiveMaps(); }
+
+    @Override
+    public void unloadChunksOutsideRadius(Coordinate2D center, int radius) {
+        if (radius <= 0) {
+            return;
+        }
+        java.util.List<Coordinate2D> toEvict = new java.util.ArrayList<>();
+        for (Map.Entry<CoordinateDim2D, Region> entry : regions.entrySet()) {
+            Region r = entry.getValue();
+            if (r.getDimension() != this.dimension) {
+                continue;
+            }
+            for (Coordinate2D chunkCoord : r.getChunkCoordinates()) {
+                int dx = Math.abs(chunkCoord.getX() - center.getX());
+                int dz = Math.abs(chunkCoord.getZ() - center.getZ());
+                if (Math.max(dx, dz) > radius) {
+                    toEvict.add(chunkCoord);
+                }
+            }
+        }
+        for (Coordinate2D coord : toEvict) {
+            CoordinateDim2D withDim = coord.addDimension(this.dimension);
+            // Bypass the schematicMode guard in unloadChunk by removing directly
+            chunkFactory.unloadChunk(withDim);
+            CoordinateDim2D regionCoordinate = withDim.chunkToDimRegion();
+            Region r = regions.get(regionCoordinate);
+            if (r != null) {
+                r.removeChunk(coord);
+                if (r.canRemove()) {
+                    regions.remove(regionCoordinate);
+                }
+            }
+            GuiManager.clearChunk(coord);
+        }
+    }
+
+    @Override
+    public boolean isChunkLoaded(int chunkX, int chunkZ) {
+        CoordinateDim2D coord = new Coordinate2D(chunkX, chunkZ).addDimension(this.dimension);
+        return getChunk(coord) != null;
+    }
 
     public EntityRegistry getEntityRegistry() {
         return entityRegistry;

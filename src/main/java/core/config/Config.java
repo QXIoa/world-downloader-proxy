@@ -416,6 +416,10 @@ public class Config {
                 + "written to disk: no region files, no level.dat, no dimension data.")
     public boolean schematicMode = false;
 
+    @Option(name = "--schematic-radius",
+            usage = "In schematic mode, unload chunks farther than this many chunks from the player (0 = unlimited).")
+    public int schematicRadius = 0;
+
     @Option(name = "--schematic-output-dir",
             usage = "Directory .schem files exported via the in-game schematic selection are written to.")
     public transient String schematicOutputDir = "schematic";
@@ -490,6 +494,14 @@ public class Config {
 
     public static boolean isSchematicMode() {
         return instance.schematicMode;
+    }
+
+    public static int getSchematicRadius() {
+        return instance.schematicRadius;
+    }
+
+    public static void setSchematicRadius(int radius) {
+        instance.schematicRadius = radius;
     }
 
     public static int getDataVersion() {

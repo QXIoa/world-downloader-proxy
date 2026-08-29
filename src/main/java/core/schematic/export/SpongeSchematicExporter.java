@@ -38,6 +38,10 @@ public class SpongeSchematicExporter implements SchematicExporter {
         this.blockRegionReader = blockRegionReader;
     }
 
+    public BlockRegionReader getBlockRegionReader() {
+        return blockRegionReader;
+    }
+
     @Override
     public void export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException {
         // --- Blocks ---

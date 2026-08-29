@@ -110,6 +110,7 @@ class ComposeMapViewModel : GuiBridge {
             playerZ = pos.z
             centerX = pos.x
             centerZ = pos.z
+            val guard = core.schematic.SchematicRadiusGuard(mgr)
             mgr.setPlayerPosListener { pos, rot ->
                 val dx = kotlin.math.abs(pos.x - playerX)
                 val dz = kotlin.math.abs(pos.z - playerZ)
@@ -125,6 +126,9 @@ class ComposeMapViewModel : GuiBridge {
                     centerX = pos.x
                     centerZ = pos.z
                 }
+                // Evict chunks outside the schematic radius (no-op when not
+                // in schematic mode or radius is 0).
+                guard.accept(pos, rot)
             }
             // Pre-load cached region images from disk so the map isn't blank
             // on reconnect. Mirrors RegionImageHandler.loadFromFile().
@@ -233,6 +237,12 @@ class ComposeMapViewModel : GuiBridge {
         val region = coords.chunkToRegion()
         val images = regions[region] ?: return
         images.colourChunk(coords.toRegionLocal(), state)
+    }
+
+    override fun clearChunk(coords: Coordinate2D) {
+        val region = coords.chunkToRegion()
+        val images = regions[region] ?: return
+        images.clearChunk(coords.toRegionLocal())
     }
 
     override fun setStatusMessage(str: String) {

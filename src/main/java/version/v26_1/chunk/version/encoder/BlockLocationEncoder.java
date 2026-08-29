@@ -36,9 +36,20 @@ public class BlockLocationEncoder {
     }
 
     public BlockLocationEncoder setTo(int x, int y, int z, int bitsPerBlock) {
+        return setTo(x, y, z, bitsPerBlock, Chunk.SECTION_HEIGHT, Chunk.SECTION_WIDTH);
+    }
+
+    /**
+     * Overload for non-block paletted containers (e.g. biomes) that use a different grid size.
+     * Biomes in 1.18+ are stored in a 4×4×4 grid per section, not 16×16×16 like blocks.
+     *
+     * @param gridHeight  grid height (16 for blocks, 4 for biomes)
+     * @param gridWidth   grid width  (16 for blocks, 4 for biomes)
+     */
+    public BlockLocationEncoder setTo(int x, int y, int z, int bitsPerBlock, int gridHeight, int gridWidth) {
         this.individualValueMask = (1 << bitsPerBlock) - 1;
 
-        int blockNumber = (((y * Chunk.SECTION_HEIGHT) + z) * Chunk.SECTION_WIDTH) + x;
+        int blockNumber = (((y * gridHeight) + z) * gridWidth) + x;
 
         // bitsPerBlock can be 0 if we're trying to call the BlockLocationEncoder
         // on a SingleValuePalette. Doing so would cause division by 0 errors!

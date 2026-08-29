@@ -202,4 +202,18 @@ public class Region {
     public void forEach(Consumer<Chunk> f) {
         chunks.values().forEach(f);
     }
+
+    /**
+     * Return the coordinates of all chunks currently held in this region.
+     */
+    public java.util.Set<Coordinate2D> getChunkCoordinates() {
+        return chunks.keySet();
+    }
+
+    /**
+     * The dimension this region belongs to.
+     */
+    public core.interfaces.IDimension getDimension() {
+        return regionCoordinates.getDimension();
+    }
 }

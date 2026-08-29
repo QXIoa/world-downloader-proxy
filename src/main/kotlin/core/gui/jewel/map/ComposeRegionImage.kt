@@ -27,6 +27,11 @@ class ComposeRegionImages(
         caves.colourChunk(local, state)
     }
 
+    fun clearChunk(local: Coordinate2D) {
+        normal.clearChunk(local)
+        caves.clearChunk(local)
+    }
+
     fun getOverlayImage(): BufferedImage? = normal.chunkOverlay
 
     fun save() {
@@ -111,6 +116,32 @@ class ComposeRegionImage(
         g.color = state.getColor()
         g.fillRect(local.x, local.z, 1, 1)
         g.dispose()
+    }
+
+    /**
+     * Fully remove a chunk from the region image and overlay — the chunk
+     * disappears from the map entirely (not just greyed out). Used when
+     * chunks are evicted from memory by the schematic radius guard.
+     */
+    fun clearChunk(local: Coordinate2D) {
+        // Clear the terrain pixels
+        val img = image
+        if (img != null) {
+            val g = img.createGraphics()
+            g.composite = java.awt.AlphaComposite.Src
+            g.color = Color(0, 0, 0, 0)
+            val sx = local.x * WorldGeometry.SECTION_WIDTH
+            val sz = local.z * WorldGeometry.SECTION_WIDTH
+            g.fillRect(sx, sz, WorldGeometry.SECTION_WIDTH, WorldGeometry.SECTION_WIDTH)
+            g.dispose()
+            saved = false
+        }
+        // Clear the overlay pixel
+        val og = chunkOverlay!!.createGraphics()
+        og.composite = java.awt.AlphaComposite.Src
+        og.color = Color(0, 0, 0, 0)
+        og.fillRect(local.x, local.z, 1, 1)
+        og.dispose()
     }
 
     /**
