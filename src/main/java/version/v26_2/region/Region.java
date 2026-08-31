@@ -90,6 +90,21 @@ public class Region {
         chunk.unload();
     }
 
+    /**
+     * Force-remove a chunk from memory immediately, bypassing the toDelete
+     * deferral used by the save service. Used by the schematic radius guard
+     * where chunks are never written to disk and would otherwise leak.
+     */
+    public void forceRemoveChunk(Coordinate2D coordinate) {
+        Chunk chunk = chunks.get(coordinate);
+        if (chunk == null) {
+            return;
+        }
+        chunks.remove(coordinate);
+        toDelete.remove(coordinate);
+        chunk.unload();
+    }
+
 
     /**
      * Returns true if the region has no chunks in it (e.g. they have all been deleted)

@@ -19,6 +19,7 @@ public interface GuiBridge {
     void resetRegion(Coordinate2D regionLocation);
     void setChunkState(Coordinate2D coords, ChunkImageState state);
     void clearChunk(Coordinate2D coords);
+    void clearRegionsOutsideRadius(Coordinate2D center, int radius);
     void setStatusMessage(String str);
     void showErrorMessage();
     void hideErrorMessage();

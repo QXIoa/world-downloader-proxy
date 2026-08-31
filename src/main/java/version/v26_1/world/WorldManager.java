@@ -697,18 +697,26 @@ public class WorldManager implements IWorldManager {
         }
         for (Coordinate2D coord : toEvict) {
             CoordinateDim2D withDim = coord.addDimension(this.dimension);
-            // Bypass the schematicMode guard in unloadChunk by removing directly
+            // Bypass the schematicMode guard in unloadChunk by removing directly.
+            // Use forceRemoveChunk so chunk data is actually freed from memory
+            // (removeChunk would add unsaved chunks to toDelete, leaking in
+            // schematic mode where chunks are never saved to disk).
             chunkFactory.unloadChunk(withDim);
             CoordinateDim2D regionCoordinate = withDim.chunkToDimRegion();
             Region r = regions.get(regionCoordinate);
             if (r != null) {
-                r.removeChunk(coord);
+                r.forceRemoveChunk(coord);
                 if (r.canRemove()) {
                     regions.remove(regionCoordinate);
                 }
             }
             GuiManager.clearChunk(coord);
         }
+
+        // Also clear region images from the GUI map that are entirely outside
+        // the radius. This frees BufferedImage memory (~2MB per region) that
+        // would otherwise leak as the player teleports across the map.
+        GuiManager.clearRegionsOutsideRadius(center, radius);
     }
 
     @Override
@@ -805,7 +813,8 @@ public class WorldManager implements IWorldManager {
 
 
     public int countActiveBinaryChunks() {
-        return this.regions.values().stream().mapToInt(el -> el.getFile().countChunks()).sum();
+        // Count chunks actually held in memory in the regions' chunks maps.
+        return this.regions.values().stream().mapToInt(Region::countChunks).sum();
     }
 
     public void loadLevelData() {

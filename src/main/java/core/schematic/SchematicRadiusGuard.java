@@ -4,18 +4,21 @@ import core.config.Config;
 import core.coordinates.Coordinate2D;
 import core.coordinates.CoordinateDouble3D;
 import core.interfaces.IWorldManager;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 /**
  * Core-side guard that limits how many chunks are retained in memory during
  * schematic mode. When the player moves, chunks farther than the configured
  * radius (in chunks, Chebyshev distance) are evicted from the per-version
- * {@link IWorldManager} and greyed out on the preview map.
+ * {@link IWorldManager} and removed from the preview map.
  *
- * <p>The guard is installed as a {@code playerPosListener} on the world manager
- * via {@link IWorldManager#setPlayerPosListener}. Core controls the policy
- * (radius value from {@link core.config.Config}); the per-version world manager
- * only executes the eviction.
+ * <p>Eviction runs on a dedicated single-thread executor so that teleporting
+ * across a large distance (which suddenly puts thousands of chunks outside the
+ * radius) does not block the proxy's packet-processing thread and cause the
+ * player to be disconnected for lag.
  *
  * <p>A radius of 0 means unlimited — no eviction is performed, matching the
  * original schematic-mode behaviour where every visited chunk stays in memory.
@@ -23,10 +26,17 @@ import java.util.function.BiConsumer;
 public final class SchematicRadiusGuard implements BiConsumer<CoordinateDouble3D, Double> {
 
     private final IWorldManager worldManager;
-    private Coordinate2D lastEvictedChunk;
+    private final ExecutorService executor;
+    private final AtomicBoolean evictionInProgress = new AtomicBoolean(false);
+    private volatile Coordinate2D pendingCenter;
 
     public SchematicRadiusGuard(IWorldManager worldManager) {
         this.worldManager = worldManager;
+        this.executor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "schematic-radius-guard");
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     @Override
@@ -40,13 +50,26 @@ public final class SchematicRadiusGuard implements BiConsumer<CoordinateDouble3D
         }
 
         Coordinate2D currentChunk = pos.discretize().globalToChunk();
-        // Only evict when the player crosses a chunk boundary — doing it every
-        // position update would be wasteful.
-        if (currentChunk.equals(lastEvictedChunk)) {
+
+        // Update the latest center regardless — if an eviction is already
+        // running, the next one will use the most recent position.
+        pendingCenter = currentChunk;
+
+        // Skip if an eviction is already in progress (e.g. player is moving
+        // fast or teleporting). The next position update will pick it up.
+        if (!evictionInProgress.compareAndSet(false, true)) {
             return;
         }
-        lastEvictedChunk = currentChunk;
 
-        worldManager.unloadChunksOutsideRadius(currentChunk, radius);
+        executor.execute(() -> {
+            try {
+                Coordinate2D center = pendingCenter;
+                if (center != null) {
+                    worldManager.unloadChunksOutsideRadius(center, radius);
+                }
+            } finally {
+                evictionInProgress.set(false);
+            }
+        });
     }
 }

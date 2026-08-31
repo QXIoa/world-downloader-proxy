@@ -121,6 +121,12 @@ public class GuiManager {
         }
     }
 
+    public static void clearRegionsOutsideRadius(Coordinate2D center, int radius) {
+        if (guiBridge != null) {
+            guiBridge.clearRegionsOutsideRadius(center, radius);
+        }
+    }
+
     /**
      * Add a custom message to the GUI error log (e.g. schematic diagnostics).
      * Unlike {@link #notifyNewError()}, this does not set the global error flag

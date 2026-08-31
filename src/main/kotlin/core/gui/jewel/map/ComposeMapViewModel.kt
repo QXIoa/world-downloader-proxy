@@ -77,8 +77,12 @@ class ComposeMapViewModel : GuiBridge {
     init {
         // Persist region images to disk every 20s, mirroring the JavaFX
         // RegionImageHandler scheduled save (world/image-cache/<mode>/<dim>/r.X.Z.png).
+        // Skip in schematic mode — chunks are never saved to disk there, so
+        // writing region PNGs would just waste CPU and I/O.
         saveExecutor.scheduleWithFixedDelay({
-            regions.values.forEach { it.save() }
+            if (!Config.isSchematicMode()) {
+                regions.values.forEach { it.save() }
+            }
         }, 20, 20, TimeUnit.SECONDS)
     }
 
@@ -132,7 +136,11 @@ class ComposeMapViewModel : GuiBridge {
             }
             // Pre-load cached region images from disk so the map isn't blank
             // on reconnect. Mirrors RegionImageHandler.loadFromFile().
-            loadCachedRegions()
+            // Skip in schematic mode — schematic mode doesn't save to disk, so
+            // loading cached PNGs would waste memory on stale images.
+            if (!Config.isSchematicMode()) {
+                loadCachedRegions()
+            }
         } catch (e: Exception) {
         }
     }
@@ -217,7 +225,10 @@ class ComposeMapViewModel : GuiBridge {
     override fun setDimension(dimension: IDimension) {
         if (activeDimension == dimension || activeDimension?.equals(dimension) == true) return
         // Flush images for the old dimension before switching
-        regions.values.forEach { it.save() }
+        // (skip in schematic mode — nothing to persist)
+        if (!Config.isSchematicMode()) {
+            regions.values.forEach { it.save() }
+        }
         activeDimension = dimension
         regions.clear()
         savedChunks.clear()
@@ -243,6 +254,33 @@ class ComposeMapViewModel : GuiBridge {
         val region = coords.chunkToRegion()
         val images = regions[region] ?: return
         images.clearChunk(coords.toRegionLocal())
+    }
+
+    /**
+     * Remove all region images that are entirely outside the given Chebyshev
+     * radius (in chunks) from the center. This frees the BufferedImage memory
+     * (512×512×4 bytes × 2 modes ≈ 2MB per region) that would otherwise leak
+     * indefinitely as the player teleports across the map.
+     *
+     * A region is considered outside if its closest chunk to the center is
+     * farther than the radius. Region coordinates are in chunks/32.
+     */
+    override fun clearRegionsOutsideRadius(center: Coordinate2D, radius: Int) {
+        val centerRegionX = center.x shr 5
+        val centerRegionZ = center.z shr 5
+        // A region spans 32 chunks. It's outside if even its nearest edge
+        // is beyond the radius. Use region-level Chebyshev distance with
+        // a margin of 1 to account for regions partially within range.
+        val regionRadius = (radius shr 5) + 1
+        val toRemove = mutableListOf<Coordinate2D>()
+        regions.keys.forEach { rc ->
+            val dx = kotlin.math.abs(rc.x - centerRegionX)
+            val dz = kotlin.math.abs(rc.z - centerRegionZ)
+            if (dx > regionRadius || dz > regionRadius) {
+                toRemove.add(rc)
+            }
+        }
+        toRemove.forEach { regions.remove(it) }
     }
 
     override fun setStatusMessage(str: String) {
@@ -301,7 +339,10 @@ class ComposeMapViewModel : GuiBridge {
 
     fun shutdown() {
         // Flush pending images to disk before shutting down
-        regions.values.forEach { it.save() }
+        // (skip in schematic mode — nothing to persist)
+        if (!Config.isSchematicMode()) {
+            regions.values.forEach { it.save() }
+        }
         saveExecutor.shutdown()
         executor.shutdown()
     }
