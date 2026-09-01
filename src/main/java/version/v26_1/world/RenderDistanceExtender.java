@@ -178,6 +178,18 @@ public class RenderDistanceExtender {
     }
 
     private void sendNewRenderDistancePacket(int newDistance) {
+        // The protocol and packet injector are only available once the proxy is running and the
+        // client handshake has established the protocol. settingsComplete() may be invoked before
+        // that (e.g. from the GUI start flow), in which case there is no client connection yet and
+        // no one to send the packet to. The extended distance is still applied to the client later,
+        // at login time, via the Login handler (which uses Config.getExtendedRenderDistance()).
+        if (Config.versionReporter() == null || Config.versionReporter().getProtocol() == null) {
+            return;
+        }
+        if (Config.getPacketInjector() == null) {
+            return;
+        }
+
         PacketBuilder pb = new PacketBuilder("SetChunkCacheRadius");
         pb.writeVarInt(newDistance);
 
