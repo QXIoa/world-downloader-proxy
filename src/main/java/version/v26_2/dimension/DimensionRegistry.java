@@ -87,11 +87,8 @@ public class DimensionRegistry implements IDimensionRegistry {
 
     private void readDimensions(String[] dimensionNames) {
         for (String dimensionName : dimensionNames) {
-            String[] parts = dimensionName.split(":");
-            String namespace = parts[0];
-            String name = parts[1];
-
-            this.dimensions.put(dimensionName, new Dimension(namespace, name));
+            String[] parts = splitIdentifier(dimensionName);
+            this.dimensions.put(dimensionName, new Dimension(parts[0], parts[1]));
         }
     }
 
@@ -104,11 +101,9 @@ public class DimensionRegistry implements IDimensionRegistry {
 
             String identifier = ((StringTag) b.get("name")).value;
             int id = ((IntTag) b.get("id")).value;
-            String[] parts = identifier.split(":");
-            String namespace = parts[0];
-            String name = parts[1];
+            String[] parts = splitIdentifier(identifier);
 
-            this.biomes.put(identifier, new Biome(namespace, name, id, b.get("element").asCompound()));
+            this.biomes.put(identifier, new Biome(parts[0], parts[1], id, b.get("element").asCompound()));
         }
         this.biomeRegistry = new BiomeRegistry(this.biomes);
     }
@@ -188,11 +183,9 @@ public class DimensionRegistry implements IDimensionRegistry {
         for (int id = 0; id < entries.size(); id++) {
             var biome = entries.get(id);
 
-            String[] parts = biome.name().split(":");
-            String namespace = parts[0];
-            String name = parts[1];
+            String[] parts = splitIdentifier(biome.name());
 
-            var res = new Biome(namespace, name, id, biome.nbt().map(Tag::asCompound).orElse(null));
+            var res = new Biome(parts[0], parts[1], id, biome.nbt().map(Tag::asCompound).orElse(null));
             this.biomes.put(biome.name(), res);
             this.biomeRegistry.addBiome(biome.name(), res);
         }
@@ -203,13 +196,27 @@ public class DimensionRegistry implements IDimensionRegistry {
         for (int id = 0; id < entries.size(); id++) {
             var dim = entries.get(id);
 
-            String[] parts = dim.name().split(":");
-            String namespace = parts[0];
-            String name = parts[1];
+            String[] parts = splitIdentifier(dim.name());
 
-            DimensionType type = new DimensionType(namespace, name, id, dim.nbt().map(Tag::asCompound).orElse(null));
+            DimensionType type = new DimensionType(parts[0], parts[1], id, dim.nbt().map(Tag::asCompound).orElse(null));
             this.dimensionTypesByID.put(id, type);
             this.dimensionTypesByName.put(type.getName(), type);
         }
+    }
+
+    /**
+     * Split an identifier like {@code minecraft:overworld} into its namespace and name. Some
+     * modded/edge-case identifiers are sent without a colon; tolerate that instead of crashing
+     * registry loading (which previously threw an {@link ArrayIndexOutOfBoundsException} and left
+     * dimension types/biomes half-loaded, breaking world-height selection for chunk parsing).
+     *
+     * @return a two-element array, {@code [namespace, name]}
+     */
+    private static String[] splitIdentifier(String identifier) {
+        String[] parts = identifier.split(":", 2);
+        if (parts.length == 1) {
+            parts = new String[] { parts[0], parts[0] };
+        }
+        return parts;
     }
 }
