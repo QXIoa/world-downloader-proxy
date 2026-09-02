@@ -46,15 +46,19 @@ public class SpongeSchematicExporter implements SchematicExporter {
     }
 
     @Override
-    public void export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException {
+    public ExportResult export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException {
+        long totalBlocks = box.volume();
+
         // --- Blocks ---
         Map<String, Integer> blockPaletteIndices = new LinkedHashMap<>();
-        byte[] blockData = encodeBlocks(box, blockPaletteIndices);
+        BlockEncodingStats blockStats = new BlockEncodingStats();
+        byte[] blockData = encodeBlocks(box, blockPaletteIndices, blockStats);
 
         CompoundTag blocks = new CompoundTag();
         blocks.add("Palette", buildPaletteTag(blockPaletteIndices));
         blocks.add("Data", new ByteArrayTag(blockData));
-        blocks.add("BlockEntities", new ListTag(Tag.TAG_COMPOUND, encodeBlockEntities(box)));
+        List<SpecificTag> blockEntityTags = encodeBlockEntities(box, blockStats);
+        blocks.add("BlockEntities", new ListTag(Tag.TAG_COMPOUND, blockEntityTags));
 
         // --- Biomes ---
         Map<String, Integer> biomePaletteIndices = new LinkedHashMap<>();
@@ -91,6 +95,13 @@ public class SpongeSchematicExporter implements SchematicExporter {
         }
         INbtIO nbtIO = Config.getVersionModule().getNbtIO();
         nbtIO.write(new NamedTag("", root), absoluteTarget);
+
+        return new ExportResult(
+                totalBlocks,
+                blockStats.missingBlocks,
+                blockEntityTags.size(),
+                blockStats.missingHeads
+        );
     }
 
     // ------------------------------------------------------------------
@@ -102,17 +113,22 @@ public class SpongeSchematicExporter implements SchematicExporter {
      * iterates y-slowest/z-middle/x-fastest, which is exactly the {@code x + z * Width + y * Width * Length}
      * linear ordering the format requires for the Data array.
      */
-    private byte[] encodeBlocks(BoundingBox box, Map<String, Integer> paletteIndices) {
+    private byte[] encodeBlocks(BoundingBox box, Map<String, Integer> paletteIndices,
+                                BlockEncodingStats stats) {
         List<Integer> indices = new ArrayList<>();
         box.forEachBlock(coord -> {
-            String blockStateKey = blockStateKeyAt(coord);
+            IBlockState state = blockRegionReader.blockAt(coord);
+            if (state == null) {
+                stats.missingBlocks++;
+            }
+            String blockStateKey = state == null ? AIR : toBlockStateKey(state);
             int index = paletteIndices.computeIfAbsent(blockStateKey, key -> paletteIndices.size());
             indices.add(index);
         });
         return VarIntByteArray.pack(indices);
     }
 
-    private List<SpecificTag> encodeBlockEntities(BoundingBox box) {
+    private List<SpecificTag> encodeBlockEntities(BoundingBox box, BlockEncodingStats stats) {
         List<SpecificTag> result = new ArrayList<>();
         box.forEachBlock(coordinate -> {
             SpecificTag tag = blockRegionReader.blockEntityAt(coordinate);
@@ -126,9 +142,22 @@ public class SpongeSchematicExporter implements SchematicExporter {
                 encoded.add("Id", new StringTag(blockEntity.get("id").stringValue()));
                 encoded.add("Data", copyWithout(blockEntity, Set.of("id", "x", "y", "z")));
                 result.add(encoded);
+            } else if (tag == null) {
+                // No block entity data for this position. Check whether the block
+                // at this position is a head/skull — if so, its profile/skin data
+                // is missing (typically because the chunk was never loaded, or the
+                // server hasn't sent the block entity yet).
+                IBlockState state = blockRegionReader.blockAt(coordinate);
+                if (state != null && isHeadBlock(state.getName())) {
+                    stats.missingHeads++;
+                }
             }
         });
         return result;
+    }
+
+    private static boolean isHeadBlock(String name) {
+        return name.endsWith("_head") || name.endsWith("_skull");
     }
 
     private List<SpecificTag> encodeEntities(BoundingBox box) {
@@ -194,6 +223,12 @@ public class SpongeSchematicExporter implements SchematicExporter {
     private String blockStateKeyAt(Coordinate3D coord) {
         IBlockState state = blockRegionReader.blockAt(coord);
         return state == null ? AIR : toBlockStateKey(state);
+    }
+
+    /** Mutable counters accumulated during block/entity encoding. */
+    private static final class BlockEncodingStats {
+        long missingBlocks;
+        int missingHeads;
     }
 
     /**

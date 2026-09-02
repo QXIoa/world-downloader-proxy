@@ -1,6 +1,7 @@
 package core.schematic.export;
 
 import core.config.Config;
+import core.interfaces.IDimension;
 import core.interfaces.ISelectionFeedback;
 import core.messages.Messages;
 import core.schematic.BoundingBox;
@@ -10,9 +11,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Orchestrates exporting the current selection: validates it, picks an output file name, delegates
@@ -20,18 +23,41 @@ import java.util.concurrent.TimeUnit;
  * that accidentally repeating the export command cannot silently duplicate/overwrite a file with
  * the same selection. This is the only class in the schematic feature where "export" turns into a
  * side effect; every other class it uses is either pure data or reusable across many exports.
+ *
+ * <p>The heavy encoding work (iterating every block, building NBT, writing to disk) runs on a
+ * dedicated background thread so it never blocks the proxy's packet-processing thread. Without
+ * this, exporting a large selection can take seconds or minutes, during which the client's
+ * keep-alive packets are not forwarded to the server and the server disconnects the player.
  */
 public class SchematicExportService {
     private final SchematicExporter exporter;
     private final SchematicFileNamer fileNamer;
     private final ISelectionFeedback feedback;
     private final Path outputDirectory;
+
+    /** Runs the "waiting for new selection" reminder after a successful export. */
     private final ScheduledExecutorService scheduler =
         Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "schematic-feedback");
             t.setDaemon(true);
             return t;
         });
+
+    /**
+     * Runs the actual export (block iteration, NBT encoding, disk write) off the
+     * network thread. Single-threaded: exports are serialised so two concurrent
+     * exports don't fight over the same output directory or read the world
+     * concurrently.
+     */
+    private final ExecutorService exportExecutor =
+        Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "schematic-export");
+            t.setDaemon(true);
+            return t;
+        });
+
+    /** Guards against a second export being queued while one is already running. */
+    private final AtomicBoolean exportInProgress = new AtomicBoolean(false);
 
     public SchematicExportService(SchematicExporter exporter, SchematicFileNamer fileNamer,
                                    ISelectionFeedback feedback, Path outputDirectory) {
@@ -60,6 +86,10 @@ public class SchematicExportService {
      * Exports the given selection (if valid) and clears it, regardless of whether the export
      * succeeded - a failed export should not be silently retried by accident, the player should
      * make a fresh selection.
+     *
+     * <p>The selection is cleared synchronously (before the background export starts) so the
+     * player cannot accidentally trigger a second export with the same corners while the first
+     * one is still running.
      */
     public void exportAndClear(SelectionState state) {
         try {
@@ -73,9 +103,24 @@ public class SchematicExportService {
                 return;
             }
 
-            BoundingBox box = state.toBoundingBox();
+            if (!exportInProgress.compareAndSet(false, true)) {
+                feedback.send(Messages.server("server.export.busy"));
+                return;
+            }
 
-            exportToFile(box, state);
+            // Capture immutable snapshots before clearing the selection.
+            BoundingBox box = state.toBoundingBox();
+            IDimension dimension = state.getDimension();
+
+            feedback.send(Messages.server("server.export.started", box));
+
+            exportExecutor.execute(() -> {
+                try {
+                    exportToFile(box, dimension, state);
+                } finally {
+                    exportInProgress.set(false);
+                }
+            });
         } finally {
             // Clear the corners but keep selection mode enabled so the player can
             // immediately start a new selection. The boss bar is NOT cleared here —
@@ -85,14 +130,14 @@ public class SchematicExportService {
         }
     }
 
-    private void exportToFile(BoundingBox box, SelectionState state) {
+    private void exportToFile(BoundingBox box, IDimension dimension, SelectionState state) {
         String serverAddress = Config.getConnectionDetails() != null
             ? Config.getConnectionDetails().getFriendlyHost()
             : null;
         Path target = outputDirectory.resolve(fileNamer.buildFileName(Instant.now(), serverAddress));
 
         try {
-            exporter.export(box, state.getDimension(), target);
+            ExportResult result = exporter.export(box, dimension, target);
 
             // Verify the file was actually created and is non-empty — a successful
             // exporter.export() call does not guarantee the file exists on disk if
@@ -115,6 +160,18 @@ public class SchematicExportService {
             }
 
             feedback.send(Messages.server("server.export.success", target.getFileName(), formatSize(size)));
+
+            // Report any data that was missing from the export — this is the key
+            // diagnostic for "some heads had no skins after pasting": if chunks
+            // inside the selection were never loaded, their block entities (and
+            // thus head profile/skin data) are silently absent.
+            if (result.hasMissingData()) {
+                feedback.send(Messages.server("server.export.incomplete",
+                        result.missingBlocks(),
+                        result.missingHeads(),
+                        result.exportedBlockEntities()));
+            }
+
             // After a brief pause, prompt for the next selection — but only if the
             // player hasn't already started making one (e.g. set a new pos1).
             scheduler.schedule(() -> {

@@ -313,6 +313,101 @@ class SpongeSchematicExporterTest {
         assertThat(biomePalette.get("minecraft:plains").intValue()).isEqualTo(0);
     }
 
+    @Test
+    void reportsMissingBlocksWhenChunkIsNotLoaded() throws IOException {
+        // Half the blocks are in an "unloaded chunk" (blockAt returns null) — the
+        // exporter should count them as missingBlocks and treat them as air.
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                if (coordinate.getX() == 0) {
+                    return null; // unloaded
+                }
+                return new FakeBlockState("minecraft:stone", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(1, 0, 0));
+        Path target = tempDir.resolve("missing_blocks.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.totalBlocks()).isEqualTo(2);
+        assertThat(result.missingBlocks()).isEqualTo(1);
+        assertThat(result.missingHeads()).isEqualTo(0);
+        assertThat(result.exportedBlockEntities()).isEqualTo(0);
+    }
+
+    @Test
+    void reportsMissingHeadsWhenHeadBlockHasNoBlockEntityData() throws IOException {
+        // A player_head block exists but has no block entity data — the exporter
+        // should count it as a missingHead (its profile/skin is lost).
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:player_head", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+                return null; // no block entity data -> head has no profile
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(0, 0, 0));
+        Path target = tempDir.resolve("missing_head.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.missingBlocks()).isEqualTo(0);
+        assertThat(result.missingHeads()).isEqualTo(1);
+        assertThat(result.exportedBlockEntities()).isEqualTo(0);
+    }
+
+    @Test
+    void doesNotCountHeadAsMissingWhenBlockEntityIsPresent() throws IOException {
+        CompoundTag headEntity = new CompoundTag();
+        headEntity.add("id", new StringTag("minecraft:skull"));
+        headEntity.add("x", new IntTag(0));
+        headEntity.add("y", new IntTag(0));
+        headEntity.add("z", new IntTag(0));
+
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:player_head", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+                return headEntity;
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(0, 0, 0));
+        Path target = tempDir.resolve("head_with_entity.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.missingHeads()).isEqualTo(0);
+        assertThat(result.exportedBlockEntities()).isEqualTo(1);
+    }
+
     private CompoundTag readSchematic(Path file) throws IOException {
         INbtIO nbtIO = Config.getVersionModule().getNbtIO();
         Tag root = (Tag) nbtIO.read(java.nio.file.Files.newInputStream(file));

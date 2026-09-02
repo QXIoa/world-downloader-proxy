@@ -3,7 +3,9 @@ build/
 .gradle/
 .kotlin/
 abc/
-.idea/
+# IntelliJ — ignore everything under .idea/ except the shared inspection profile
+.idea/*
+!.idea/inspectionProfiles/
 AGENTS.md
 docs/
 .classpath

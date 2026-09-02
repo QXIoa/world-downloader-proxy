@@ -14,5 +14,11 @@ import java.nio.file.Path;
  * {@link SchematicExportService} or anything upstream of it.
  */
 public interface SchematicExporter {
-    void export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException;
+    /**
+     * Encode the selected region to a schematic file on disk.
+     *
+     * @return statistics about the export, including how many blocks were in
+     *         unloaded chunks and how many head blocks lacked block-entity data
+     */
+    ExportResult export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException;
 }
