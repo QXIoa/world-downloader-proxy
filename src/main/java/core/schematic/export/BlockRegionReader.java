@@ -2,6 +2,11 @@ package core.schematic.export;
 
 import core.coordinates.Coordinate3D;
 import core.interfaces.IBlockState;
+import core.schematic.BoundingBox;
+import se.llbit.nbt.SpecificTag;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Reads block state data for a single coordinate. Kept as a small interface (rather than a
@@ -21,4 +26,12 @@ public interface BlockRegionReader {
      *         (chunk not loaded, or pre-1.18 version without per-section biomes).
      */
     String biomeAt(Coordinate3D coordinate);
+
+    default SpecificTag blockEntityAt(Coordinate3D coordinate) {
+        return null;
+    }
+
+    default List<SpecificTag> entitiesIn(BoundingBox box) {
+        return Collections.emptyList();
+    }
 }

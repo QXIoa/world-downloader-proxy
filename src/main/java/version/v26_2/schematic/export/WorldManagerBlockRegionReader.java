@@ -2,8 +2,12 @@ package version.v26_2.schematic.export;
 
 import core.coordinates.Coordinate3D;
 import core.interfaces.IBlockState;
+import core.schematic.BoundingBox;
 import core.schematic.export.BlockRegionReader;
+import se.llbit.nbt.SpecificTag;
 import version.v26_2.world.WorldManager;
+
+import java.util.List;
 
 /**
  * The production {@link BlockRegionReader}: reads block data out of the in-memory world held by
@@ -29,5 +33,15 @@ public class WorldManagerBlockRegionReader implements core.schematic.export.Bloc
     @Override
     public String biomeAt(Coordinate3D coordinate) {
         return worldManager.biomeAt(coordinate);
+    }
+
+    @Override
+    public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+        return worldManager.blockEntityAt(coordinate);
+    }
+
+    @Override
+    public List<SpecificTag> entitiesIn(BoundingBox box) {
+        return worldManager.getEntityRegistry().getEntitiesNbt(box);
     }
 }

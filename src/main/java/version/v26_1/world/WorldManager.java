@@ -365,6 +365,11 @@ public class WorldManager implements IWorldManager {
         return c.getBlockStateAt(pos);
     }
 
+    public se.llbit.nbt.SpecificTag blockEntityAt(Coordinate3D coordinate3D) {
+        Chunk c = this.getChunk(coordinate3D.globalToChunk().addDimension(this.dimension));
+        return c == null ? null : c.getBlockEntity(coordinate3D);
+    }
+
     /**
      * Read the biome resource location at the given world-space coordinates, or {@code null} if
      * the chunk is not loaded or the version does not support per-section biomes.

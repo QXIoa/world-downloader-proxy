@@ -8,6 +8,10 @@ import core.interfaces.INbtIO;
 import core.schematic.BoundingBox;
 import se.llbit.nbt.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,11 +25,10 @@ import java.util.*;
  * optional — so that it is accepted by strict readers such as FastAsyncWorldEdit's
  * {@code FastSchematicReaderV3}, which NPEs on missing optional fields like {@code Offset}.
  *
- * <p>Block entities (chest contents, sign text, etc.) and entities are emitted as empty lists
- * because the proxy does not currently track them for a selection. Biomes are read from the
- * loaded chunk data when available (1.18+); if a biome is missing for a coordinate, the
- * default {@code minecraft:plains} is used so the {@code Biomes.Data} array always has the
- * required {@code Width * Height * Length} entries.
+ * <p>Block entities and entities are copied from the loaded chunks when they fall inside the
+ * selection. Biomes are read from the loaded chunk data when available (1.18+); if a biome is
+ * missing for a coordinate, the default {@code minecraft:plains} is used so the
+ * {@code Biomes.Data} array always has the required {@code Width * Height * Length} entries.
  */
 public class SpongeSchematicExporter implements SchematicExporter {
     private static final int FORMAT_VERSION = 3;
@@ -51,7 +54,7 @@ public class SpongeSchematicExporter implements SchematicExporter {
         CompoundTag blocks = new CompoundTag();
         blocks.add("Palette", buildPaletteTag(blockPaletteIndices));
         blocks.add("Data", new ByteArrayTag(blockData));
-        blocks.add("BlockEntities", new ListTag(Tag.TAG_COMPOUND, Collections.emptyList()));
+        blocks.add("BlockEntities", new ListTag(Tag.TAG_COMPOUND, encodeBlockEntities(box)));
 
         // --- Biomes ---
         Map<String, Integer> biomePaletteIndices = new LinkedHashMap<>();
@@ -77,7 +80,7 @@ public class SpongeSchematicExporter implements SchematicExporter {
         schematic.add("Metadata", buildMetadataTag());
         schematic.add("Blocks", blocks);
         schematic.add("Biomes", biomes);
-        schematic.add("Entities", new ListTag(Tag.TAG_COMPOUND, Collections.emptyList()));
+        schematic.add("Entities", new ListTag(Tag.TAG_COMPOUND, encodeEntities(box)));
 
         CompoundTag root = new CompoundTag();
         root.add("Schematic", schematic);
@@ -107,6 +110,85 @@ public class SpongeSchematicExporter implements SchematicExporter {
             indices.add(index);
         });
         return VarIntByteArray.pack(indices);
+    }
+
+    private List<SpecificTag> encodeBlockEntities(BoundingBox box) {
+        List<SpecificTag> result = new ArrayList<>();
+        box.forEachBlock(coordinate -> {
+            SpecificTag tag = blockRegionReader.blockEntityAt(coordinate);
+            if (tag instanceof CompoundTag blockEntity && !blockEntity.get("id").isError()) {
+                CompoundTag encoded = new CompoundTag();
+                encoded.add("Pos", new IntArrayTag(new int[] {
+                        coordinate.getX() - box.getMin().getX(),
+                        coordinate.getY() - box.getMin().getY(),
+                        coordinate.getZ() - box.getMin().getZ()
+                }));
+                encoded.add("Id", new StringTag(blockEntity.get("id").stringValue()));
+                encoded.add("Data", copyWithout(blockEntity, Set.of("id", "x", "y", "z")));
+                result.add(encoded);
+            }
+        });
+        return result;
+    }
+
+    private List<SpecificTag> encodeEntities(BoundingBox box) {
+        List<SpecificTag> result = new ArrayList<>();
+        for (SpecificTag tag : blockRegionReader.entitiesIn(box)) {
+            if (!(tag instanceof CompoundTag entity) || entity.get("id").isError() || entity.get("Pos").isError()) {
+                continue;
+            }
+
+            CompoundTag encoded = new CompoundTag();
+            encoded.add("Pos", (SpecificTag) entity.get("Pos"));
+            encoded.add("Id", new StringTag(entity.get("id").stringValue()));
+            encoded.add("Data", copyWithout(entity, Set.of("id", "Pos")));
+            result.add(encoded);
+        }
+        return result;
+    }
+
+    private CompoundTag copyWithout(CompoundTag source, Set<String> excluded) {
+        CompoundTag copy = new CompoundTag();
+        for (NamedTag entry : source) {
+            if (excluded.contains(entry.name())) {
+                continue;
+            }
+            SpecificTag tag = entry.getTag();
+            if (tag.isError()) {
+                continue;
+            }
+            copy.add(entry.name(), deepCopy(tag));
+        }
+        return copy;
+    }
+
+    private SpecificTag deepCopy(SpecificTag source) {
+        if (source.isError()) {
+            return null;
+        }
+        if (source instanceof CompoundTag compound) {
+            CompoundTag copy = new CompoundTag();
+            for (NamedTag entry : compound) {
+                if (entry.getTag().isError()) {
+                    continue;
+                }
+                SpecificTag child = deepCopy(entry.getTag());
+                if (child != null) {
+                    copy.add(entry.name(), child);
+                }
+            }
+            return copy;
+        }
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            DataOutputStream output = new DataOutputStream(bytes);
+            source.writeType(output);
+            source.write(output);
+            DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+            return SpecificTag.read(input.readByte(), input);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not copy NBT data", e);
+        }
     }
 
     private String blockStateKeyAt(Coordinate3D coord) {

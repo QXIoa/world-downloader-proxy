@@ -90,6 +90,12 @@ public class RegistryLoader {
         }
     }
 
+    public DataComponentRegistry generateDataComponentRegistry() throws IOException {
+        try (InputStream in = openResource(REGISTRY_FILENAME)) {
+            return DataComponentRegistry.fromRegistry(in);
+        }
+    }
+
     public BlockEntityRegistry generateBlockEntityRegistry() throws IOException {
         try (InputStream in = openResource(REGISTRY_FILENAME)) {
             return BlockEntityRegistry.fromRegistry(in);

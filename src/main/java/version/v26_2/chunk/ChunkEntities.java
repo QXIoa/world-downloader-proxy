@@ -18,8 +18,8 @@ import version.v26_2.registries.RegistryManager;
 import version.v26_2.world.WorldManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manage entities and block entities for chunks.
@@ -30,7 +30,7 @@ public abstract class ChunkEntities extends ChunkEvents {
     public ChunkEntities() {
         super();
 
-        blockEntities = new HashMap<>();
+        blockEntities = new ConcurrentHashMap<>();
     }
 
     /**
@@ -131,6 +131,10 @@ public abstract class ChunkEntities extends ChunkEvents {
         return new ListTag(Tag.TAG_COMPOUND, WorldManager.getInstance().getEntityRegistry().getEntitiesNbt(this.getLocation()));
     }
 
+
+    public SpecificTag getBlockEntity(Coordinate3D location) {
+        return blockEntities.get(location);
+    }
 
     public void addBlockEntity(Coordinate3D location, SpecificTag tag) {
         // we shouldn't reach this state, but just in case we do

@@ -2,8 +2,8 @@ package version.v26_2.entity.metadata;
 
 import se.llbit.nbt.ByteTag;
 import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.IntTag;
-import se.llbit.nbt.StringTag;
+import se.llbit.nbt.ShortTag;
+import se.llbit.nbt.SpecificTag;
 import version.v26_2.packets.DataTypeProvider;
 
 import java.util.HashMap;
@@ -31,7 +31,11 @@ public class MetaData {
         typeHandlers.put(6, DataTypeProvider::readOptChat);
         typeHandlers.put(7, DataTypeProvider::readSlot);
         typeHandlers.put(8, DataTypeProvider::readBoolean);
-        typeHandlers.put(9, DataTypeProvider::readBoolean);
+        typeHandlers.put(9, provider -> {
+            provider.readFloat();
+            provider.readFloat();
+            provider.readFloat();
+        });
         typeHandlers.put(10, DataTypeProvider::readLong);
         typeHandlers.put(11, provider -> {
             if (provider.readBoolean()) {
@@ -39,19 +43,39 @@ public class MetaData {
             }
         });
         typeHandlers.put(12, DataTypeProvider::readVarInt);
+        typeHandlers.put(13, provider -> {
+            if (provider.readBoolean()) {
+                provider.readUUID();
+            }
+        });
         typeHandlers.put(14, DataTypeProvider::readVarInt);
-        typeHandlers.put(15, DataTypeProvider::readNbtTag);
-        typeHandlers.put(17, (provider -> {
+        typeHandlers.put(15, DataTypeProvider::readVarInt);
+        typeHandlers.put(18, provider -> {
             provider.readVarInt();
             provider.readVarInt();
             provider.readVarInt();
-        }));
-        typeHandlers.put(18, DataTypeProvider::readOptVarInt);
-        typeHandlers.put(19, DataTypeProvider::readVarInt);
+        });
+        for (int i = 19; i <= 32; i++) {
+            typeHandlers.put(i, DataTypeProvider::readVarInt);
+        }
+        for (int i = 35; i <= 38; i++) {
+            typeHandlers.put(i, DataTypeProvider::readVarInt);
+        }
+        typeHandlers.put(39, provider -> {
+            provider.readFloat();
+            provider.readFloat();
+            provider.readFloat();
+        });
+        typeHandlers.put(40, provider -> {
+            provider.readFloat();
+            provider.readFloat();
+            provider.readFloat();
+            provider.readFloat();
+        });
     }
 
-    private int air;
-    private String customName;
+    private int air = 300;
+    private SpecificTag customName;
     private boolean customNameVisible;
     private boolean isInvisible;
     private boolean isSilent;
@@ -61,6 +85,7 @@ public class MetaData {
 
     public void parse(DataTypeProvider provider) {
         while (true) {
+            int entryPosition = provider.position();
             int index = provider.readNext() & 0xFF;
             if (index == TERMINATOR) { break; }
 
@@ -69,7 +94,13 @@ public class MetaData {
             Consumer<DataTypeProvider> indexHandler = getIndexHandler(index);
             Consumer<DataTypeProvider> typeHandler = getTypeHandler(type);
 
-            if (indexHandler == null && typeHandler == null) { break; }
+            if (indexHandler == null && typeHandler == null) {
+                provider.markIncomplete(
+                        "UNSUPPORTED_ENTITY_DATA_SERIALIZER", "entity_metadata", type, null, entryPosition,
+                        "No metadata reader for serializer " + type + " at entity data index " + index
+                );
+                break;
+            }
 
             if (indexHandler != null) {
                 indexHandler.accept(provider);
@@ -95,7 +126,7 @@ public class MetaData {
         switch (i) {
             case 0: return provider -> isInvisible = (provider.readNext() & 0x20) > 0;
             case 1: return provider -> this.air = provider.readVarInt();
-            case 2: return provider -> this.customName = provider.readOptChat();
+            case 2: return provider -> this.customName = provider.readOptChatTag();
             case 3: return provider -> this.customNameVisible = provider.readBoolean();
             case 4: return provider -> this.isSilent = provider.readBoolean();
             case 5: return provider -> this.hasNoGravity = provider.readBoolean();
@@ -108,9 +139,9 @@ public class MetaData {
         nbt.add("NoGravity", new ByteTag(hasNoGravity ? 1 : 0));
         nbt.add("Invisible", new ByteTag(isInvisible ? 1 : 0));
         nbt.add("CustomNameVisible", new ByteTag(customNameVisible ? 1 : 0));
-        nbt.add("Air", new IntTag(air));
-        if (customName != null && customName.length() > 0) {
-            nbt.add("CustomName", new StringTag(customName));
+        nbt.add("Air", new ShortTag((short) air));
+        if (customName != null) {
+            nbt.add("CustomName", customName);
         }
     }
 }
