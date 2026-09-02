@@ -1,5 +1,6 @@
 package version.v26_1.entity;
 
+import core.config.Config;
 import core.coordinates.CoordinateDim2D;
 import core.interfaces.IEntityRegistry;
 import core.schematic.BoundingBox;
@@ -43,6 +44,24 @@ public class EntityRegistry implements IEntityRegistry {
         this.executor.execute(() -> attempt(() -> {
             Entity ent = parser.apply(provider);
             if (ent == null) { return; }
+
+            // If an entity with the same ID already exists (e.g. the server
+            // re-sent AddEntity after the player walked away and back, and
+            // schematic mode kept the old one), remove the stale entry from
+            // perChunk before overwriting it — otherwise both the old and new
+            // entity objects would be in the perChunk set.
+            Entity existing = entities.get(ent.getId());
+            if (existing != null) {
+                CoordinateDim2D oldChunk = existing.getChunkLocation();
+                Set<Entity> oldSet = perChunk.get(oldChunk);
+                if (oldSet != null) {
+                    oldSet.remove(existing);
+                    if (oldSet.isEmpty()) {
+                        perChunk.remove(oldChunk);
+                    }
+                }
+            }
+
             entities.put(ent.getId(), ent);
 
             // If this is a player entity spawned via AddEntity (protocol 776+ has no
@@ -291,9 +310,19 @@ public class EntityRegistry implements IEntityRegistry {
     /**
      * When destroyEntities is called, we don't remove the entities from the perChunk map. These will only be removed
      * when the chunk is unloaded. This way we won't accidentally delete entities that belong to an unsaved chunk.
+     *
+     * In schematic mode, we also keep entities in the entities map so that late metadata/equipment
+     * updates still find them, and so entity IDs aren't reused for stale entries in perChunk.
      */
     public void destroyEntities(DataTypeProvider provider) {
         int count = provider.readVarInt();
+        if (Config.isSchematicMode()) {
+            // Still consume the packet data, but don't remove anything.
+            while (count-- > 0) {
+                provider.readVarInt();
+            }
+            return;
+        }
         while (count-- > 0) {
             int id = provider.readVarInt();
             Entity removed = entities.remove(id);
