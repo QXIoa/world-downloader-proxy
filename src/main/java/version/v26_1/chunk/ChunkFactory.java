@@ -103,12 +103,21 @@ public class ChunkFactory {
         CoordinateDim2D chunkPos = parser.location;
 
         Chunk chunk = worldManager.getChunk(chunkPos);
-        if (chunk == null) {
+        boolean isNewChunk = (chunk == null);
+        if (isNewChunk) {
             chunk = getVersionedChunk(chunkPos);
-            worldManager.loadChunk(chunk, true, true);
         }
 
+        // Parse the chunk fully BEFORE making it visible to the world. Previously,
+        // loadChunk was called before parse(), which meant the export thread could
+        // see a chunk with block states but no block entities (or only minimal
+        // stubs from findBlockEntities). This caused schematic exports to lose
+        // head skins and banner patterns.
         chunk.parse(dataProvider);
+
+        if (isNewChunk) {
+            worldManager.loadChunk(chunk, true, true);
+        }
 
         return chunk;
     }

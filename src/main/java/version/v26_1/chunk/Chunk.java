@@ -294,7 +294,16 @@ public class Chunk extends ChunkEntities implements IChunk {
 
                     if (blockEntities.isBlockEntity(state.getName())) {
                         Coordinate3D coords = new Coordinate3D(x, y, z).sectionLocalToGlobal(sectionY, this.location);
-                        this.addBlockEntity(coords, this.generateBlockEntity(state.getName(), coords));
+                        // Only generate a minimal block entity if we don't already have one.
+                        // parseBlockEntities (called right after readChunkColumn) will overwrite
+                        // this with the real NBT from the chunk packet. But if the chunk is
+                        // re-parsed later (server re-sends it), findBlockEntities would overwrite
+                        // the existing real data (with profile/patterns) with a minimal stub
+                        // (just id+xyz). That race causes schematic exports to lose head skins
+                        // and banner patterns. putIfAbsent prevents the overwrite.
+                        if (this.getBlockEntity(coords) == null) {
+                            this.addBlockEntity(coords, this.generateBlockEntity(state.getName(), coords));
+                        }
                     }
                 }
             }
@@ -315,7 +324,7 @@ public class Chunk extends ChunkEntities implements IChunk {
         int blockEntityCount = dataProvider.readVarInt();
         for (int i = 0; i < blockEntityCount; i++) {
             byte xz = dataProvider.readNext();
-            int x = xz >> 4;
+            int x = (xz >> 4) & 0b1111;
             int z = xz & 0b1111;
             int y = dataProvider.readShort();
             int type = dataProvider.readVarInt();
@@ -743,7 +752,9 @@ public class Chunk extends ChunkEntities implements IChunk {
 
             updateBlock(blockPos, blockId, true);
         }
-        this.getChunkHeightHandler().recomputeHeights(toUpdate);
+        if (this.getChunkHeightHandler() != null) {
+            this.getChunkHeightHandler().recomputeHeights(toUpdate);
+        }
     }
 
     public boolean hasSeparateEntities() {

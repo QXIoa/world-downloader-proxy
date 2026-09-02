@@ -297,7 +297,12 @@ public final class ComponentCodecs {
                 for (int i = 0; i < count; i++) {
                     int id = input.readVarInt();
                     int level = input.readVarInt();
-                    levels.add(String.valueOf(id), new IntTag(level));
+                    // Convert numeric enchantment ID to namespaced name (e.g. 12 → "minecraft:sharpness").
+                    // The destination server expects namespaced keys in the "levels" compound, not numeric IDs.
+                    String name = version.v26_1.schematic.DynamicRegistry.getInstance()
+                            .getName("minecraft:enchantment", id);
+                    String key = name != null ? name : String.valueOf(id);
+                    levels.add(key, new IntTag(level));
                 }
                 CompoundTag root = new CompoundTag();
                 root.add("levels", levels);
@@ -1236,16 +1241,27 @@ public final class ComponentCodecs {
                 int layerCount = input.readVarInt();
                 List<SpecificTag> layers = new ArrayList<>(layerCount);
                 for (int i = 0; i < layerCount; i++) {
-                    SpecificTag pattern = registryEntryHolderCodec().read(input, context);
+                    // Banner pattern is a registry entry holder: VarInt discriminator.
+                    // >0 means registry ID (discriminator - 1); 0 means inline NBT.
+                    int discriminator = input.readVarInt();
                     int color = input.readVarInt();
                     CompoundTag layer = new CompoundTag();
-                    layer.add("pattern", pattern);
+                    if (discriminator > 0) {
+                        int patternId = discriminator - 1;
+                        // Convert numeric banner pattern ID to namespaced name (e.g. 1 → "minecraft:stripe_bottom").
+                        String name = version.v26_1.schematic.DynamicRegistry.getInstance()
+                                .getName("minecraft:banner_pattern", patternId);
+                        layer.add("pattern", new StringTag(name != null ? name : "minecraft:" + patternId));
+                    } else {
+                        // Inline: read NBT data and pass through
+                        SpecificTag data = input.readNbtTag();
+                        layer.add("pattern", data);
+                    }
                     layer.add("color", new IntTag(color));
                     layers.add(layer);
                 }
-                CompoundTag root = new CompoundTag();
-                root.add("layers", new ListTag(Tag.TAG_COMPOUND, layers));
-                return root;
+                // The component value is a list of layers directly (not wrapped in a compound).
+                return new ListTag(Tag.TAG_COMPOUND, layers);
             }
 
             @Override

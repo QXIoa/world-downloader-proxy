@@ -211,9 +211,9 @@ public abstract class ChunkEntities extends ChunkEvents {
         if (id.endsWith("shulker_box")) {
             entId = "minecraft:shulker_box";
         }
-        // Covers all bed colours
-        if (id.endsWith("_bed")) {
-            entId = "minecraft:bed";
+        // moving_piston blocks use the "minecraft:piston" block entity type (PistonMovingBlockEntity)
+        if (id.equals("minecraft:moving_piston")) {
+            entId = "minecraft:piston";
         }
         // Covers command blocks, chain and repeating command blocks
         if (id.endsWith("command_block")) {
@@ -222,6 +222,10 @@ public abstract class ChunkEntities extends ChunkEvents {
         // Covers banners
         if (id.endsWith("banner")) {
             entId = "minecraft:banner";
+        }
+        // Covers all head/skull variants (player_head, skeleton_skull, etc.)
+        if (id.endsWith("_head") || id.endsWith("_skull")) {
+            entId = "minecraft:skull";
         }
 
         CompoundTag entity = new CompoundTag();

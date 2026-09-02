@@ -1,6 +1,7 @@
 package version.v26_1.packets.handler;
 
 import version.v26_1.proxy.ConnectionManager;
+import version.v26_1.schematic.DynamicRegistry;
 import version.v26_1.schematic.ParticleRegistry;
 import version.v26_1.world.WorldManager;
 
@@ -28,6 +29,11 @@ public class ClientBoundConfigurationPacketHandler extends PacketHandler {
                 case "minecraft:worldgen/biome" -> WorldManager.getInstance().getDimensionRegistry().loadBiomes(registry);
                 case "minecraft:dimension_type" -> WorldManager.getInstance().getDimensionRegistry().loadDimensions(registry);
                 case "minecraft:particle_type" -> ParticleRegistry.getInstance().load(registry);
+                // Dynamic registries needed for data component encoding (enchantments, banner patterns).
+                // These are not in the static registries.json report, so we must capture them from the
+                // server's RegistryData packet to convert numeric IDs to namespaced names.
+                case "minecraft:enchantment", "minecraft:banner_pattern" ->
+                    DynamicRegistry.getInstance().load(registry);
             }
             return true;
         });

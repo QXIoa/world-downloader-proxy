@@ -175,7 +175,7 @@ public class WorldManager implements IWorldManager {
         }
 
         Chunk c = getChunk(discrete.globalToChunk());
-        if (c == null) {
+        if (c == null || c.getChunkHeightHandler() == null) {
             return;
         }
 
@@ -415,7 +415,10 @@ public class WorldManager implements IWorldManager {
      */
     public void touchChunk(ChunkEntities c) {
         c.touch();
-        regions.get(c.getLocation().chunkToDimRegion()).touch();
+        Region r = regions.get(c.getLocation().chunkToDimRegion());
+        if (r != null) {
+            r.touch();
+        }
     }
 
     public DimensionRegistry getDimensionRegistry() {

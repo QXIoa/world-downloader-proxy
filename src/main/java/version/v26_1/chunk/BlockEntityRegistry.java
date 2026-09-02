@@ -41,14 +41,29 @@ public class BlockEntityRegistry {
     }
 
     public boolean isBlockEntity(String id) {
+        // The block entity type "minecraft:piston" (PistonMovingBlockEntity) is in the
+        // registry, but it should only be associated with minecraft:moving_piston blocks,
+        // not minecraft:piston or minecraft:sticky_piston blocks. Without this exclusion,
+        // findBlockEntities generates stubs for every piston block, and the destination
+        // server rejects them with "Invalid block entity minecraft:piston state ... got
+        // Block{minecraft:piston}".
+        if (id.equals("minecraft:piston") || id.equals("minecraft:sticky_piston")) {
+            return false;
+        }
         return entityNames.contains(id) || isSpecialBlockEntity(id);
     }
 
     // should probably name this something else
     public boolean isSpecialBlockEntity(String id) {
-        return id.endsWith("shulker_box")
-            || id.endsWith("_bed")
+        // piston_head ends with "_head" but is not a skull; exclude it explicitly.
+        if (id.equals("minecraft:piston_head")) {
+            return false;
+        }
+        return id.equals("minecraft:moving_piston")
+            || id.endsWith("shulker_box")
             || id.endsWith("command_block")
-            || id.endsWith("banner");
+            || id.endsWith("banner")
+            || id.endsWith("_head")
+            || id.endsWith("_skull");
     }
 }
