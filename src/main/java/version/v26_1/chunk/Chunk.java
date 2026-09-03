@@ -456,14 +456,16 @@ public class Chunk extends ChunkEntities implements IChunk {
 
         int numSkyLight = provider.readVarInt();
         if (skyLightMask.cardinality() != numSkyLight) {
-            throw new InputMismatchException("Number of provided skylight maps does not match provided mask: " + skyLightMask + " != " + numSkyLight);
+            System.out.println(Messages.console("console.chunk.light_data_ignored", location, skyLightMask, numSkyLight));
+            return;
         }
 
         parseLightArray(skyLightMask, emptySkyLightMask, provider, ChunkSection::setSkyLight, ChunkSection::getSkyLight);
 
         int numBlockLight = provider.readVarInt();
         if (blockLightMask.cardinality() != numBlockLight) {
-            throw new InputMismatchException("Number of provided blocklight maps does not match provided mask: " + blockLightMask + " != " + numBlockLight);
+            System.out.println(Messages.console("console.chunk.light_data_ignored", location, blockLightMask, numBlockLight));
+            return;
         }
 
         parseLightArray(blockLightMask, emptyBlockLightMask, provider, ChunkSection::setBlockLight, ChunkSection::getBlockLight);
