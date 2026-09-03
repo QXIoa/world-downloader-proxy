@@ -36,10 +36,14 @@ public class PrimitiveEntity {
         return moveTo(switch(typeName) {
             case "minecraft:armor_stand" -> new ArmorStand();
             case "minecraft:axolotl" -> new Axolotl();
+            case "minecraft:block_display" -> new DisplayEntity.BlockDisplay();
             case "minecraft:cat" -> new Cat();
             case "minecraft:horse" -> new Horse();
+            case "minecraft:interaction" -> new DisplayEntity.InteractionEntity();
             case "minecraft:item" -> new DroppedItem();
+            case "minecraft:item_display" -> new DisplayEntity.ItemDisplay();
             case "minecraft:item_frame", "minecraft:glow_item_frame" -> new ItemFrame();
+            case "minecraft:text_display" -> new DisplayEntity.TextDisplay();
             case "minecraft:sheep" -> new Sheep();
             case "minecraft:villager" -> new Villager();
             default -> generate.get();

@@ -12,6 +12,7 @@ public class RegistryManager {
     private static RegistryManager instance;
     private MenuRegistry menuRegistry;
     private ItemRegistry itemRegistry;
+    private DataComponentRegistry dataComponentRegistry;
     private BlockEntityRegistry blockEntityRegistry;
     private VillagerProfessionRegistry villagerProfessionRegistry;
     private VillagerTypeRegistry villagerTypeRegistry;
@@ -38,6 +39,10 @@ public class RegistryManager {
         return itemRegistry;
     }
 
+    public DataComponentRegistry getDataComponentRegistry() {
+        return dataComponentRegistry;
+    }
+
     public BlockEntityRegistry getBlockEntityRegistry() {
         return blockEntityRegistry;
     }
@@ -54,6 +59,7 @@ public class RegistryManager {
     public void setRegistries(RegistryLoader loader) throws IOException {
         this.menuRegistry = loader.generateMenuRegistry();
         this.itemRegistry = loader.generateItemRegistry();
+        this.dataComponentRegistry = loader.generateDataComponentRegistry();
         this.blockEntityRegistry = loader.generateBlockEntityRegistry();
         this.villagerProfessionRegistry = loader.generateVillagerProfessionRegistry();
         this.villagerTypeRegistry = loader.generateVillagerTypeRegistry();

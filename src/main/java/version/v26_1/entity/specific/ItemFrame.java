@@ -1,7 +1,10 @@
 package version.v26_1.entity.specific;
 
+import core.config.Config;
+import core.coordinates.Coordinate3D;
 import se.llbit.nbt.ByteTag;
 import se.llbit.nbt.CompoundTag;
+import se.llbit.nbt.IntArrayTag;
 import se.llbit.nbt.IntTag;
 import version.v26_1.container.Slot;
 import version.v26_1.entity.ObjectEntity;
@@ -26,14 +29,28 @@ public class ItemFrame extends ObjectEntity {
      */
     @Override
     protected void addNbtData(CompoundTag root) {
-        super.addNbtData(root);
+        addItemFrameNbt(root, null);
+    }
 
+    @Override
+    protected void addNbtDataRelative(CompoundTag root, Coordinate3D origin) {
+        addItemFrameNbt(root, origin);
+    }
+
+    private void addItemFrameNbt(CompoundTag root, Coordinate3D origin) {
         root.add("Facing", new IntTag(facing));
 
+        int offsetX = origin == null ? Config.getCenterX() : origin.getX();
+        int offsetY = origin == null ? 0 : origin.getY();
+        int offsetZ = origin == null ? Config.getCenterZ() : origin.getZ();
         // use math.floor instead of just cast so that negative numbers are handled correctly
-        root.add("TileX", new IntTag((int) Math.floor(x)));
-        root.add("TileY", new IntTag((int) Math.floor(y)));
-        root.add("TileZ", new IntTag((int) Math.floor(z)));
+        int tileX = (int) Math.floor(x) - offsetX;
+        int tileY = (int) Math.floor(y) - offsetY;
+        int tileZ = (int) Math.floor(z) - offsetZ;
+        root.add("block_pos", new IntArrayTag(new int[] { tileX, tileY, tileZ }));
+        root.add("TileX", new IntTag(tileX));
+        root.add("TileY", new IntTag(tileY));
+        root.add("TileZ", new IntTag(tileZ));
 
         // prevent floating item frames from popping off
         root.add("Fixed", new ByteTag(1));
@@ -49,12 +66,9 @@ public class ItemFrame extends ObjectEntity {
     }
 
     @Override
-    public void parseMetadata(DataTypeProvider provider) {
+    public synchronized void parseMetadata(DataTypeProvider provider) {
         if (metaData == null) {
-            // 1.17+ reordered the item-frame metadata fields; that order is the only one used by
-            // the supported versions (26.x). The base ItemFrameMetaData keeps the pre-1.17 order
-            // as an extension point should a future version revert it.
-            metaData = new ItemFrameMetaData_1_17();
+            metaData = new ItemFrameMetaData();
         }
         try {
             metaData.parse(provider);
@@ -63,35 +77,25 @@ public class ItemFrame extends ObjectEntity {
         }
     }
 
-    private static class ItemFrameMetaData extends MetaData {
+    private class ItemFrameMetaData extends MetaData {
         Slot item;
         int rotation;
 
         @Override
         public void addNbtTags(CompoundTag nbt) {
+            super.addNbtTags(nbt);
             if (item != null) {
                 nbt.add("Item", item.toNbt());
             }
-            nbt.add("ItemRotation", new IntTag(rotation));
+            nbt.add("ItemRotation", new ByteTag(rotation));
         }
 
         @Override
         public Consumer<DataTypeProvider> getIndexHandler(int i) {
             return switch (i) {
-                case 7 -> provider -> item = provider.readSlot();
-                case 8 -> provider -> rotation = provider.readVarInt();
-                default -> super.getIndexHandler(i);
-            };
-        }
-    }
-
-    private class ItemFrameMetaData_1_17 extends ItemFrameMetaData {
-        @Override
-        public Consumer<DataTypeProvider> getIndexHandler(int i) {
-            // order of metadata fields for item frames changed a little bit in 1.17
-            return switch (i) {
-                case 7 -> provider -> rotation = provider.readVarInt();
-                case 8 -> provider -> item = provider.readSlot();
+                case 8 -> provider -> facing = provider.readVarInt();
+                case 9 -> provider -> item = provider.readSlot();
+                case 10 -> provider -> rotation = provider.readVarInt();
                 default -> super.getIndexHandler(i);
             };
         }

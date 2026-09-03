@@ -30,7 +30,7 @@ public class ArmorStand extends MobEntity {
 
 
     @Override
-    public void parseMetadata(DataTypeProvider provider) {
+    public synchronized void parseMetadata(DataTypeProvider provider) {
         if (metaData == null) {
             metaData = new ArmorStandMetaData();
         }
@@ -44,7 +44,7 @@ public class ArmorStand extends MobEntity {
 
 class ArmorStandMetaData extends MetaData {
     private boolean isSmall;
-    private boolean hasArms = true;
+    private boolean hasArms;
     private boolean hasNoBasePlate;
     private boolean isMarker;
 
@@ -75,19 +75,19 @@ class ArmorStandMetaData extends MetaData {
     @Override
     public Consumer<DataTypeProvider> getIndexHandler(int i) {
         return switch (i) {
-            case 14 -> provider -> {
+            case 15 -> provider -> {
                 byte status = provider.readNext();
                 isSmall = (status & 0x01) > 0;
                 hasArms = (status & 0x04) > 0;
                 hasNoBasePlate = (status & 0x08) > 0;
                 isMarker = (status & 0x10) > 0;
             };
-            case 15 -> provider -> pose.put("Head", Rotation.read(provider));
-            case 16 -> provider -> pose.put("Body", Rotation.read(provider));
-            case 17 -> provider -> pose.put("LeftArm", Rotation.read(provider));
-            case 18 -> provider -> pose.put("RightArm", Rotation.read(provider));
-            case 19 -> provider -> pose.put("LeftLeg", Rotation.read(provider));
-            case 20 -> provider -> pose.put("RightLeg", Rotation.read(provider));
+            case 16 -> provider -> pose.put("Head", Rotation.read(provider));
+            case 17 -> provider -> pose.put("Body", Rotation.read(provider));
+            case 18 -> provider -> pose.put("LeftArm", Rotation.read(provider));
+            case 19 -> provider -> pose.put("RightArm", Rotation.read(provider));
+            case 20 -> provider -> pose.put("LeftLeg", Rotation.read(provider));
+            case 21 -> provider -> pose.put("RightLeg", Rotation.read(provider));
             default -> super.getIndexHandler(i);
         };
     }

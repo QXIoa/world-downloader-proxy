@@ -8,6 +8,7 @@ import version.v26_1.proxy.CompressionManager;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.GZIPOutputStream;
 
 public class NbtUtil {
 
@@ -23,10 +24,13 @@ public class NbtUtil {
     }
 
    public static void write(Tag nbt, Path destination) throws IOException {
-       ByteArrayOutputStream output = new ByteArrayOutputStream();
-       nbt.write(new DataOutputStream(output));
-
-       byte[] compressed = CompressionManager.gzipCompress(output.toByteArray());
-       Files.write(destination, compressed);
+       // Stream directly to a GZIP-compressed file instead of buffering the entire NBT
+       // in memory. For large schematics (200M+ blocks), the previous approach allocated
+       // two ByteArrayOutputStreams (~800MB+ combined) and caused OutOfMemoryError.
+       try (OutputStream fos = Files.newOutputStream(destination);
+            GZIPOutputStream gzip = new GZIPOutputStream(fos);
+            DataOutputStream out = new DataOutputStream(gzip)) {
+           nbt.write(out);
+       }
    }
 }

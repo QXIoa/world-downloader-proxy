@@ -2,14 +2,21 @@ package version.v26_1.packets;
 
 import core.coordinates.Coordinate3D;
 import core.coordinates.CoordinateDouble3D;
+import core.snapshot.SnapshotCompleteness;
+import core.snapshot.SnapshotDiagnostic;
 import se.llbit.nbt.SpecificTag;
 import se.llbit.nbt.Tag;
+import version.v26_1.components.ComponentReadContext;
+import version.v26_1.components.DataComponentPatch;
 import version.v26_1.container.Slot;
+import version.v26_1.registries.DataComponentRegistry;
+import version.v26_1.registries.RegistryManager;
 
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -26,6 +33,7 @@ public class DataTypeProvider {
     private static final int MAX_SHORT_VAL = 1 << 15;
     private byte[] finalFullPacket;
     private int pos;
+    private final SnapshotCompleteness completeness = new SnapshotCompleteness();
 
     public byte[] debug__getFullArray() {
         return finalFullPacket;
@@ -113,12 +121,10 @@ public class DataTypeProvider {
 
     public String readString() {
         int stringSize = readVarInt();
-
-        StringBuilder sb = new StringBuilder();
-        while (stringSize-- > 0) {
-            sb.appendCodePoint(readNext() & 0xFF);
+        if (stringSize < 0 || stringSize > remaining()) {
+            throw new IllegalArgumentException("Invalid string byte length: " + stringSize);
         }
-        return sb.toString();
+        return new String(readByteArray(stringSize), StandardCharsets.UTF_8);
     }
 
     public int readVarInt() {
@@ -200,6 +206,7 @@ public class DataTypeProvider {
     }
 
     public SpecificTag readNbtTag() {
+        int start = position();
         try {
             return (SpecificTag) SpecificTag.read(readNext(), new DataInputStream(new InputStream() {
                 @Override
@@ -208,8 +215,8 @@ public class DataTypeProvider {
                 }
             })).unpack();
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
+            markIncomplete("MALFORMED_NBT", "packet", null, null, start, ex.getMessage());
+            throw new IllegalArgumentException("Could not decode NBT at packet position " + start, ex);
         }
     }
 
@@ -244,14 +251,20 @@ public class DataTypeProvider {
         // 26.x encodes chat components as NBT compound tags, not JSON strings.
         // Reading a VarInt-prefixed string here would consume the wrong number
         // of bytes and misalign all subsequent fields in the packet.
-        SpecificTag tag = readNbtTag();
+        SpecificTag tag = readChatTag();
         return tag != null ? tag.toString() : "";
     }
+
+    public SpecificTag readChatTag() {
+        return readNbtTag();
+    }
     public String readOptChat() {
-        if (readBoolean()) {
-            return readChat();
-        }
-        return null;
+        SpecificTag tag = readOptChatTag();
+        return tag == null ? null : tag.toString();
+    }
+
+    public SpecificTag readOptChatTag() {
+        return readBoolean() ? readChatTag() : null;
     }
 
     public List<Slot> readSlots(int count) {
@@ -266,12 +279,19 @@ public class DataTypeProvider {
 
     public Slot readSlot() {
         int count = readVarInt();
-
-        // TODO: handle 1.20.6+ item components
-        if (count > 0) {
-            return new Slot(readVarInt(), (byte) count, null);
+        if (count <= 0) {
+            return null;
         }
-        return null;
+
+        int itemId = readVarInt();
+        DataComponentRegistry registry = RegistryManager.getInstance().getDataComponentRegistry();
+        if (registry == null) {
+            throw new IllegalStateException("Data component registry is not initialized");
+        }
+        DataComponentPatch patch = DataComponentPatch.read(this, new ComponentReadContext(
+                registry, completeness, "26.1", "item_stack", 0, 16
+        ));
+        return new Slot(itemId, count, patch);
     }
 
     public static int readOptVarInt(DataTypeProvider provider) {
@@ -336,6 +356,17 @@ public class DataTypeProvider {
      */
     public int position() {
         return pos;
+    }
+
+    public SnapshotCompleteness getCompleteness() {
+        return completeness;
+    }
+
+    public void markIncomplete(String code, String source, Integer numericId, String resourceLocation,
+                               int bufferPosition, String detail) {
+        completeness.markIncomplete(new SnapshotDiagnostic(
+                code, "26.1", source, numericId, resourceLocation, bufferPosition, detail
+        ));
     }
 
     /**

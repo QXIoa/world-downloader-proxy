@@ -14,6 +14,7 @@ import version.v26_1.module.VersionModuleImpl;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -164,6 +165,132 @@ class SpongeSchematicExporterTest {
     }
 
     @Test
+    void exportsBlockEntityWithRelativePositionAndSeparatedData() throws IOException {
+        Coordinate3D position = new Coordinate3D(10, 64, -5);
+        CompoundTag blockEntity = new CompoundTag();
+        blockEntity.add("id", new StringTag("minecraft:banner"));
+        blockEntity.add("x", new IntTag(10));
+        blockEntity.add("y", new IntTag(64));
+        blockEntity.add("z", new IntTag(-5));
+        blockEntity.add("CustomName", new StringTag("Banner"));
+        CompoundTag pattern = new CompoundTag();
+        pattern.add("pattern", new StringTag("minecraft:stripe_top"));
+        blockEntity.add("patterns", new ListTag(Tag.TAG_COMPOUND, List.of(pattern)));
+
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:white_banner", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+                return coordinate.equals(position) ? blockEntity : null;
+            }
+        };
+
+        Path target = tempDir.resolve("block-entity.schem");
+        new SpongeSchematicExporter(reader).export(new BoundingBox(position, position), TestDimension.overworld(), target);
+
+        ListTag blockEntities = (ListTag) readSchematic(target).get("Blocks").asCompound().get("BlockEntities");
+        assertThat(blockEntities.size()).isEqualTo(1);
+        CompoundTag encoded = blockEntities.get(0).asCompound();
+        assertThat(((IntArrayTag) encoded.get("Pos")).getData()).containsExactly(0, 0, 0);
+        assertThat(encoded.get("Id").stringValue()).isEqualTo("minecraft:banner");
+        assertThat(encoded.get("Data").asCompound().get("CustomName").stringValue()).isEqualTo("Banner");
+        assertThat(encoded.get("Data").asCompound().get("patterns").asList().size()).isEqualTo(1);
+        assertThat(encoded.get("Data").asCompound().get("x").isError()).isTrue();
+    }
+
+    @Test
+    void exportsEntityDataWithPositionProvidedByRegionReader() throws IOException {
+        CompoundTag entity = new CompoundTag();
+        entity.add("id", new StringTag("minecraft:armor_stand"));
+        entity.add("Pos", new ListTag(Tag.TAG_DOUBLE, List.of(
+            new DoubleTag(0.5), new DoubleTag(1.0), new DoubleTag(0.5)
+        )));
+        entity.add("Marker", new ByteTag(1));
+
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:air", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public List<SpecificTag> entitiesIn(BoundingBox box) {
+                return List.of(entity);
+            }
+        };
+
+        Path target = tempDir.resolve("entity.schem");
+        BoundingBox box = new BoundingBox(new Coordinate3D(10, 64, -5), new Coordinate3D(11, 65, -4));
+        new SpongeSchematicExporter(reader).export(box, TestDimension.overworld(), target);
+
+        ListTag entities = (ListTag) readSchematic(target).get("Entities");
+        assertThat(entities.size()).isEqualTo(1);
+        CompoundTag encoded = entities.get(0).asCompound();
+        assertThat(encoded.get("Id").stringValue()).isEqualTo("minecraft:armor_stand");
+        assertThat(encoded.get("Pos").asList().get(0).doubleValue()).isEqualTo(0.5);
+        assertThat(encoded.get("Data").asCompound().get("Marker").byteValue()).isEqualTo((byte) 1);
+        assertThat(encoded.get("Data").asCompound().get("id").isError()).isTrue();
+    }
+
+    @Test
+    void skipsErrorTagsWhenCopyingEntityNbt() throws IOException {
+        // Regression: entity NBT can contain ErrorTag entries (from failed .get() lookups
+        // that were accidentally stored). deepCopy/copyWithout must skip them instead of
+        // throwing "Cannot write an error tag to NBT stream".
+        CompoundTag entity = new CompoundTag();
+        entity.add("id", new StringTag("minecraft:armor_stand"));
+        entity.add("Pos", new ListTag(Tag.TAG_DOUBLE, List.of(
+            new DoubleTag(0.5), new DoubleTag(1.0), new DoubleTag(0.5)
+        )));
+        entity.add("Marker", new ByteTag(1));
+        // Simulate a corrupted entry that resolves to ErrorTag
+        entity.add("BadField", (SpecificTag) entity.get("nonexistent"));
+
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:air", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public List<SpecificTag> entitiesIn(BoundingBox box) {
+                return List.of(entity);
+            }
+        };
+
+        Path target = tempDir.resolve("error-tag.schem");
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(1, 1, 1));
+        new SpongeSchematicExporter(reader).export(box, TestDimension.overworld(), target);
+
+        ListTag entities = (ListTag) readSchematic(target).get("Entities");
+        assertThat(entities.size()).isEqualTo(1);
+        CompoundTag encoded = entities.get(0).asCompound();
+        assertThat(encoded.get("Id").stringValue()).isEqualTo("minecraft:armor_stand");
+        assertThat(encoded.get("Data").asCompound().get("Marker").byteValue()).isEqualTo((byte) 1);
+        // BadField (ErrorTag) should have been skipped, not cause a crash
+        assertThat(encoded.get("Data").asCompound().get("BadField").isError()).isTrue();
+    }
+
+    @Test
     void missingBiomesDefaultToPlains() throws IOException {
         BlockRegionReader reader = new BlockRegionReader() {
             @Override
@@ -184,6 +311,101 @@ class SpongeSchematicExporterTest {
 
         CompoundTag biomePalette = readSchematic(target).get("Biomes").asCompound().get("Palette").asCompound();
         assertThat(biomePalette.get("minecraft:plains").intValue()).isEqualTo(0);
+    }
+
+    @Test
+    void reportsMissingBlocksWhenChunkIsNotLoaded() throws IOException {
+        // Half the blocks are in an "unloaded chunk" (blockAt returns null) — the
+        // exporter should count them as missingBlocks and treat them as air.
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                if (coordinate.getX() == 0) {
+                    return null; // unloaded
+                }
+                return new FakeBlockState("minecraft:stone", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(1, 0, 0));
+        Path target = tempDir.resolve("missing_blocks.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.totalBlocks()).isEqualTo(2);
+        assertThat(result.missingBlocks()).isEqualTo(1);
+        assertThat(result.missingHeads()).isEqualTo(0);
+        assertThat(result.exportedBlockEntities()).isEqualTo(0);
+    }
+
+    @Test
+    void reportsMissingHeadsWhenHeadBlockHasNoBlockEntityData() throws IOException {
+        // A player_head block exists but has no block entity data — the exporter
+        // should count it as a missingHead (its profile/skin is lost).
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:player_head", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+                return null; // no block entity data -> head has no profile
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(0, 0, 0));
+        Path target = tempDir.resolve("missing_head.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.missingBlocks()).isEqualTo(0);
+        assertThat(result.missingHeads()).isEqualTo(1);
+        assertThat(result.exportedBlockEntities()).isEqualTo(0);
+    }
+
+    @Test
+    void doesNotCountHeadAsMissingWhenBlockEntityIsPresent() throws IOException {
+        CompoundTag headEntity = new CompoundTag();
+        headEntity.add("id", new StringTag("minecraft:skull"));
+        headEntity.add("x", new IntTag(0));
+        headEntity.add("y", new IntTag(0));
+        headEntity.add("z", new IntTag(0));
+
+        BlockRegionReader reader = new BlockRegionReader() {
+            @Override
+            public IBlockState blockAt(Coordinate3D coordinate) {
+                return new FakeBlockState("minecraft:player_head", new CompoundTag());
+            }
+
+            @Override
+            public String biomeAt(Coordinate3D coordinate) {
+                return "minecraft:plains";
+            }
+
+            @Override
+            public SpecificTag blockEntityAt(Coordinate3D coordinate) {
+                return headEntity;
+            }
+        };
+        SpongeSchematicExporter exporter = new SpongeSchematicExporter(reader);
+
+        BoundingBox box = new BoundingBox(new Coordinate3D(0, 0, 0), new Coordinate3D(0, 0, 0));
+        Path target = tempDir.resolve("head_with_entity.schem");
+        ExportResult result = exporter.export(box, TestDimension.overworld(), target);
+
+        assertThat(result.missingHeads()).isEqualTo(0);
+        assertThat(result.exportedBlockEntities()).isEqualTo(1);
     }
 
     private CompoundTag readSchematic(Path file) throws IOException {

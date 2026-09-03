@@ -167,11 +167,11 @@ public class ClientBoundGamePacketHandler extends PacketHandler {
 
         operations.put("BlockEntityData", provider -> {
             Coordinate3D position = provider.readCoordinates();
-            byte action = provider.readNext();
+            int type = provider.readVarInt();
             SpecificTag entityData = provider.readNbtTag();
 
             if (entityData instanceof CompoundTag entity) {
-                entity.add("id", new StringTag(RegistryManager.getInstance().getBlockEntityRegistry().getBlockEntityName(action)));
+                entity.add("id", new StringTag(RegistryManager.getInstance().getBlockEntityRegistry().getBlockEntityName(type)));
             }
             worldManager.getChunkFactory().updateTileEntity(position, entityData);
             return true;

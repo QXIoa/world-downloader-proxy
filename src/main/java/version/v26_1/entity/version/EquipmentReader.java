@@ -24,7 +24,14 @@ public class EquipmentReader {
 
             hasNext = (slotData & 0x80) > 0;
             int slotId = (slotData & 0x7f);
-            equipment[slotId] = provider.readSlot();
+            Slot slot = provider.readSlot();
+            equipment[slotId] = slot;
+            // If the slot's component patch was not fully parsed, the buffer
+            // position is undefined — stop reading further slots to avoid
+            // garbage data, but preserve already-parsed slots.
+            if (slot != null && !slot.getComponents().isFullyParsed()) {
+                break;
+            }
         } while (hasNext);
 
         return equipment;

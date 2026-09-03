@@ -175,7 +175,7 @@ public class WorldManager implements IWorldManager {
         }
 
         Chunk c = getChunk(discrete.globalToChunk());
-        if (c == null) {
+        if (c == null || c.getChunkHeightHandler() == null) {
             return;
         }
 
@@ -184,6 +184,12 @@ public class WorldManager implements IWorldManager {
     }
 
     private void unloadChunks(Map<CoordinateDim2D, Region> regions) {
+        // In schematic mode, chunks and entities must stay in memory for later export.
+        // Region.unloadAll saves chunk data to disk and evicts entities — neither
+        // should happen in schematic mode.
+        if (schematicMode) {
+            return;
+        }
         regions.values().forEach(Region::unloadAll);
     }
 
@@ -365,6 +371,11 @@ public class WorldManager implements IWorldManager {
         return c.getBlockStateAt(pos);
     }
 
+    public se.llbit.nbt.SpecificTag blockEntityAt(Coordinate3D coordinate3D) {
+        Chunk c = this.getChunk(coordinate3D.globalToChunk().addDimension(this.dimension));
+        return c == null ? null : c.getBlockEntity(coordinate3D);
+    }
+
     /**
      * Read the biome resource location at the given world-space coordinates, or {@code null} if
      * the chunk is not loaded or the version does not support per-section biomes.
@@ -404,7 +415,10 @@ public class WorldManager implements IWorldManager {
      */
     public void touchChunk(ChunkEntities c) {
         c.touch();
-        regions.get(c.getLocation().chunkToDimRegion()).touch();
+        Region r = regions.get(c.getLocation().chunkToDimRegion());
+        if (r != null) {
+            r.touch();
+        }
     }
 
     public DimensionRegistry getDimensionRegistry() {
@@ -702,6 +716,9 @@ public class WorldManager implements IWorldManager {
             // (removeChunk would add unsaved chunks to toDelete, leaking in
             // schematic mode where chunks are never saved to disk).
             chunkFactory.unloadChunk(withDim);
+            // Evict entities from the evicted chunk too — both chunk data and
+            // entities outside the radius are freed to limit memory usage.
+            entityRegistry.unloadChunk(withDim);
             CoordinateDim2D regionCoordinate = withDim.chunkToDimRegion();
             Region r = regions.get(regionCoordinate);
             if (r != null) {

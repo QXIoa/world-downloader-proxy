@@ -1,7 +1,9 @@
 package version.v26_1.entity;
 
+import core.config.Config;
 import core.coordinates.CoordinateDim2D;
 import core.interfaces.IEntityRegistry;
+import core.schematic.BoundingBox;
 import se.llbit.nbt.SpecificTag;
 import version.v26_1.chunk.Chunk;
 import version.v26_1.entity.specific.Villager;
@@ -42,6 +44,24 @@ public class EntityRegistry implements IEntityRegistry {
         this.executor.execute(() -> attempt(() -> {
             Entity ent = parser.apply(provider);
             if (ent == null) { return; }
+
+            // If an entity with the same ID already exists (e.g. the server
+            // re-sent AddEntity after the player walked away and back, and
+            // schematic mode kept the old one), remove the stale entry from
+            // perChunk before overwriting it — otherwise both the old and new
+            // entity objects would be in the perChunk set.
+            Entity existing = entities.get(ent.getId());
+            if (existing != null) {
+                CoordinateDim2D oldChunk = existing.getChunkLocation();
+                Set<Entity> oldSet = perChunk.get(oldChunk);
+                if (oldSet != null) {
+                    oldSet.remove(existing);
+                    if (oldSet.isEmpty()) {
+                        perChunk.remove(oldChunk);
+                    }
+                }
+            }
+
             entities.put(ent.getId(), ent);
 
             // If this is a player entity spawned via AddEntity (protocol 776+ has no
@@ -194,7 +214,12 @@ public class EntityRegistry implements IEntityRegistry {
             Entity ent = entities.get(provider.readVarInt());
 
             if (ent != null) {
-                ent.parseMetadata(provider);
+                try {
+                    ent.parseMetadata(provider);
+                    markUnsaved(ent.getChunkLocation());
+                } finally {
+                    ent.mergeDecodeCompleteness(provider.getCompleteness());
+                }
             }
         }));
     }
@@ -240,6 +265,26 @@ public class EntityRegistry implements IEntityRegistry {
         return entities.stream().map(Entity::toNbt).collect(Collectors.toList());
     }
 
+    public List<SpecificTag> getEntitiesNbt(BoundingBox box) {
+        CoordinateDim2D minChunk = box.getMin().globalToChunk().addDimension(worldManager.getDimension());
+        CoordinateDim2D maxChunk = box.getMax().globalToChunk().addDimension(worldManager.getDimension());
+        Set<Entity> selected = new LinkedHashSet<>();
+
+        for (int chunkX = minChunk.getX(); chunkX <= maxChunk.getX(); chunkX++) {
+            for (int chunkZ = minChunk.getZ(); chunkZ <= maxChunk.getZ(); chunkZ++) {
+                Set<Entity> chunkEntities = perChunk.get(new CoordinateDim2D(chunkX, chunkZ, worldManager.getDimension()));
+                if (chunkEntities != null) {
+                    selected.addAll(chunkEntities);
+                }
+            }
+        }
+
+        return selected.stream()
+                .map(entity -> entity.toNbtIfInside(box))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     public void reset() {
         this.entities.clear();
         this.perChunk.clear();
@@ -252,7 +297,12 @@ public class EntityRegistry implements IEntityRegistry {
             Entity ent = entities.get(id);
 
             if (ent != null) {
-                ent.addEquipment(provider);
+                try {
+                    ent.addEquipment(provider);
+                    markUnsaved(ent.getChunkLocation());
+                } finally {
+                    ent.mergeDecodeCompleteness(provider.getCompleteness());
+                }
             }
         }));
     }
@@ -260,14 +310,24 @@ public class EntityRegistry implements IEntityRegistry {
     /**
      * When destroyEntities is called, we don't remove the entities from the perChunk map. These will only be removed
      * when the chunk is unloaded. This way we won't accidentally delete entities that belong to an unsaved chunk.
+     *
+     * In schematic mode, we also keep entities in the entities map so that late metadata/equipment
+     * updates still find them, and so entity IDs aren't reused for stale entries in perChunk.
      */
     public void destroyEntities(DataTypeProvider provider) {
         int count = provider.readVarInt();
+        if (Config.isSchematicMode()) {
+            // Still consume the packet data, but don't remove anything.
+            while (count-- > 0) {
+                provider.readVarInt();
+            }
+            return;
+        }
         while (count-- > 0) {
             int id = provider.readVarInt();
-            if (entities.containsKey(id)) {
-                players.remove(entities.get(id).uuid);
-                entities.remove(id);
+            Entity removed = entities.remove(id);
+            if (removed != null) {
+                players.remove(removed.uuid);
             }
         }
     }
