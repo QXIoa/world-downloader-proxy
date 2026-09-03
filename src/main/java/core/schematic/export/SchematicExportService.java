@@ -137,7 +137,12 @@ public class SchematicExportService {
         Path target = outputDirectory.resolve(fileNamer.buildFileName(Instant.now(), serverAddress));
 
         try {
+            System.out.println("[schematic-export] Starting export: " + box.sizeX() + "x" + box.sizeY() + "x" + box.sizeZ()
+                + " = " + box.volume() + " blocks");
+
             ExportResult result = exporter.export(box, dimension, target);
+
+            System.out.println("[schematic-export] Export finished, verifying file...");
 
             // Verify the file was actually created and is non-empty — a successful
             // exporter.export() call does not guarantee the file exists on disk if
@@ -185,6 +190,17 @@ public class SchematicExportService {
             // Catch runtime exceptions too — the file may have been partially or fully written
             // before the error, so the player needs to know something went wrong.
             feedback.send(Messages.server("server.export.failed_generic", e.getClass().getSimpleName(), e.getMessage()));
+        } catch (Error e) {
+            // OutOfMemoryError and other Errors — for a 144M-block export, OOME is the most
+            // likely cause. Without this catch, the error propagates to the executor's uncaught
+            // exception handler and the player never sees a failure message (silent hang).
+            System.err.println("[schematic-export] FATAL error during export: "
+                + e.getClass().getSimpleName() + ": " + e.getMessage());
+            e.printStackTrace();
+            feedback.send(Messages.server("server.export.failed_generic",
+                e.getClass().getSimpleName(),
+                e.getMessage() != null ? e.getMessage() : "(out of memory?)"));
+            throw e;
         }
     }
 

@@ -48,27 +48,44 @@ public class SpongeSchematicExporter implements SchematicExporter {
     @Override
     public ExportResult export(BoundingBox box, IDimension dimension, Path targetFile) throws IOException {
         long totalBlocks = box.volume();
+        long startTime = System.currentTimeMillis();
 
         // --- Blocks ---
+        System.out.println("[schematic-export] Phase 1/6: encoding blocks (" + totalBlocks + " blocks)...");
         Map<String, Integer> blockPaletteIndices = new LinkedHashMap<>();
         BlockEncodingStats blockStats = new BlockEncodingStats();
         byte[] blockData = encodeBlocks(box, blockPaletteIndices, blockStats);
+        System.out.println("[schematic-export] Phase 1 done: " + blockPaletteIndices.size()
+            + " palette entries, " + blockData.length + " bytes ("
+            + (System.currentTimeMillis() - startTime) + "ms)");
 
         CompoundTag blocks = new CompoundTag();
         blocks.add("Palette", buildPaletteTag(blockPaletteIndices));
         blocks.add("Data", new ByteArrayTag(blockData));
+        System.out.println("[schematic-export] Phase 2/6: encoding block entities...");
         List<SpecificTag> blockEntityTags = encodeBlockEntities(box, blockStats);
         blocks.add("BlockEntities", new ListTag(Tag.TAG_COMPOUND, blockEntityTags));
+        System.out.println("[schematic-export] Phase 2 done: " + blockEntityTags.size()
+            + " block entities (" + (System.currentTimeMillis() - startTime) + "ms)");
 
         // --- Biomes ---
+        System.out.println("[schematic-export] Phase 3/6: encoding biomes...");
         Map<String, Integer> biomePaletteIndices = new LinkedHashMap<>();
         byte[] biomeData = encodeBiomes(box, biomePaletteIndices);
+        System.out.println("[schematic-export] Phase 3 done: " + biomePaletteIndices.size()
+            + " biome entries, " + biomeData.length + " bytes ("
+            + (System.currentTimeMillis() - startTime) + "ms)");
 
         CompoundTag biomes = new CompoundTag();
         biomes.add("Palette", buildPaletteTag(biomePaletteIndices));
         biomes.add("Data", new ByteArrayTag(biomeData));
 
         // --- Schematic root ---
+        System.out.println("[schematic-export] Phase 4/6: encoding entities...");
+        List<SpecificTag> entityTags = encodeEntities(box);
+        System.out.println("[schematic-export] Phase 4 done: " + entityTags.size()
+            + " entities (" + (System.currentTimeMillis() - startTime) + "ms)");
+
         CompoundTag schematic = new CompoundTag();
         // Required fields
         schematic.add("Version", new IntTag(FORMAT_VERSION));
@@ -84,7 +101,7 @@ public class SpongeSchematicExporter implements SchematicExporter {
         schematic.add("Metadata", buildMetadataTag());
         schematic.add("Blocks", blocks);
         schematic.add("Biomes", biomes);
-        schematic.add("Entities", new ListTag(Tag.TAG_COMPOUND, encodeEntities(box)));
+        schematic.add("Entities", new ListTag(Tag.TAG_COMPOUND, entityTags));
 
         CompoundTag root = new CompoundTag();
         root.add("Schematic", schematic);
@@ -93,15 +110,22 @@ public class SpongeSchematicExporter implements SchematicExporter {
         if (absoluteTarget.getParent() != null) {
             Files.createDirectories(absoluteTarget.getParent());
         }
+        System.out.println("[schematic-export] Phase 5/6: writing NBT to disk...");
         INbtIO nbtIO = Config.getVersionModule().getNbtIO();
         nbtIO.write(new NamedTag("", root), absoluteTarget);
+        System.out.println("[schematic-export] Phase 5 done: file written ("
+            + (System.currentTimeMillis() - startTime) + "ms)");
 
-        return new ExportResult(
+        System.out.println("[schematic-export] Phase 6/6: building result...");
+        ExportResult exportResult = new ExportResult(
                 totalBlocks,
                 blockStats.missingBlocks,
                 blockEntityTags.size(),
                 blockStats.missingHeads
         );
+        System.out.println("[schematic-export] All phases complete in "
+            + (System.currentTimeMillis() - startTime) + "ms");
+        return exportResult;
     }
 
     // ------------------------------------------------------------------
@@ -116,6 +140,7 @@ public class SpongeSchematicExporter implements SchematicExporter {
     private byte[] encodeBlocks(BoundingBox box, Map<String, Integer> paletteIndices,
                                 BlockEncodingStats stats) {
         List<Integer> indices = new ArrayList<>();
+        long count = 0;
         box.forEachBlock(coord -> {
             IBlockState state = blockRegionReader.blockAt(coord);
             if (state == null) {
@@ -125,7 +150,14 @@ public class SpongeSchematicExporter implements SchematicExporter {
             int index = paletteIndices.computeIfAbsent(blockStateKey, key -> paletteIndices.size());
             indices.add(index);
         });
-        return VarIntByteArray.pack(indices);
+        long memBefore = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("[schematic-export] encodeBlocks: " + indices.size()
+            + " indices collected, mem used=" + (memBefore / 1024 / 1024) + "MB");
+        byte[] packed = VarIntByteArray.pack(indices);
+        long memAfter = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("[schematic-export] encodeBlocks: packed to " + packed.length
+            + " bytes, mem used=" + (memAfter / 1024 / 1024) + "MB");
+        return packed;
     }
 
     private List<SpecificTag> encodeBlockEntities(BoundingBox box, BlockEncodingStats stats) {
