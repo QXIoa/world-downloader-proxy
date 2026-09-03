@@ -118,6 +118,20 @@ public class Config {
             System.exit(1);
         }
 
+        // --cli runs entirely headless: never open the settings GUI or the map GUI.
+        if (instance.cli) {
+            instance.guiOnlyMode = false;
+            instance.disableGui = true;
+        }
+
+        // The version module is normally set by the GUI bootstrap (Bootstrap.kt) before the proxy
+        // starts. For command-line launches (Config.init), pick the default/latest module here so
+        // settingsComplete() and startProxy() have a module to work with; the handshake later
+        // re-selects the module matching the client's protocol version.
+        if (module == null) {
+            setVersionModule(core.sniffer.VersionRegistry.getInstance().getModule(0));
+        }
+
         instance.settingsComplete();
     }
 
@@ -403,6 +417,11 @@ public class Config {
             usage = "Disable the GUI")
     public transient boolean disableGui = false;
 
+    @Option(name = "--cli", depends = "--server",
+            usage = "Run entirely from the command line (no GUI). Parses all options, prints help for "
+                + "--help, and starts the proxy headless. Implies --no-gui.")
+    public transient boolean cli = false;
+
     @Option(name = "--mark-new-chunks",
             usage = "Mark new chunks in an orange outline.")
     public transient boolean markNewChunks = false;
@@ -431,6 +450,11 @@ public class Config {
     @Option(name = "--disable-srv-lookup",
             usage = "Disable checking for true address using DNS service records")
     public boolean disableSrvLookup = false;
+
+    @Option(name = "--multi",
+            usage = "Allow multiple Minecraft clients to connect to the proxy at the same time. "
+                + "Each connection forwards independently, but they all share one downloaded world.")
+    public boolean multi = false;
 
     @Option(name = "--disable-mark-unsaved",
             usage = "Disable marking unsaved chunks in red on the map")
@@ -490,6 +514,10 @@ public class Config {
 
     public static boolean isInDevMode() {
         return instance.devMode;
+    }
+
+    public static boolean isMultiUser() {
+        return instance != null && instance.multi;
     }
 
     public static boolean isSchematicMode() {

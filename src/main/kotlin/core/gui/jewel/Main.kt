@@ -51,6 +51,24 @@ private fun loadIconBitmap(path: String): ImageBitmap? {
 }
 
 /**
+ * Route command-line invocations that shouldn't open the GUI (e.g. --cli, --help, --no-gui,
+ * --clear-settings) through {@link Config#init}: it parses the args, prints help and exits for
+ * --help, and for --cli starts the proxy headless. Returns true when the caller should skip
+ * launching the GUI (the proxy threads keep the JVM alive on their own).
+ */
+private fun runCliIfRequested(args: Array<String>): Boolean {
+    val headlessRequested = args.any { it == "--cli" } ||
+        args.any { it == "--help" || it == "-h" } ||
+        args.any { it == "--no-gui" } ||
+        args.any { it == "--clear-settings" }
+    if (!headlessRequested) {
+        return false
+    }
+    core.config.Config.init(args)
+    return true
+}
+
+/**
  * Bottom grass strip — the 240x34 grass.png is drawn upside down (rotated 180°)
  * and tiled horizontally to fill the full window width responsively.
  * The image is scaled to physical pixels so it looks the same on HiDPI displays.
@@ -82,9 +100,16 @@ fun GrassBar(modifier: Modifier = Modifier) {
     }
 }
 
-fun main() {
+fun main(args: Array<String>) {
     System.setProperty("apple.awt.application.name", "World Downloader Proxy")
     System.setProperty("com.apple.macos.useScreenMenuBar", "true")
+
+    // When any headless/CLI option is passed (e.g. --cli, --no-gui, --help/-h, --clear-settings),
+    // run entirely through Config.init() instead of launching the GUI. This also makes --help print
+    // the usage text from the command line rather than opening the settings window.
+    if (runCliIfRequested(args)) {
+        return
+    }
 
     try {
         if (Taskbar.isTaskbarSupported()) {

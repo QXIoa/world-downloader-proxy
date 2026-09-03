@@ -2,6 +2,7 @@ package core.proxy;
 
 import core.NetworkMode;
 import core.interfaces.IConnectionManager;
+import core.interfaces.IConnectionSession;
 import core.interfaces.IDataReader;
 import core.messages.Messages;
 
@@ -10,32 +11,47 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static core.util.ExceptionHandling.attempt;
 
 /**
  * Proxy server class, handles receiving of data and forwarding it to the right places.
+ *
+ * <p>Each accepted Minecraft client connection is serviced through a {@link IConnectionSession}
+ * created by the supplied {@code sessionFactory}. In single-user mode (the default) connections
+ * are handled serially, one at a time. When {@code multi} is {@code true}, an acceptor thread
+ * spawns a dedicated handler thread per connection, each with its own session so encryption,
+ * compression and packet readers stay isolated between concurrent clients.
  */
 public class ProxyServer extends Thread {
     private final ConnectionDetails connectionDetails;
-    private final IConnectionManager connectionManager;
+    private final Supplier<IConnectionSession> sessionFactory;
+    private final boolean multi;
+    private ServerSocket serverSocket;
 
-    private IDataReader onServerBoundPacket;
-    private IDataReader onClientBoundPacket;
-
-    public ProxyServer(IConnectionManager connectionManager, ConnectionDetails connectionDetails) {
+    public ProxyServer(Supplier<IConnectionSession> sessionFactory, ConnectionDetails connectionDetails, boolean multi) {
         this.connectionDetails = connectionDetails;
-        this.connectionManager = connectionManager;
+        this.sessionFactory = sessionFactory;
+        this.multi = multi;
     }
 
     /**
-     * Run the proxy server. This method does not return.
-     * @param onServerBoundPacket data reader for client -> server traffic
-     * @param onClientBoundPacket data reader for server -> client traffic
+     * Bind the local {@link ServerSocket} synchronously, then start the accept loop in the
+     * background. Binding synchronously means the local port is already listening by the time this
+     * method returns, so connecting clients queue in the OS backlog instead of getting refused.
      */
-    public void runServer(IDataReader onServerBoundPacket, IDataReader onClientBoundPacket) {
-        this.onClientBoundPacket = onClientBoundPacket;
-        this.onServerBoundPacket = onServerBoundPacket;
+    public void runServer() {
+        setName("Proxy");
+
+        String friendlyHost = connectionDetails.getFriendlyHost();
+        System.out.println(Messages.console("console.proxy.starting", friendlyHost, connectionDetails.getPortLocal()));
+
+        attempt(() -> serverSocket = connectionDetails.getServerSocket(), (ex) -> {
+            ex.printStackTrace();
+            System.exit(1);
+        });
+
         this.start();
         this.setPriority(10);
     }
@@ -43,87 +59,106 @@ public class ProxyServer extends Thread {
     @Override
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
-        setName("Proxy");
-        
-        String friendlyHost = connectionDetails.getFriendlyHost();
-        System.out.println(Messages.console("console.proxy.starting", friendlyHost, connectionDetails.getPortLocal()));
-
-        // Create a ServerSocket to listen for connections with
-        AtomicReference<ServerSocket> ss = new AtomicReference<>();
-        attempt(() -> ss.set(connectionDetails.getServerSocket()), (ex) -> {
-            ex.printStackTrace();
-            System.exit(1);
-        });
-
-        final byte[] request = new byte[4096];
-        final byte[] reply = new byte[4096];
-
         // Server accept loop — runs until the process exits or an unrecoverable error occurs.
         while (true) {
             AtomicReference<Socket> client = new AtomicReference<>();
-            AtomicReference<Socket> server = new AtomicReference<>();
 
-            attempt(() -> {
-                // Wait for a connection on the local port
-                client.set(ss.get().accept());
+            attempt(() -> client.set(serverSocket.accept()), (ex) -> {
+                ex.printStackTrace();
+            });
 
-                final InputStream streamFromClient = client.get().getInputStream();
-                final OutputStream streamToClient = client.get().getOutputStream();
-                connectionManager.getEncryptionManager().setStreamToClient(streamToClient);
+            if (client.get() == null) {
+                continue;
+            }
 
-                // If the server cannot connect, close client connection
-                attempt(() -> server.set(connectionDetails.getClientSocket()), (ex) -> {
-                    System.err.println(Messages.console("console.proxy.cannot_connect", friendlyHost, ex.getClass().getCanonicalName()));
-                    attempt(client.get()::close);
-                });
+            if (multi) {
+                // spawn a dedicated thread per connection so multiple clients can be proxied at once
+                Thread handler = new Thread(() -> handleConnection(client.get()), "Proxy Connection");
+                handler.start();
+            } else {
+                // single-user mode: handle one connection fully before accepting the next
+                handleConnection(client.get());
+            }
+        }
+    }
 
-                final InputStream streamFromServer = server.get().getInputStream();
-                final OutputStream streamToServer = server.get().getOutputStream();
-                connectionManager.getEncryptionManager().setStreamToServer(streamToServer);
+    /**
+     * Proxy a single accepted client connection to the remote server and back using its own session.
+     *
+     * @param client the accepted connection from the Minecraft client
+     */
+    private void handleConnection(Socket client) {
+        final byte[] request = new byte[4096];
+        final byte[] reply = new byte[4096];
 
-                // start client listener thread
-                Thread clientListener = new Thread(() -> {
-                    connectionManager.setMode(NetworkMode.HANDSHAKE);
-                    attempt(() -> {
-                        int bytesRead;
-                        while ((bytesRead = streamFromClient.read(request)) != -1) {
-                            onServerBoundPacket.pushData(request, bytesRead);
-                        }
-                    }, (ex) -> {
-                        Throwable cause = ex.getCause();
-                        if (cause != null) {
-                            cause.printStackTrace();
-                        }
-                        System.out.println(Messages.console("console.proxy.server_disconnected"));
-                        connectionManager.reset();
-                    });
-                    // the client closed the connection to us, so close our connection to the server.
-                    attempt(streamToServer::close);
-                }, "Proxy Client Listener");
-                clientListener.start();
-                clientListener.setPriority(10);
+        IConnectionSession session = sessionFactory.get();
+        IConnectionManager connectionManager = session.getConnectionManager();
 
-                // listen to messages from server
+        AtomicReference<Socket> server = new AtomicReference<>();
+
+        attempt(() -> {
+            final InputStream streamFromClient = client.getInputStream();
+            final OutputStream streamToClient = client.getOutputStream();
+            connectionManager.getEncryptionManager().setStreamToClient(streamToClient);
+
+            // If the server cannot connect, close client connection
+            attempt(() -> server.set(connectionDetails.getClientSocket()), (ex) -> {
+                System.err.println(Messages.console("console.proxy.cannot_connect",
+                        connectionDetails.getFriendlyHost(), ex.getClass().getCanonicalName()));
+                attempt(client::close);
+            });
+            if (server.get() == null) {
+                return;
+            }
+
+            final InputStream streamFromServer = server.get().getInputStream();
+            final OutputStream streamToServer = server.get().getOutputStream();
+            connectionManager.getEncryptionManager().setStreamToServer(streamToServer);
+
+            // start client listener thread
+            Thread clientListener = new Thread(() -> {
+                IDataReader serverBound = session.getServerBoundReader();
+                connectionManager.setMode(NetworkMode.HANDSHAKE);
                 attempt(() -> {
                     int bytesRead;
-                    while ((bytesRead = streamFromServer.read(reply)) != -1) {
-                        onClientBoundPacket.pushData(reply, bytesRead);
+                    while ((bytesRead = streamFromClient.read(request)) != -1) {
+                        serverBound.pushData(request, bytesRead);
                     }
                 }, (ex) -> {
                     Throwable cause = ex.getCause();
                     if (cause != null) {
                         cause.printStackTrace();
                     }
-                    System.out.println(Messages.console("console.proxy.client_disconnected"));
+                    System.out.println(Messages.console("console.proxy.server_disconnected"));
                     connectionManager.reset();
                 });
+                // the client closed the connection to us, so close our connection to the server.
+                attempt(streamToServer::close);
+            }, "Proxy Client Listener");
+            clientListener.start();
+            clientListener.setPriority(10);
 
-                // The server closed its connection to us, so we close our connection to our client.
-                streamToClient.close();
+            // listen to messages from server
+            IDataReader clientBound = session.getClientBoundReader();
+            attempt(() -> {
+                int bytesRead;
+                while ((bytesRead = streamFromServer.read(reply)) != -1) {
+                    clientBound.pushData(reply, bytesRead);
+                }
             }, (ex) -> {
-                if (server.get() != null) { attempt(server.get()::close); }
-                if (client.get() != null) { attempt(client.get()::close); }
+                Throwable cause = ex.getCause();
+                if (cause != null) {
+                    cause.printStackTrace();
+                }
+                System.out.println(Messages.console("console.proxy.client_disconnected"));
+                connectionManager.reset();
             });
-        }
+
+            // The server closed its connection to us, so we close our connection to our client.
+            streamToClient.close();
+        }, (ex) -> {
+            if (server.get() != null) { attempt(server.get()::close); }
+            attempt(client::close);
+        });
     }
 }

@@ -64,6 +64,28 @@ Disable the GUI and specify the server address directly:
 java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar --no-gui -s address.to.server.com
 ```
 
+Run everything from the command line (no GUI, implies `--no-gui`):
+
+```
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar --cli -s address.to.server.com
+```
+
+`--cli` parses all command-line options and starts the proxy headless, so the whole session happens
+in the terminal. Passing `--help` (or `-h`) prints the full option list and exits without opening
+the GUI.
+
+Allow multiple Minecraft clients to connect to the proxy at the same time:
+
+```
+java -jar world-downloader-proxy-<version>-mac-linux-win-arm-x86.jar --multi -s address.to.server.com
+```
+
+By default the proxy only handles one client at a time. With `--multi`, an acceptor thread
+spawns a dedicated handler per connection, so several clients can connect simultaneously (for
+example different people joining the same server through the proxy). Each connection forwards
+independently with its own encryption/compression state, but they all share the single downloaded
+world, so only one of them actively drives the download at a time.
+
 ### Running on Linux
 
 ```bash
